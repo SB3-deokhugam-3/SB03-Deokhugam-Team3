@@ -5,12 +5,12 @@ CREATE TABLE users
     id         UUID PRIMARY KEY,
 
     -- Column
-    created_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ  NOT NULL,
     updated_at TIMESTAMPTZ,
-    email      VARCHAR(20) NOT NULL UNIQUE,
-    nickname   VARCHAR(20) NOT NULL,
-    password   VARCHAR(20) NOT NULL,
-    is_deleted BOOLEAN     NOT NULL
+    email      VARCHAR(320) NOT NULL UNIQUE,
+    nickname   VARCHAR(50)  NOT NULL,
+    password   VARCHAR(100) NOT NULL,
+    is_deleted BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE books
@@ -27,10 +27,10 @@ CREATE TABLE books
     description    TEXT             NOT NULL,
     publisher      VARCHAR(50)      NOT NULL,
     published_date DATE             NOT NULL,
-    rating         DOUBLE PRECISION NOT NULL,
-    review_count   BIGINT           NOT NULL,
+    rating         DOUBLE PRECISION NOT NULL CHECK (rating BETWEEN 0 AND 5),
+    review_count   BIGINT           NOT NULL DEFAULT 0,
     isbn           VARCHAR(16)      NOT NULL UNIQUE,
-    is_deleted     BOOLEAN          NOT NULL
+    is_deleted     BOOLEAN          NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE reviews
@@ -43,18 +43,18 @@ CREATE TABLE reviews
     updated_at    TIMESTAMPTZ,
     book_id       UUID             NOT NULL,
     user_id       UUID             NOT NULL,
-    rating        DOUBLE PRECISION NOT NULL,
+    rating        DOUBLE PRECISION NOT NULL CHECK (rating BETWEEN 0 AND 5),
     content       TEXT             NOT NULL,
-    like_count    BIGINT           NOT NULL,
-    comment_count BIGINT           NOT NULL,
-    is_deleted    BOOLEAN          NOT NULL,
+    like_count    BIGINT           NOT NULL DEFAULT 0,
+    comment_count BIGINT           NOT NULL DEFAULT 0,
+    is_deleted    BOOLEAN          NOT NULL DEFAULT FALSE,
 
-    CONSTRAINT fk_book
+    CONSTRAINT fk_reviews_book
         FOREIGN KEY (book_id)
             REFERENCES books (id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_user
+    CONSTRAINT fk_reviews_user
         FOREIGN KEY (user_id)
             REFERENCES users (id)
             ON DELETE CASCADE,
@@ -73,14 +73,14 @@ CREATE TABLE comments
     user_id    UUID        NOT NULL,
     review_id  UUID        NOT NULL,
     content    TEXT        NOT NULL,
-    is_deleted BOOLEAN     NOT NULL,
+    is_deleted BOOLEAN     NOT NULL DEFAULT FALSE,
 
-    CONSTRAINT fk_user
+    CONSTRAINT fk_comments_user
         FOREIGN KEY (user_id)
             REFERENCES users (id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_review
+    CONSTRAINT fk_comments_review
         FOREIGN KEY (review_id)
             REFERENCES reviews (id)
             ON DELETE CASCADE
@@ -99,12 +99,12 @@ CREATE TABLE notifications
     content    VARCHAR(255),
     confirmed  BOOLEAN     NOT NULL,
 
-    CONSTRAINT fk_user
+    CONSTRAINT fk_notifications_user
         FOREIGN KEY (user_id)
             REFERENCES users (id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_review
+    CONSTRAINT fk_notifications_review
         FOREIGN KEY (review_id)
             REFERENCES reviews (id)
             ON DELETE CASCADE
@@ -120,12 +120,12 @@ CREATE TABLE review_likes
     review_id  UUID        NOT NULL,
     user_id    UUID        NOT NULL,
 
-    CONSTRAINT fk_user
+    CONSTRAINT fk_review_likes_user
         FOREIGN KEY (user_id)
             REFERENCES users (id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_review
+    CONSTRAINT fk_review_likes_review
         FOREIGN KEY (review_id)
             REFERENCES reviews (id)
             ON DELETE CASCADE,
@@ -144,11 +144,11 @@ CREATE TABLE power_users
     period           VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     score            DOUBLE PRECISION NOT NULL,
     rank             BIGINT           NOT NULL,
-    review_score_num DOUBLE PRECISION NOT NULL,
-    like_count       BIGINT           NOT NULL,
-    comment_count    BIGINT           NOT NULL,
+    review_score_num DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    like_count       BIGINT           NOT NULL DEFAULT 0,
+    comment_count    BIGINT           NOT NULL DEFAULT 0,
 
-    CONSTRAINT fk_user
+    CONSTRAINT fk_power_users_user
         FOREIGN KEY (user_id)
             REFERENCES users (id)
             ON DELETE CASCADE
@@ -164,11 +164,11 @@ CREATE TABLE popular_book_rankings
     book_id      UUID             NOT NULL,
     period       VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     rank         BIGINT           NOT NULL,
-    score        DOUBLE PRECISION NOT NULL,
-    review_count BIGINT           NOT NULL,
+    score        DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    review_count BIGINT           NOT NULL DEFAULT 0,
     rating       DOUBLE PRECISION NOT NULL,
 
-    CONSTRAINT fk_book
+    CONSTRAINT fk_popular_book_rankings_book
         FOREIGN KEY (book_id)
             REFERENCES books (id)
             ON DELETE CASCADE
@@ -184,11 +184,11 @@ CREATE TABLE popular_review_rankings
     review_id     UUID             NOT NULL,
     period        VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     rank          BIGINT           NOT NULL,
-    score         DOUBLE PRECISION NOT NULL,
-    like_count    BIGINT           NOT NULL,
-    comment_count BIGINT           NOT NULL,
+    score         DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    like_count    BIGINT           NOT NULL DEFAULT 0,
+    comment_count BIGINT           NOT NULL DEFAULT 0,
 
-    CONSTRAINT fk_review
+    CONSTRAINT fk_popular_review_rankings_review
         FOREIGN KEY (review_id)
             REFERENCES reviews (id)
             ON DELETE CASCADE
