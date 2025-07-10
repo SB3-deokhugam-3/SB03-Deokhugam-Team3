@@ -5,6 +5,9 @@ review:
     enabled: true         # PR 리뷰 자동 활성화
     comment: true         # 코드에 인라인 댓글
     summary: true         # PR 마지막에 요약 리뷰 추가
+    branches:
+      include:
+        - '**'               # 모든 브랜치에서 리뷰 수행
 
 filters:
   include:
