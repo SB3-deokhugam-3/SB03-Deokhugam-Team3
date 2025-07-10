@@ -1,0 +1,35 @@
+# ..coderabbit.yaml
+
+review:
+  pull_request:
+    enabled: true         # PR 리뷰 자동 활성화
+    comment: true         # 코드에 인라인 댓글
+    summary: true         # PR 마지막에 요약 리뷰 추가
+
+filters:
+  include:
+    - '**/*.java'         # Java 소스 코드
+    - '**/*.xml'          # Spring XML 설정 파일
+    - '**/*.yml'          # application.yml 등
+    - '**/*.yaml'
+    - '**/*.gradle'       # Gradle 빌드 스크립트
+  exclude:
+    - '**/test/**'        # 테스트 코드 제외
+    - '**/build/**'       # 빌드 산출물 제외
+    - '**/generated/**'   # 자동 생성 코드 제외
+
+review_comments:
+  style: concise          # 간결하게 리뷰
+  tone: friendly           # 중립적인 어조 (또는 friendly)
+
+language: ko              # 한국어로 리뷰
+
+limits:
+  comments: 10            # PR당 최대 10개의 리뷰 코멘트
+
+ai:
+  instructions: |
+    - Java와 Spring의 베스트 프랙티스를 기반으로 리뷰하세요.
+    - 불필요한 반복, 과도한 의존성, 불필요한 빈 등록 등을 지적하세요.
+    - 예외 처리, 트랜잭션 처리, DI 주입 방식 등을 중점적으로 검토하세요.
+    - Validation, Logging 설정도 리뷰 대상에 포함하세요.
