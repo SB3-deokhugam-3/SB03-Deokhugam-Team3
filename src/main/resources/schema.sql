@@ -97,7 +97,7 @@ CREATE TABLE notifications
     review_id  UUID        NOT NULL,
     user_id    UUID        NOT NULL,
     content    VARCHAR(255),
-    confirmed  BOOLEAN     NOT NULL,
+    is_confirmed  BOOLEAN     NOT NULL,
 
     CONSTRAINT fk_notifications_user
         FOREIGN KEY (user_id)
@@ -193,3 +193,25 @@ CREATE TABLE popular_review_rankings
             REFERENCES reviews (id)
             ON DELETE CASCADE
 );
+
+-- power_users index 생성
+CREATE INDEX idx_power_users ON power_users (period, created_at);
+
+-- popular_book_rankings index 생성
+CREATE INDEX idx_popular_book_rankings ON popular_book_rankings (period, created_at);
+
+-- popular_review_rankings index 생성
+CREATE INDEX idx_popular_review_rankings ON popular_review_rankings (period, created_at);
+
+-- notifications index 생성
+CREATE INDEX idx_notifications ON notifications (user_id, is_confirmed, created_at);
+
+-- reviews index 생성
+CREATE INDEX idx_reviews_created_at ON reviews (book_id, created_at);
+CREATE INDEX idx_reviews_rating ON reviews (book_id, rating);
+
+-- comments index 생성
+CREATE INDEX idx_comments ON comments (review_id, created_at DESC);
+
+-- review likes index 생성
+CREATE INDEX idx_review_likes ON review_likes (user_id);
