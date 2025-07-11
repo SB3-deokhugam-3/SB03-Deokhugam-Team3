@@ -1,17 +1,17 @@
 package com.sprint.deokhugam.domain.user.entity;
 
-import com.sprint.deokhugam.global.base.BaseEntity;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "users")
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class User extends BaseUpdatableEntity {
 
     @Column(length = 20, nullable = false, unique = true)
@@ -23,8 +23,15 @@ public class User extends BaseUpdatableEntity {
     @Column(length = 20, nullable = false)
     private String password;
 
+    @Builder
+    public User(String email, String nickname, String password) {
+        this.email = email;
+        this.nickname = nickname;
+        this.password = password;
+    }
+
     public void update(String newNickname) {
-        if(newNickname != null && !newNickname.equals(this.nickname)){
+        if (newNickname != null && !newNickname.equals(this.nickname)) {
             this.nickname = newNickname;
         }
     }
