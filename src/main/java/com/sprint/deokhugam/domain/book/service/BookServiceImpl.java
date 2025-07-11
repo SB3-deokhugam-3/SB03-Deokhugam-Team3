@@ -1,6 +1,7 @@
 package com.sprint.deokhugam.domain.book.service;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
+import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
@@ -13,49 +14,50 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BookServiceImpl implements BookService{
 
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
 
     @Override
-    public CursorPageResponse<BookDto> getBooks(
-        String keyword,
-        String orderBy,
-        String direction,
-        String cursor,
-        Instant after,
-        Integer limit
-    ) {
-       // 기본값 설정
-       String sortBy = orderBy != null ? orderBy : "title";
-       String sortDirection = direction != null ? direction : "DESC";
-       int pageSize = limit != null ? limit : 50;
+    public CursorPageResponse<BookDto> getBooks(BookSearchRequest request) {
+        log.info("도서 목록 조회 시작 - request: {}", request);
 
-       // 정렬 조건 생성
-        Sort sort = createSort(sortBy, sortDirection);
-        Pageable pageable = PageRequest.of(0,pageSize + 1, sort);
+        // 유효성 검증
+        BookSearchRequest validatedRequest = request.validate();
+
+        // 하나 더 조회하여 다음 페이지 존재 여부 확인
+        BookSearchRequest queryRequest = BookSearchRequest.of(
+            validatedRequest.keyword(),
+            validatedRequest.orderBy(),
+            validatedRequest.direction(),
+            validatedRequest.cursor(),
+            validatedRequest.after(),
+            validatedRequest.limit() + 1
+        );
 
         List<Book> books;
 
         // 커서 기반 페이지네이션
-        if (after != null) {
-            books = bookRepository.findBooksWithKeywordAndCursor(keyword, after, pageable);
+        if (validatedRequest.hasCursor()) {
+            books = bookRepository.findBooksWithKeywordAndCursor(queryRequest);
         } else {
-            books = bookRepository.findBooksWithKeyword(keyword, pageable);
+            books = bookRepository.findBooksWithKeyword(queryRequest);
         }
 
         // 총 개수 조회
-        long totalElements = bookRepository.countBooksWithKeyword(keyword);
+        long totalElements = bookRepository.countBooksWithKeyword(validatedRequest.keyword());
 
         // 다음 페이지 존재 여부 확인
-        boolean hasNext = books.size() > pageSize;
-        if( hasNext ) {
-            books = books.subList(0, pageSize);
+        boolean hasNext = books.size() > validatedRequest.limit();
+        if (hasNext) {
+            books = books.subList(0, validatedRequest.limit());
         }
 
         // Next 커서 생성
@@ -63,27 +65,32 @@ public class BookServiceImpl implements BookService{
         Long nextIdAfter = null;
 
         if (hasNext && !books.isEmpty()) {
-            Book lastBook = books.get(books.size() -1);
-            nextCursor = lastBook.getCreatedAt().toString();
+            Book lastBook = books.get(books.size() - 1);
+            nextCursor = getCursorValue(lastBook, validatedRequest.orderBy());
             nextIdAfter = lastBook.getCreatedAt().toEpochMilli();
         }
 
-       return new CursorPageResponse<>(
-           books.stream().map(bookMapper::toBookDto).toList(),
-           nextCursor,
-           nextIdAfter,
-           books.size(),
-           totalElements,
-           hasNext
-       );
+        CursorPageResponse<BookDto> response = new CursorPageResponse<>(
+            books.stream().map(bookMapper::toBookDto).toList(),
+            nextCursor,
+            nextIdAfter,
+            books.size(),
+            totalElements,
+            hasNext
+        );
+
+        log.info("도서 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(), response.hasNext());
+
+        return response;
     }
 
-    private Sort createSort(String orderBy, String direction) {
-        Sort.Direction sortDirection = "ASC".equals(direction) ?
-            Sort.Direction.ASC : Sort.Direction.DESC;
-
-        // 주 정렬 조건 + 생성시간 보조 정렬
-        return Sort.by(sortDirection, orderBy)
-            .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+    private String getCursorValue(Book book, String orderBy) {
+        return switch (orderBy) {
+            case "title" -> book.getTitle();
+            case "publishedDate" -> book.getPublishedDate().toString();
+            case "rating" -> book.getRating().toString();
+            case "reviewCount" -> book.getReviewCount().toString();
+            default -> book.getTitle();
+        };
     }
 }

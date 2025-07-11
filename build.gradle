@@ -53,7 +53,7 @@ dependencies {
 }
 
 // querydsl Q클래스 생성 경로설정
-def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
+def querydslDir = layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main").get().asFile
 
 sourceSets {
     main {
@@ -65,6 +65,14 @@ sourceSets {
 
 compileJava {
     options.annotationProcessorPath = configurations.annotationProcessor
+    doFirst {
+        querydslDir.mkdirs()
+    }
+}
+
+// Clean 작업에서 생성된 Q클래스 제거
+clean {
+    delete querydslDir
 }
 
 configurations {

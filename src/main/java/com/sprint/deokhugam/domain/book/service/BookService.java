@@ -1,8 +1,8 @@
 package com.sprint.deokhugam.domain.book.service;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
+import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import java.time.Instant;
 
 public interface BookService {
     /*
@@ -15,5 +15,5 @@ public interface BookService {
      * @param limit 페이지 크기
      * @return 도서 목록 응답 */
 
-    CursorPageResponse<BookDto> getBooks(String keyword, String orderBy, String direction, String cursor, Instant after, Integer limit);
+    CursorPageResponse<BookDto> getBooks(BookSearchRequest request);
 }
