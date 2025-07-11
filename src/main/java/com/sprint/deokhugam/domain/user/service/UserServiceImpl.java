@@ -20,9 +20,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserCreateRequest userCreateRequest) {
+        if (userCreateRequest == null) {
+            throw new IllegalArgumentException("null 요청은 받을 수 없습니다.");
+        }
+
+        if (userCreateRequest.email() == null || userCreateRequest.email().isEmpty()) {
+            throw new IllegalArgumentException("이메일은 필수로 입력해주셔야 합니다.");
+        }
+
+        if (userCreateRequest.nickname() == null || userCreateRequest.nickname().isEmpty()) {
+            throw new IllegalArgumentException("닉네임은 필수로 입력해주셔야 합니다.");
+        }
+
+        if (userCreateRequest.password() == null || userCreateRequest.password().isEmpty()) {
+            throw new IllegalArgumentException("비밀번호는 필수로 입력해주셔야 합니다.");
+        }
+
         if (userRepository.existsByEmail(userCreateRequest.email())) {
             throw new RuntimeException("이미 존재하는 이메일입니다.");
         }
+
         User user = userMapper.toEntity(userCreateRequest);
         User saved = userRepository.save(user);
 

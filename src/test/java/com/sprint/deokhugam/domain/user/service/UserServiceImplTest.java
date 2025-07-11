@@ -67,5 +67,46 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.createUser(request))
                 .hasMessageContaining("이미 존재하는 이메일입니다.");
     }
+
+    @Test
+    void null_요청으로_회원가입_시도_시_예외가_발생한다() {
+        // given
+        UserCreateRequest request = null;
+
+        // when & then
+        assertThatThrownBy(() -> userService.createUser(request))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void 빈_이메일로_회원가입_시도_시_예외가_발생한다() {
+        // given
+        UserCreateRequest request = new UserCreateRequest("", "testUser", "test1234!");
+
+        // when & then
+        assertThatThrownBy(() -> userService.createUser(request))
+                .hasMessageContaining("이메일은 필수로 입력해주셔야 합니다.");
+    }
+
+    @Test
+    void 빈_닉네임으로_회원가입_시도_시_예외가_발생한다() {
+        // given
+        UserCreateRequest request = new UserCreateRequest("testuser@test.com", "", "test1234!");
+
+        // when & then
+        assertThatThrownBy(() -> userService.createUser(request))
+                .hasMessageContaining("닉네임은 필수로 입력해주셔야 합니다.");
+    }
+
+    @Test
+    void 빈_비밀번호로_회원가입_시도_시_예외가_발생한다() {
+        // given
+        UserCreateRequest request = new UserCreateRequest("testuser@test.com", "testUser", "");
+
+        // when & then
+        assertThatThrownBy(() -> userService.createUser(request))
+                .hasMessageContaining("비밀번호는 필수로 입력해주셔야 합니다.");
+    }
+
 }
 

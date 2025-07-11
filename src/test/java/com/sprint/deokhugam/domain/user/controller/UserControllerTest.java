@@ -67,7 +67,7 @@ class UserControllerTest {
                 "qwer!!!",
                 "1234!@#$",
                 "1",  //2자 이상 조건 위반
-                ""
+                "" //빈값
         );
 
         for (String pw : invalidPasswords) {
@@ -90,7 +90,7 @@ class UserControllerTest {
     void 닉네임_형식이_잘못되면_400_에러를_반환한다() throws Exception {
         List<String> invalidNickNames = List.of(
                 "1", //2자 이상 조건 위반
-                ""
+                "" //빈값
         );
 
         for (String nickname : invalidNickNames) {
