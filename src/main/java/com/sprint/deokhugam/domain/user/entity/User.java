@@ -3,10 +3,12 @@ package com.sprint.deokhugam.domain.user.entity;
 import com.sprint.deokhugam.global.base.BaseEntity;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Entity
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
