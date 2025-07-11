@@ -1,5 +1,9 @@
 package com.sprint.deokhugam.domain.review.repository;
 
-public class ReviewRepository {
+import com.sprint.deokhugam.domain.review.entity.Review;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
 }
