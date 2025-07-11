@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class GlobalExceptionHandler extends RuntimeException {
 
-  @ExceptionHandler(RuntimeException.class)
-  public ResponseEntity<?> handleRuntime(RuntimeException ex) {
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(Map.of("error", ex.getMessage()));
-  }
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<?> handleRuntime(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(Map.of("error", ex.getMessage()));
+    }
 
 //  @ExceptionHandler(CommonException.class)
 //  public ResponseEntity<ErrorResponse> handleCommonException(CommonException e) {
