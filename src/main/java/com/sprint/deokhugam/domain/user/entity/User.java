@@ -24,6 +24,9 @@ public class User extends BaseUpdatableEntity {
     @Column(length = 100, nullable = false)
     private String password;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
     @Builder
     public User(String email, String nickname, String password) {
         this.email = email;
