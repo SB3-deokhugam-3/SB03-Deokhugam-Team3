@@ -88,19 +88,19 @@ class UserControllerTest {
 
     @Test
     void 닉네임_형식이_잘못되면_400_에러를_반환한다() throws Exception {
-        List<String> invalidPasswords = List.of(
+        List<String> invalidNickNames = List.of(
                 "1", //2자 이상 조건 위반
                 ""
         );
 
-        for (String pw : invalidPasswords) {
+        for (String nickname : invalidNickNames) {
             String requestJson = String.format("""
                         {
                           "email": "test@example.com",
-                          "nickname": "tester",
-                          "password": "%s"
+                          "nickname": "%s",
+                          "password": "testPassword!"
                         }
-                    """, pw);
+                    """, nickname);
 
             mockMvc.perform(post("/api/users")
                             .contentType(MediaType.APPLICATION_JSON)
