@@ -3,14 +3,14 @@ package com.sprint.deokhugam.domain.review.dto.data;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
+@Builder
 public class ReviewDto {
 
     private UUID id;
@@ -21,8 +21,8 @@ public class ReviewDto {
     private String userNickname;
     private String content;
     private Double rating;
-    private Integer likeCount;
-    private Integer commentCount;
+    private Long likeCount;
+    private Long commentCount;
     private Boolean likedByMe;
     private Instant createdAt;
     private Instant updatedAt;
