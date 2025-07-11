@@ -13,12 +13,12 @@ public record UserCreateRequest(
         String email,
 
         @NotBlank
-        @Size(min = 2, max = 20)
+        @Size(min = 2, max = 50)
         String nickname,
 
         @NotBlank
         @Pattern(
-                regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,20}$",
+                regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,100}$",
                 message = "비밀번호는 영어, 숫자, 특수문자를 포함해야 합니다."
         )
         String password

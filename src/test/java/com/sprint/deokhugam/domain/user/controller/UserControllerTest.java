@@ -66,7 +66,6 @@ class UserControllerTest {
                 "qwer1234",
                 "qwer!!!",
                 "1234!@#$",
-                "qwer1234!qwer1234!qwer1234!", //20자 이하 조건 위반
                 "1",  //2자 이상 조건 위반
                 ""
         );
@@ -91,7 +90,6 @@ class UserControllerTest {
     void 닉네임_형식이_잘못되면_400_에러를_반환한다() throws Exception {
         List<String> invalidPasswords = List.of(
                 "1", //2자 이상 조건 위반
-                "안녕하세요 박찬호입니다. 제가 LA에 있었을 때....", //20자 이하 조건 위반
                 ""
         );
 
