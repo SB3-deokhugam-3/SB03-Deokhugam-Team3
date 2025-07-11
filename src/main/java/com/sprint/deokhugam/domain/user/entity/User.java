@@ -1,5 +1,7 @@
 package com.sprint.deokhugam.domain.user.entity;
 
+import com.sprint.deokhugam.global.base.BaseEntity;
+import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class User extends BaseUpdatableEntity {
 
     @Column(length = 20, nullable = false, unique = true)
     private String email;
