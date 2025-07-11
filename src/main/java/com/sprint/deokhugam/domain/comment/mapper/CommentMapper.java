@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.Mapping;
 @Mapper(componentModel = "spring")
 public interface CommentMapper {
 
-    @Mapping(target ="reviewId", source = "review.id")
-    @Mapping(target = "userId", source = "user.id")
+//    @Mapping(target ="reviewId", source = "review.id")
+//    @Mapping(target = "userId", source = "user.id")
     CommentDto toDto(Comment comment);
 
 }
