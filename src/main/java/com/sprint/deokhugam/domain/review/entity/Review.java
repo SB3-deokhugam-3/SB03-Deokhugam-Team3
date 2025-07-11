@@ -14,19 +14,19 @@ import lombok.NoArgsConstructor;
 public class Review extends BaseUpdatableEntity {
 
     @Column(name = "rating", nullable = false)
-    private double rating = 0.0;
+    private Double rating = 0.0;
 
     @Column(name = "content", nullable = false)
     private String content = "";
 
     @Column(name = "like_count")
-    private long likeCount = 0;
+    private Long likeCount = 0L;
 
     @Column(name = "comment_count")
-    private long commentCount = 0;
+    private Long commentCount = 0L;
 
     @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = false;
+    private Boolean isDeleted = false;
 
 //    @ManyToOne
 //    @JoinColumn(name = "book_id")
