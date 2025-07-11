@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.book.service;
 
+import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -8,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class BookServiceImpl implements BookService {
 
     @Override
-    public void create(BookCreateRequest bookData, MultipartFile thumbnailImage) {
-
+    public BookDto create(BookCreateRequest bookData, MultipartFile thumbnailImage) {
+        return null;
     }
 }

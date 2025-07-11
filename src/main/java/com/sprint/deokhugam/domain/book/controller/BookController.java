@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.book.controller;
 
+import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.service.BookService;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +21,11 @@ public class BookController {
     private final BookService bookService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> create(
+    public ResponseEntity<BookDto> create(
         @RequestPart("bookData") BookCreateRequest bookData,
         @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
     ) {
-        bookService.create(bookData, thumbnailImage);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        BookDto result = bookService.create(bookData, thumbnailImage);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 }
