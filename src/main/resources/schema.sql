@@ -5,8 +5,8 @@ CREATE TABLE users
     id         UUID PRIMARY KEY,
 
     -- Column
-    created_at TIMESTAMPTZ  NOT NULL,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMP  NOT NULL,
+    updated_at TIMESTAMP,
     email      VARCHAR(320) NOT NULL UNIQUE,
     nickname   VARCHAR(50)  NOT NULL,
     password   VARCHAR(100) NOT NULL,
@@ -19,8 +19,8 @@ CREATE TABLE books
     id             UUID PRIMARY KEY,
 
     -- Column
-    created_at     TIMESTAMPTZ      NOT NULL,
-    updated_at     TIMESTAMPTZ,
+    created_at     TIMESTAMP      NOT NULL,
+    updated_at     TIMESTAMP,
     title          VARCHAR(100)     NOT NULL,
     thumbnail_url  VARCHAR(512),
     author         VARCHAR(50)      NOT NULL,
@@ -39,8 +39,8 @@ CREATE TABLE reviews
     id            UUID PRIMARY KEY,
 
     -- Column
-    created_at    TIMESTAMPTZ      NOT NULL,
-    updated_at    TIMESTAMPTZ,
+    created_at    TIMESTAMP      NOT NULL,
+    updated_at    TIMESTAMP,
     book_id       UUID             NOT NULL,
     user_id       UUID             NOT NULL,
     rating        DOUBLE PRECISION NOT NULL CHECK (rating BETWEEN 0 AND 5),
@@ -68,8 +68,8 @@ CREATE TABLE comments
     id         UUID PRIMARY KEY,
 
     -- Column
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP,
     user_id    UUID        NOT NULL,
     review_id  UUID        NOT NULL,
     content    TEXT        NOT NULL,
@@ -92,8 +92,8 @@ CREATE TABLE notifications
     id         UUID PRIMARY KEY,
 
     -- Column
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP,
     review_id  UUID        NOT NULL,
     user_id    UUID        NOT NULL,
     content    VARCHAR(255),
@@ -116,7 +116,7 @@ CREATE TABLE review_likes
     id         UUID        NOT NULL PRIMARY KEY,
 
     -- COLUMN
-    created_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMP NOT NULL,
     review_id  UUID        NOT NULL,
     user_id    UUID        NOT NULL,
 
@@ -139,7 +139,7 @@ CREATE TABLE power_users
     id               UUID PRIMARY KEY,
 
     -- Column
-    created_at       TIMESTAMPTZ      NOT NULL,
+    created_at       TIMESTAMP      NOT NULL,
     user_id          UUID             NOT NULL,
     period           VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     score            DOUBLE PRECISION NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE popular_book_rankings
     id           UUID PRIMARY KEY,
 
     -- Column
-    created_at   TIMESTAMPTZ      NOT NULL,
+    created_at   TIMESTAMP      NOT NULL,
     book_id      UUID             NOT NULL,
     period       VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     rank         BIGINT           NOT NULL,
@@ -180,7 +180,7 @@ CREATE TABLE popular_review_rankings
     id            UUID PRIMARY KEY,
 
     -- Column
-    created_at    TIMESTAMPTZ      NOT NULL,
+    created_at    TIMESTAMP      NOT NULL,
     review_id     UUID             NOT NULL,
     period        VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     rank          BIGINT           NOT NULL,
