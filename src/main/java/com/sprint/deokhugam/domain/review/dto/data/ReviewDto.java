@@ -7,24 +7,21 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class ReviewDto {
+public record ReviewDto (
+    UUID id,
+    UUID bookId,
+    String bookTitle,
+    String bookThumbnailUrl,
+    UUID userId,
+    String userNickname,
+    String content,
+    Double rating,
+    Long likeCount,
+    Long commentCount,
+    Boolean likedByMe,
+    Instant createdAt,
+    Instant updatedAt
 
-    private UUID id;
-    private UUID bookId;
-    private String bookTitle;
-    private String bookThumbnailUrl;
-    private UUID userId;
-    private String userNickname;
-    private String content;
-    private Double rating;
-    private Long likeCount;
-    private Long commentCount;
-    private Boolean likedByMe;
-    private Instant createdAt;
-    private Instant updatedAt;
-
+) {
 }
