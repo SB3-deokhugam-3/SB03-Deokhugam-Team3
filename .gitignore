@@ -49,7 +49,7 @@ bin/
 /.env.*
 *.env
 
-# log
+## log
 logs/
 *.log
 **/logs/
