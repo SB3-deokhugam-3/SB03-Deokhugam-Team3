@@ -68,4 +68,8 @@ public class Book extends BaseUpdatableEntity  {
     public void updatePublishedDate(LocalDate publishedDate) {
         this.publishedDate = publishedDate;
     }
+
+    public void updateThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
 }

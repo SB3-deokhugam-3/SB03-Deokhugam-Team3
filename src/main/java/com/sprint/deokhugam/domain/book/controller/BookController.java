@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.book.controller;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.service.BookService;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,7 +25,7 @@ public class BookController {
     public ResponseEntity<BookDto> create(
         @RequestPart("bookData") BookCreateRequest bookData,
         @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
-    ) {
+    ) throws IOException {
         BookDto result = bookService.create(bookData, thumbnailImage);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
