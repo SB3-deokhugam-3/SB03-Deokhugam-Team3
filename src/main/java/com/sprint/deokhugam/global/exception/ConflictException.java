@@ -1,17 +1,16 @@
 package com.sprint.deokhugam.global.exception;
 
+import java.util.Map;
+
 /**
  * 409 Conflict 예외의 상위 클래스
  */
-abstract class ConflictException extends DeokhugamException {
-
-    // 기본: _ALREADY_EXISTS
-    protected ConflictException(String domain, String message) {
-        super(domain + "_ALREADY_EXISTS", message);
+public class ConflictException extends DeokhugamException {
+    public ConflictException(String domain, Map<String, Object> details) {
+        super(domain, ErrorCode.DUPLICATE_RESOURCE, details);
     }
 
-    // 커스텀 에러 코드도 허용
-    protected ConflictException(String domain, String action, String message) {
-        super(action + "_" + domain, message);
+    public ConflictException(Map<String, Object> details) {
+        super(ErrorCode.DUPLICATE_RESOURCE, details);
     }
 }

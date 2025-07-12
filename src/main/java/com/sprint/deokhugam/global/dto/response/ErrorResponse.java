@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.global.dto.response;
 
+import com.sprint.deokhugam.global.exception.DeokhugamException;
 import java.time.Instant;
 import java.util.Map;
 
@@ -12,28 +13,14 @@ public record ErrorResponse(
     int status
 ) {
 
-    // 기본 생성 메서드
-    public static ErrorResponse of(String code, String message, int status) {
+    public static ErrorResponse of(DeokhugamException ex) {
         return new ErrorResponse(
-            Instant.now(),
-            code,
-            message,
-            Map.of(),
-            "Exception",
-            status
-        );
-    }
-
-    // details가 있는 생성 메서드
-    public static ErrorResponse of(String code, String message, Map<String, Object> details,
-        int status) {
-        return new ErrorResponse(
-            Instant.now(),
-            code,
-            message,
-            details != null ? details : Map.of(),
-            "Exception",
-            status
+            ex.getTimestamp(),
+            ex.getErrorCodeString(),  // 문자열 에러 코드
+            ex.getErrorMessage(),
+            ex.getDetails(),
+            ex.getClass().getSimpleName(),
+            ex.getErrorCode().getStatus()
         );
     }
 }

@@ -1,12 +1,16 @@
 package com.sprint.deokhugam.global.exception;
 
+import java.util.Map;
+
 /**
  * 403 Forbidden 예외의 상위 클래스
  */
-abstract class ForbiddenException extends DeokhugamException {
-
-    protected ForbiddenException(String errorCode, String message) {
-        super(errorCode, message);
+public class ForbiddenException extends DeokhugamException {
+    public ForbiddenException(String domain, Map<String, Object> details) {
+        super(domain, ErrorCode.FORBIDDEN_ACTION, details);
     }
 
+    public ForbiddenException(Map<String, Object> details) {
+        super(ErrorCode.FORBIDDEN_ACTION, details);
+    }
 }

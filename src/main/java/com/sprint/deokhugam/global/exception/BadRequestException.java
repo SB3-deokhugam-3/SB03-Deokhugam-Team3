@@ -1,17 +1,16 @@
 package com.sprint.deokhugam.global.exception;
 
+import java.util.Map;
+
 /**
  * 400 Bad Request 예외의 상위 클래스
  */
-abstract class BadRequestException extends DeokhugamException {
-
-    // 기본: INVALID_ 접두사
-    protected BadRequestException(String domain, String message) {
-        super("INVALID_" + domain, message);
+public class BadRequestException extends DeokhugamException {
+    public BadRequestException(String domain, Map<String, Object> details) {
+        super(domain, ErrorCode.INVALID_INPUT_VALUE, details);
     }
 
-    // 커스텀 에러 코드도 허용
-    protected BadRequestException(String errorCode, String action, String message) {
-        super(errorCode, message);  // 예: "DUPLICATE_REVIEW"
+    public BadRequestException(Map<String, Object> details) {
+        super(ErrorCode.INVALID_INPUT_VALUE, details);
     }
 }
