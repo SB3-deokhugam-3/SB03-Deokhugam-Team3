@@ -33,20 +33,20 @@ public class ReviewServiceImpl implements ReviewService {
         Book book = bookRepository.findById(bookId)
             .orElseThrow(() -> {
                 log.warn("[review] 생성 실패 - 존재하지 않는 bookId={}", bookId);
-                return new RuntimeException();
+                return new IllegalArgumentException();
 //                return new BookNotFoundException(bookId);
             });
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> {
                 log.warn("[review] 생성 실패 - 존재하지 않는 userId={}", userId);
-                return new RuntimeException();
+                return new IllegalArgumentException();
 //                return new UserNotFoundException(userId);
             });
 
         if (reviewRepository.existsByBookIdAndUserId(bookId, userId)) {
             log.warn("[review] 생성 실패 - 해당 review가 이미 존재함: bookId={}, userId={}", bookId, userId);
-            throw new RuntimeException();
+            throw new IllegalArgumentException();
             // throw new DuplicationReviewException(bookId, userId);
         }
 
