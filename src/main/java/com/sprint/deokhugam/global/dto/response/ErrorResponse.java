@@ -6,17 +6,17 @@ import java.util.Map;
 
 public record ErrorResponse(
     Instant timestamp,
-    String code,                    // 추가: 에러 코드
+    String code,
     String message,
-    Map<String, Object> details,    // 변경: String → Map
-    String exceptionType,           // 추가: 예외 타입
+    Map<String, Object> details,
+    String exceptionType,
     int status
 ) {
 
     public static ErrorResponse of(DeokhugamException ex) {
         return new ErrorResponse(
             ex.getTimestamp(),
-            ex.getErrorCodeString(),  // 문자열 에러 코드
+            ex.getErrorCodeString(),
             ex.getErrorMessage(),
             ex.getDetails(),
             ex.getClass().getSimpleName(),
