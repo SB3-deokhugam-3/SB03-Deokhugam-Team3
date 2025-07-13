@@ -5,19 +5,20 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "reviews")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Where(clause = "is_deleted = false")
+@SQLRestriction("is_deleted <> false")
 public class Review extends BaseUpdatableEntity {
 
     @Column(name = "rating", nullable = false)
@@ -35,12 +36,12 @@ public class Review extends BaseUpdatableEntity {
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
-    @ManyToOne
-    @JoinColumn(name = "book_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public Review(Double rating, String content, Book book, User user) {
@@ -59,14 +60,20 @@ public class Review extends BaseUpdatableEntity {
         }
     }
 
-    public void increaseLikeCount() { this.likeCount++; }
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
     public void decreaseLikeCount() {
         if (this.likeCount > 0) {
             this.likeCount--;
         }
     }
 
-    public void increaseCommentCount() { this.commentCount++; }
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+
     public void decreaseCommentCount() {
         if (this.commentCount > 0) {
             this.commentCount--;

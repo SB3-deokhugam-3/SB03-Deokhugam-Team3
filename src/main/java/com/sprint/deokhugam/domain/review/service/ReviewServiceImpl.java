@@ -5,6 +5,7 @@ import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -24,6 +26,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final BookRepository bookRepository;
     private final ReviewMapper reviewMapper;
 
+    @Transactional
     @Override
     public ReviewDto create(ReviewCreateRequest request) {
         UUID bookId = request.bookId();
@@ -46,8 +49,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         if (reviewRepository.existsByBookIdAndUserId(bookId, userId)) {
             log.warn("[review] 생성 실패 - 해당 review가 이미 존재함: bookId={}, userId={}", bookId, userId);
-            throw new IllegalArgumentException();
-            // throw new DuplicationReviewException(bookId, userId);
+            throw new DuplicationReviewException(bookId, userId);
         }
 
         String content = request.content();
@@ -55,7 +57,8 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);
-        log.info("[review] 생성 완료 : reviewId={}, bookId={}, userId={}, rating={}, content={}", savedReview.getId(), bookId, userId, rating, content);
+        log.info("[review] 생성 완료 : reviewId={}, bookId={}, userId={}, rating={}, content={}",
+            savedReview.getId(), bookId, userId, rating, content);
 
         return reviewMapper.toDto(savedReview);
     }

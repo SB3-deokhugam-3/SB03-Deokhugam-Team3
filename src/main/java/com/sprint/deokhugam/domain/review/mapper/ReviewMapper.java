@@ -13,6 +13,7 @@ public interface ReviewMapper {
     @Mapping(target = "bookTitle", source = "book.title")
     @Mapping(target = "bookThumbnailUrl", source = "book.thumbnailUrl")
     @Mapping(target = "userNickname", source = "user.nickname")
+    @Mapping(target = "likedByMe", ignore = true)
     ReviewDto toDto(Review review);
 
 }

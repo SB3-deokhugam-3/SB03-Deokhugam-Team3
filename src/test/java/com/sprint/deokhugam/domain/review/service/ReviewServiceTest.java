@@ -12,6 +12,7 @@ import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
@@ -99,7 +100,7 @@ public class ReviewServiceTest {
         given(bookRepository.findById(bookId)).willReturn(Optional.empty());
 
         // when
-        Throwable thrown = catchThrowable(() ->  reviewService.create(request));
+        Throwable thrown = catchThrowable(() -> reviewService.create(request));
 
         // then
         assertThat(thrown)
@@ -121,7 +122,7 @@ public class ReviewServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.empty());
 
         // when
-        Throwable thrown = catchThrowable(() ->  reviewService.create(request));
+        Throwable thrown = catchThrowable(() -> reviewService.create(request));
 
         // then
         assertThat(thrown)
@@ -145,11 +146,11 @@ public class ReviewServiceTest {
         given(reviewRepository.existsByBookIdAndUserId(bookId, userId)).willReturn(true);
 
         // when
-        Throwable thrown = catchThrowable(() ->  reviewService.create(request));
+        Throwable thrown = catchThrowable(() -> reviewService.create(request));
 
         // then
         assertThat(thrown)
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(DuplicationReviewException.class);
         then(bookRepository).should().findById(bookId);
         then(userRepository).should().findById(userId);
         then(reviewRepository).should().existsByBookIdAndUserId(bookId, userId);
