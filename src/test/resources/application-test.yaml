@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password: password
@@ -14,3 +14,14 @@ spring:
   h2:
     console:
       enabled: true
+
+# S3 - 테스트용 더미
+deokhugam:
+  storage:
+    type: s3
+    s3:
+      access-key: dummy-access-key
+      secret-key: dummy-secret-key
+      region: dummy-region
+      bucket: dummy-bucket
+      presigned-url-expiration: 600

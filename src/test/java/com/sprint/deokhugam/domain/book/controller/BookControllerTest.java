@@ -111,4 +111,117 @@ class BookControllerTest {
                 req.isbn().equals(isbn)
         ), any());
     }
+
+    @Test
+    void 출간일을_현재_날짜_보다_이후로_설정하면_400_에러를_반환한다() throws Exception {
+
+        // given
+        BookCreateRequest request = BookCreateRequest.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.of(2099, 7, 12))
+            .isbn("1234567890123")
+            .build();
+
+        MockMultipartFile bookData = new MockMultipartFile(
+            "bookData",
+            "",
+            "application/json",
+            objectMapper.writeValueAsBytes(request));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books")
+            .file(bookData)
+            .contentType(MediaType.MULTIPART_FORM_DATA));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 필수_항목이_빈_값이면_400_에러를_반환한다() throws Exception {
+        // given
+        // 제목을 입력하지 않은 경우
+        BookCreateRequest request = BookCreateRequest.builder()
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123123")
+            .build();
+
+        MockMultipartFile bookData = new MockMultipartFile(
+            "bookData",
+            "",
+            "application/json",
+            objectMapper.writeValueAsBytes(request));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books")
+            .file(bookData)
+            .contentType(MediaType.MULTIPART_FORM_DATA));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 제목의_길이가_100자_이상이면_400_에러를_반환한다() throws Exception {
+
+        // given
+        String longTitle = "a".repeat(101);
+
+        BookCreateRequest request = BookCreateRequest.builder()
+            .title(longTitle)
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123")
+            .build();
+
+        MockMultipartFile bookData = new MockMultipartFile(
+            "bookData",
+            "",
+            "application/json",
+            objectMapper.writeValueAsBytes(request));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books")
+            .file(bookData)
+            .contentType(MediaType.MULTIPART_FORM_DATA));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void isbn_길이가_13자_이상이면_400_에러를_반환한다() throws Exception {
+
+        // given
+        BookCreateRequest request = BookCreateRequest.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123123")
+            .build();
+
+        MockMultipartFile bookData = new MockMultipartFile(
+            "bookData",
+            "",
+            "application/json",
+            objectMapper.writeValueAsBytes(request));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books")
+            .file(bookData)
+            .contentType(MediaType.MULTIPART_FORM_DATA));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
 }

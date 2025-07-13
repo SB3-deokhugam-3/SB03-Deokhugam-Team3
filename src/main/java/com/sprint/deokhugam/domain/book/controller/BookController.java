@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.book.controller;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.service.BookService;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class BookController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BookDto> create(
-        @RequestPart("bookData") BookCreateRequest bookData,
+        @Valid @RequestPart("bookData") BookCreateRequest bookData,
         @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
     ) throws IOException {
         BookDto result = bookService.create(bookData, thumbnailImage);
