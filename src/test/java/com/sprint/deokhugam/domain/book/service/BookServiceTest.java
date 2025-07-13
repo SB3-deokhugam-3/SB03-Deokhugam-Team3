@@ -67,7 +67,7 @@ public class BookServiceTest {
         assertThat(response.totalElements()).isEqualTo(15L);
         assertThat(response.hasNext()).isFalse();
         assertThat(response.nextCursor()).isNull();
-        assertThat(response.nextIdAfter()).isNull();
+        assertThat(response.nextAfter()).isNull();
         verify(bookRepository).findBooksWithKeyword(any(BookSearchRequest.class));
         verify(bookRepository).countBooksWithKeyword(any());
     }
@@ -118,7 +118,7 @@ public class BookServiceTest {
         assertThat(response.totalElements()).isEqualTo(5L);
         assertThat(response.hasNext()).isTrue();
         assertThat(response.nextCursor()).isNotNull();
-        assertThat(response.nextIdAfter()).isNotNull();
+        assertThat(response.nextAfter()).isNotNull();
         verify(bookRepository).findBooksWithKeywordAndCursor(any(BookSearchRequest.class));
     }
 

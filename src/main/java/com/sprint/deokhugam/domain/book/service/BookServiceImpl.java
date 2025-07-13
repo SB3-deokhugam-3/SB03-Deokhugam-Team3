@@ -6,13 +6,9 @@ import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,18 +58,18 @@ public class BookServiceImpl implements BookService {
 
         // Next 커서 생성
         String nextCursor = null;
-        Long nextIdAfter = null;
+        String nextAfter = null;
 
         if (hasNext && !books.isEmpty()) {
             Book lastBook = books.get(books.size() - 1);
             nextCursor = getCursorValue(lastBook, validatedRequest.orderBy());
-            nextIdAfter = lastBook.getCreatedAt().toEpochMilli();
+            nextAfter = lastBook.getCreatedAt().toString();
         }
 
         CursorPageResponse<BookDto> response = new CursorPageResponse<>(
             books.stream().map(bookMapper::toBookDto).toList(),
             nextCursor,
-            nextIdAfter,
+            nextAfter,
             books.size(),
             totalElements,
             hasNext
