@@ -34,7 +34,7 @@ public class BookServiceImpl implements BookService {
 
         Book book = bookMapper.toEntity(bookData);
 
-        if (thumbnailImage != null) {
+        if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
             // Book Entity를 저장할 때는 S3의 실제 경로 저장
             String thumbnailImageUrl = s3Storage.uploadImage(thumbnailImage);
             book.updateThumbnailUrl(thumbnailImageUrl);
