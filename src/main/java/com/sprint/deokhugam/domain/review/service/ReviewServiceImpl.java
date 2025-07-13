@@ -4,12 +4,16 @@ import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +29,67 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
     private final ReviewMapper reviewMapper;
+
+    @Override
+    public CursorPageResponse<ReviewDto> findAll(ReviewRequest params, UUID requestUserId) {
+        // 마지막 요소를 한개 더 가져온 후 다음 페이지 있는지 확인
+        ReviewRequest paramsWithExtraLimit = params.toBuilder().limit(params.getLimit() + 1)
+            .build();
+        List<Review> reviewsWithNextCheck = reviewRepository.findAll(paramsWithExtraLimit);
+
+        // 데이터 없으면 바로 return
+        if (reviewsWithNextCheck.isEmpty()) {
+            return new CursorPageResponse<>(new ArrayList<>(),
+                null, null, params.getLimit(),
+                0L, false);
+        }
+
+        List<Review> reviews = reviewsWithNextCheck;
+        log.info("reviews = {}", reviews);
+
+        // hasNext 값 구하기 + limit값만큼만 데이터 전달
+        log.warn("params.getLimit() = {}", params.getLimit());
+        boolean hasNext = false;
+        if (reviewsWithNextCheck.size() > params.getLimit()) {
+            reviews = reviewsWithNextCheck.subList(0, params.getLimit());
+            hasNext = true;
+        }
+
+        Review lastReview = reviewsWithNextCheck.get(reviewsWithNextCheck.size() - 1);
+        String nextCursor = calculateNextCursor(lastReview, params.getOrderBy());
+        String nextAfter = lastReview.getCreatedAt().toString();
+        Long totalElements = reviewRepository.countAllByFilterCondition(params);
+
+        List<ReviewDto> reviewDtoList = updateLikedByMe(reviews, requestUserId);
+
+        return new CursorPageResponse<>(reviewDtoList,
+            nextCursor, nextAfter, params.getLimit(),
+            totalElements, hasNext);
+
+    }
+
+    //(createdAt | rating 어떤값을 기준으로 order하는지에 따라 cursor 타입 달라짐)
+    private String calculateNextCursor(Review lastReview, String orderBy) {
+        return switch (orderBy) {
+            case "createdAt" -> lastReview.getCreatedAt().toString();
+            case "rating" -> lastReview.getRating().toString();
+            // TODO : error 타입 생성해서 넣기
+            default -> throw new IllegalArgumentException("지원하지않는 정렬타입입니다. ");
+        };
+    }
+
+    // ReviewDto에 likeByMe값 동적 추가
+    private List<ReviewDto> updateLikedByMe(List<Review> reviews, UUID requestUserId) {
+        // TODO : likedByMe는 나중에 mapper 에서 처리하는게 좋을듯 -> 서비스 관련 로직이라 서비스에 냅둘것
+        boolean likedByMe = false;
+
+        return reviews.stream().map((review -> {
+            ReviewDto reviewDto = reviewMapper.toDto(review);
+            //TODO: review-like 테이블 생성 후 query 로 가져올것
+            return reviewDto.toBuilder().likedByMe(likedByMe).build();
+        })).toList();
+    }
+
 
     @Transactional
     @Override
