@@ -67,7 +67,7 @@ public class BookServiceImpl implements BookService {
         }
 
         CursorPageResponse<BookDto> response = new CursorPageResponse<>(
-            books.stream().map(bookMapper::toBookDto).toList(),
+            books.stream().map(bookMapper::toDto).toList(),
             nextCursor,
             nextAfter,
             books.size(),

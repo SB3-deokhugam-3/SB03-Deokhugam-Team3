@@ -56,7 +56,7 @@ public class BookServiceTest {
             .willReturn(testBooks.subList(0, 3));
         given(bookRepository.countBooksWithKeyword(any()))
             .willReturn(15L);
-        given(bookMapper.toBookDto(any(Book.class)))
+        given(bookMapper.toDto(any(Book.class)))
             .willReturn(testBookDtos.get(0), testBookDtos.get(1), testBookDtos.get(2));
 
         //when
@@ -82,7 +82,7 @@ public class BookServiceTest {
             .willReturn(searchResults);
         given(bookRepository.countBooksWithKeyword("Hot"))
             .willReturn(3L);
-        given(bookMapper.toBookDto(any(Book.class)))
+        given(bookMapper.toDto(any(Book.class)))
             .willReturn(testBookDtos.get(0), testBookDtos.get(1), testBookDtos.get(2));
 
         // when
@@ -107,7 +107,7 @@ public class BookServiceTest {
             .willReturn(searchResults);
         given(bookRepository.countBooksWithKeyword("Super"))
             .willReturn(5L);
-        given(bookMapper.toBookDto(any(Book.class)))
+        given(bookMapper.toDto(any(Book.class)))
             .willReturn(testBookDtos.get(0), testBookDtos.get(1));
 
         // when
@@ -131,7 +131,7 @@ public class BookServiceTest {
             .willReturn(testBooks);
         given(bookRepository.countBooksWithKeyword(any()))
             .willReturn(3L);
-        given(bookMapper.toBookDto(any(Book.class)))
+        given(bookMapper.toDto(any(Book.class)))
             .willReturn(testBookDtos.get(0), testBookDtos.get(1), testBookDtos.get(2));
 
         // when

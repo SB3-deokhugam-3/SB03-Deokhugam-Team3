@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.service.BookService;
@@ -34,9 +33,6 @@ public class BookControllerTest {
 
     @MockBean
     private BookService bookService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private CursorPageResponse<BookDto> mockResponse;
     private List<BookDto> mockBooks;

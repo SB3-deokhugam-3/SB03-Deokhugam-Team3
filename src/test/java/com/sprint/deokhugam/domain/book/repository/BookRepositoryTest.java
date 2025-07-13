@@ -435,7 +435,7 @@ public class BookRepositoryTest {
         assertThat(result).isEmpty(); // 삭제된 도서는 조회되지 않음
     }
 
-    // === 총 개수 조회 테스트 ===
+    /* 총 개수 조회 테스트 */
     @Test
     @DisplayName("총 개수 조회 - 키워드 있음")
     void 총_개수_조회_키워드_있음() {
@@ -496,6 +496,4 @@ public class BookRepositoryTest {
         // then: 발생한 예외 메시지가 올바른지 확인
         assertThat(exception.getMessage()).isEqualTo("페이지 크기는 1 이상 100 이하여야 합니다.");
     }
-
-
 }

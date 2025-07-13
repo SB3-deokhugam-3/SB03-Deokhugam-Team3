@@ -3,6 +3,17 @@ spring:
     name: SB03-Deokhugam-Team3
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# OCR 구현체 설정
+ocr:
+  vision:
+    enabled: true # Google Cloud Vision API 사용 여부
+  tesseract:
+    enabled: true # Tesseract
 
 # Spring Actuator
 management:
