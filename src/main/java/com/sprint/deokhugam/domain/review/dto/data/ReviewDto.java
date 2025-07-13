@@ -2,13 +2,10 @@ package com.sprint.deokhugam.domain.review.dto.data;
 
 import java.time.Instant;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Builder
-public record ReviewDto (
+public record ReviewDto(
     UUID id,
     UUID bookId,
     String bookTitle,
@@ -24,4 +21,5 @@ public record ReviewDto (
     Instant updatedAt
 
 ) {
+
 }
