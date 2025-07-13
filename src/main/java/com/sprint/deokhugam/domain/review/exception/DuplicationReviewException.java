@@ -7,6 +7,6 @@ import java.util.UUID;
 public class DuplicationReviewException extends ConflictException {
 
     public DuplicationReviewException(UUID bookId, UUID userId) {
-        super("Review", Map.of("bookId, userId", bookId, "userId", userId));
+        super("Review", Map.of("bookId", bookId, "userId", userId));
     }
 }
