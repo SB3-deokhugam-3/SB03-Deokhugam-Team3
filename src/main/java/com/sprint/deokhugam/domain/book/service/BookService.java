@@ -1,5 +1,9 @@
 package com.sprint.deokhugam.domain.book.service;
 
-public interface BookService {
+import com.sprint.deokhugam.domain.book.dto.data.BookDto;
+import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 
+public interface BookService {
+    CursorPageResponse<BookDto> getBooks(BookSearchRequest request);
 }
