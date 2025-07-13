@@ -1,4 +1,4 @@
-package com.sprint.deokhugam.domain.user.storage.s3;
+package com.sprint.deokhugam.domain.book.storage.s3;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;

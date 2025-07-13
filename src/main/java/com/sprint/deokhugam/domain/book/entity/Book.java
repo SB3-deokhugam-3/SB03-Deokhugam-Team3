@@ -16,7 +16,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@SQLRestriction("is_deleted <> false")
+@SQLRestriction("is_deleted = false")
 @Entity
 @Table(name = "books")
 public class Book extends BaseUpdatableEntity  {
@@ -33,13 +33,13 @@ public class Book extends BaseUpdatableEntity  {
     @Column(nullable = false)
     private String publisher;
 
-    @Column(nullable = false)
+    @Column(name = "published_date", nullable = false)
     private LocalDate publishedDate;
 
     @Column
     private String isbn;
 
-    @Column
+    @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
     @Column(nullable = false)
@@ -48,7 +48,7 @@ public class Book extends BaseUpdatableEntity  {
     @Column(nullable = false)
     private Double rating = 0.0;
 
-    @Column(nullable = false)
+    @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
     public void updateTitle(String title) {

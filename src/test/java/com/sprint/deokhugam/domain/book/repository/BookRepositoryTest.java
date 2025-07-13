@@ -126,7 +126,7 @@ class BookRepositoryTest {
         List<Book> result = bookRepository.findAll();
 
         // then
-        assertThat(result).hasSize(4);
+        assertThat(result).hasSize(3);
     }
 
 

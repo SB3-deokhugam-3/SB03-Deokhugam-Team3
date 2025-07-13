@@ -1,5 +1,7 @@
-package com.sprint.deokhugam.domain.user.storage.s3;
+package com.sprint.deokhugam.domain.book.storage.s3;
 
+import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
+import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
@@ -36,6 +38,18 @@ public class S3Storage {
      * S3에 이미지 업로드
      */
     public String uploadImage(MultipartFile image) throws IOException {
+
+        // 파일 타입 검증
+        String contentType = image.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new InvalidFileTypeException(contentType);
+        }
+
+        // 파일 크기 검증 (예: 5MB 제한)
+        if (image.getSize() > 5 * 1024 * 1024) {
+            throw new FileSizeExceededException(image.getSize(), 5 * 1024 * 1024);
+        }
+
         // UUID 앞에서 12글자만 추출
         String shortUUID = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String key = "image/" + shortUUID + "_" + image.getOriginalFilename();
@@ -50,7 +64,7 @@ public class S3Storage {
 
         return key;
     }
-    
+
     public String generatePresignedUrl(String key) {
         // Presigned Url 생성
         GetObjectRequest getRequest = GetObjectRequest.builder()
