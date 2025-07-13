@@ -2,12 +2,10 @@ package com.sprint.deokhugam.domain.book.service;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
-import java.io.IOException;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import java.io.IOException;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface BookService {
 

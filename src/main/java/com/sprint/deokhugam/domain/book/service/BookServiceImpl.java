@@ -49,27 +49,9 @@ public class BookServiceImpl implements BookService {
 
         log.info("책 등록 완료: id={}, title={}", savedBook.getId(), savedBook.getTitle());
 
-        if (savedBook.getThumbnailUrl() != null) {
-            String presignedUrl = s3Storage.generatePresignedUrl(savedBook.getThumbnailUrl());
-
-            return BookDto.builder()
-                .id(savedBook.getId())
-                .createdAt(savedBook.getCreatedAt())
-                .updatedAt(savedBook.getUpdatedAt())
-                .title(savedBook.getTitle())
-                .author(savedBook.getAuthor())
-                .description(savedBook.getDescription())
-                .publisher(savedBook.getPublisher())
-                .publishedDate(savedBook.getPublishedDate())
-                .isbn(savedBook.getIsbn())
-                .thumbnailUrl(presignedUrl)
-                .rating(savedBook.getRating())
-                .reviewCount(savedBook.getReviewCount())
-                .build();
-        }
-
-        return bookMapper.toDto(savedBook);
+        return bookMapper.toDto(savedBook, s3Storage);
     }
+
     @Override
     public CursorPageResponse<BookDto> getBooks(BookSearchRequest request) {
         log.info("도서 목록 조회 시작 - request: {}", request);
@@ -116,7 +98,7 @@ public class BookServiceImpl implements BookService {
         }
 
         CursorPageResponse<BookDto> response = new CursorPageResponse<>(
-            books.stream().map(bookMapper::toBookDto).toList(),
+            books.stream().map(book -> bookMapper.toDto(book, s3Storage)).toList(),
             nextCursor,
             nextAfter,
             books.size(),
