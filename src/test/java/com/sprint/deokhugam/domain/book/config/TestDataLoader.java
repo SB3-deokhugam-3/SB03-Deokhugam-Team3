@@ -3,12 +3,11 @@ package com.sprint.deokhugam.domain.book.config;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import jakarta.annotation.PostConstruct;
-import org.springframework.context.annotation.Configuration;
-
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.boot.test.context.TestConfiguration;
 
-@Configuration
+@TestConfiguration
 public class TestDataLoader {
 
     private final BookRepository bookRepository;

@@ -54,7 +54,7 @@ public class BookController {
             cursor,
             after != null ? Instant.ofEpochMilli(after) : null,
             limit
-        );
+        ).validate();
 
         CursorPageResponse<BookDto> response = bookService.getBooks(request);
 

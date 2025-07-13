@@ -101,76 +101,42 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
         boolean isAsc = "ASC".equals(direction);
 
         return switch (orderBy) {
-            case "title" -> createStringCursorCondition(book.title, cursorValue, book.createdAt, after, isAsc);
-            case "publishedDate" -> createLocalDateCursorCondition(book.publishedDate, LocalDate.parse(cursorValue), book.createdAt, after, isAsc);
-            case "rating" -> createDoubleCursorCondition(book.rating, Double.parseDouble(cursorValue), book.createdAt, after, isAsc);
-            case "reviewCount" -> createLongCursorCondition(book.reviewCount, Long.parseLong(cursorValue), book.createdAt, after, isAsc);
+            case "title" -> createCursorCondition(book.title, cursorValue, book.createdAt, after, isAsc);
+            case "publishedDate" -> createCursorCondition(book.publishedDate, LocalDate.parse(cursorValue), book.createdAt, after, isAsc);
+            case "rating" -> createNumberCursorCondition(book.rating, Double.parseDouble(cursorValue), book.createdAt, after, isAsc);
+            case "reviewCount" -> createNumberCursorCondition(book.reviewCount, Long.parseLong(cursorValue), book.createdAt, after, isAsc);
             default -> book.createdAt.lt(after);
         };
     }
 
     /**
-     * String 타입 커서 조건 생성
+     * Comparable 타입 커서 조건 생성 (String, LocalDate 등)
      */
-    private BooleanExpression createStringCursorCondition(
-        ComparableExpression<String> orderField, String cursorValue,
-        ComparableExpression<Instant> timeField, Instant after, boolean isAsc) {
-
-        if (isAsc) {
-            return orderField.gt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.gt(after)));
-        } else {
-            return orderField.lt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.lt(after)));
-        }
+    private <T extends Comparable<? super T>> BooleanExpression createCursorCondition(
+        ComparableExpression<T> orderField,
+        T cursorValue,
+        ComparableExpression<Instant> timeField,
+        Instant after,
+        boolean isAsc
+    ) {
+        BooleanExpression primary = isAsc ? orderField.gt(cursorValue) : orderField.lt(cursorValue);
+        BooleanExpression secondary = isAsc ? timeField.gt(after) : timeField.lt(after);
+        return primary.or(orderField.eq(cursorValue).and(secondary));
     }
 
     /**
-     * LocalDate 타입 커서 조건 생성
+     * Number 타입 커서 조건 생성 (Double, Long 등)
      */
-    private BooleanExpression createLocalDateCursorCondition(
-        ComparableExpression<LocalDate> orderField, LocalDate cursorValue,
-        ComparableExpression<Instant> timeField, Instant after, boolean isAsc) {
-
-        if (isAsc) {
-            return orderField.gt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.gt(after)));
-        } else {
-            return orderField.lt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.lt(after)));
-        }
-    }
-
-    /**
-     * Double 타입 커서 조건 생성
-     */
-    private BooleanExpression createDoubleCursorCondition(
-        NumberExpression<Double> orderField, Double cursorValue,
-        ComparableExpression<Instant> timeField, Instant after, boolean isAsc) {
-
-        if (isAsc) {
-            return orderField.gt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.gt(after)));
-        } else {
-            return orderField.lt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.lt(after)));
-        }
-    }
-
-    /**
-     * Long 타입 커서 조건 생성
-     */
-    private BooleanExpression createLongCursorCondition(
-        NumberExpression<Long> orderField, Long cursorValue,
-        ComparableExpression<Instant> timeField, Instant after, boolean isAsc) {
-
-        if (isAsc) {
-            return orderField.gt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.gt(after)));
-        } else {
-            return orderField.lt(cursorValue)
-                .or(orderField.eq(cursorValue).and(timeField.lt(after)));
-        }
+    private <T extends Number & Comparable<? super T>> BooleanExpression createNumberCursorCondition(
+        NumberExpression<T> orderField,
+        T cursorValue,
+        ComparableExpression<Instant> timeField,
+        Instant after,
+        boolean isAsc
+    ) {
+        BooleanExpression primary = isAsc ? orderField.gt(cursorValue) : orderField.lt(cursorValue);
+        BooleanExpression secondary = isAsc ? timeField.gt(after) : timeField.lt(after);
+        return primary.or(orderField.eq(cursorValue).and(secondary));
     }
 
     /**

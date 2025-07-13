@@ -29,12 +29,15 @@ public record BookSearchRequest(String keyword,
         return this;
     }
 
+    private static final List<String> VALID_ORDER_BY = List.of("title", "publishedDate", "rating", "reviewCount");
+    private static final List<String> VALID_DIRECTIONS = List.of("ASC", "DESC");
+
     private void validateSortParameters() {
-        if (!List.of("title", "publishedDate", "rating", "reviewCount").contains(orderBy())) {
+        if (!VALID_ORDER_BY.contains(orderBy())) {
             throw new IllegalArgumentException("정렬 기준은 title, publishedDate, rating, reviewCount 중 하나여야 합니다.");
         }
 
-        if (!List.of("ASC", "DESC").contains(direction())) {
+        if (!VALID_DIRECTIONS.contains(direction())) {
             throw new IllegalArgumentException("정렬 방향은 ASC 또는 DESC여야 합니다.");
         }
     }
