@@ -10,18 +10,18 @@ import lombok.Builder;
 @Builder
 public record BookCreateRequest(
     @NotBlank
-    @Size(max = 100)
+    @Size(max = 100, message = "제목은 100자까지만 입력 가능합니다.")
     String title,
 
     @NotBlank
-    @Size(max = 50)
+    @Size(max = 50, message = "저자는 50자까지만 입력 가능합니다.")
     String author,
 
     @NotBlank
     String description,
 
     @NotBlank
-    @Size(max = 50)
+    @Size(max = 50, message = "출판사는 50자까지만 입력 가능합니다.")
     String publisher,
 
     @NotNull

@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.book.service;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.user.storage.s3.S3Storage;
@@ -28,7 +29,7 @@ public class BookServiceImpl implements BookService {
         String isbn = bookData.isbn();
 
         if (bookRepository.existsByIsbn(isbn)) {
-
+            throw new DuplicateIsbnException(isbn);
         }
 
         Book book = bookMapper.toEntity(bookData);
