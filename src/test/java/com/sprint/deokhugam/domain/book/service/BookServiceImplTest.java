@@ -1,14 +1,18 @@
 package com.sprint.deokhugam.domain.book.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.user.storage.s3.S3Storage;
@@ -42,7 +46,7 @@ class BookServiceImplTest {
     private S3Storage storage;
 
     @Test
-    void 책을_등록하면_책이_저장된다() throws IOException {
+    void 썸네일_이미지가_있는_책을_등록하면_책이_저장된다() throws IOException {
 
         // given
         UUID bookId = UUID.randomUUID();
@@ -119,5 +123,112 @@ class BookServiceImplTest {
         verify(storage).uploadImage(thumbnail);
         verify(bookRepository).save(any(Book.class));
         verify(storage).generatePresignedUrl(thumbnailUrl);
+    }
+
+    @Test
+    void 썸네일_이미지가_없는_책을_등록하면_책이_저장된다() throws IOException {
+
+        // given
+        UUID bookId = UUID.randomUUID();
+        BookCreateRequest request = BookCreateRequest.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123")
+            .build();
+
+        Book bookEntity =  Book.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123")
+            .rating(0.0)
+            .reviewCount(0L)
+            .isDeleted(false)
+            .build();
+
+        Book savedBook = Book.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123")
+            .rating(0.0)
+            .reviewCount(0L)
+            .isDeleted(false)
+            .thumbnailUrl(null)
+            .build();
+
+        ReflectionTestUtils.setField(savedBook, "id", bookId);
+
+        BookDto expectedResponse = BookDto.builder()
+            .id(bookId)
+            .createdAt(Instant.now())
+            .updatedAt(Instant.now())
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123")
+            .rating(0.0)
+            .reviewCount(0L)
+            .build();
+
+        given(bookRepository.existsByIsbn(anyString())).willReturn(false);
+        given(bookMapper.toEntity(request)).willReturn(bookEntity);
+        given(bookRepository.save(bookEntity)).willReturn(savedBook);
+        given(bookMapper.toDto(savedBook)).willReturn(expectedResponse);
+
+        // when
+        BookDto result = bookService.create(request, null);
+
+        // then
+        assertNotNull(result);
+        assertEquals(bookId, result.id());
+        assertEquals("test book", result.title());
+        assertEquals("test author", result.author());
+        assertEquals("test description", result.description());
+        assertEquals("test publisher", result.publisher());
+        assertEquals(LocalDate.now(), result.publishedDate());
+        assertEquals("1234567890123", result.isbn());
+        assertEquals(0.0, result.rating());
+        assertEquals(0L, result.reviewCount());
+        verify(bookRepository).existsByIsbn("1234567890123");
+        verify(bookMapper).toEntity(request);
+        verify(bookMapper).toDto(savedBook);
+        verify(bookRepository).save(any(Book.class));
+    }
+
+    @Test
+    void 중복_isbn으로_책_등록_시도_시_책_등록이_실패한다() {
+
+        // given
+        String existsIsbn = "1234567890123";
+
+        BookCreateRequest request = BookCreateRequest.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn(existsIsbn)
+            .build();
+
+        given(bookRepository.existsByIsbn(existsIsbn)).willReturn(true);
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.create(request, null));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(DuplicateIsbnException.class)
+            .hasMessageContaining("존재");
+        verify(bookRepository, never()).save(any());
     }
 }
