@@ -4,6 +4,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,7 +63,6 @@ class S3StorageTest {
         // then
         ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
         verify(s3Client).putObject(requestCaptor.capture(), any(RequestBody.class));
-
         PutObjectRequest capturedRequest = requestCaptor.getValue();
         assertThat(capturedRequest.bucket()).isEqualTo("test-bucket");
         assertThat(capturedRequest.key()).startsWith("image/");
@@ -113,12 +113,12 @@ class S3StorageTest {
         // given
         String key = "image/test.jpg";
         URL fakeUrl = mock(URL.class);
-        when(fakeUrl.toString()).thenReturn("https://fake-presigned-url.com/image/test.jpg");
-
         PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
-        when(presignedRequest.url()).thenReturn(fakeUrl);
-        when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
-            .thenReturn(presignedRequest);
+
+        given(fakeUrl.toString()).willReturn("https://fake-presigned-url.com/image/test.jpg");
+        given(presignedRequest.url()).willReturn(fakeUrl);
+        given(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
+            .willReturn(presignedRequest);
 
         // when
         String url = s3Storage.generatePresignedUrl(key);
