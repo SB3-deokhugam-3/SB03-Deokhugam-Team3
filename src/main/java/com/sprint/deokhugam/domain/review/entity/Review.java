@@ -18,7 +18,9 @@ import org.hibernate.annotations.SQLRestriction;
 @Table(name = "reviews")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@SQLRestriction("is_deleted <> false")
+@SQLRestriction("is_deleted = false")
+@Setter
+@ToString
 public class Review extends BaseUpdatableEntity {
 
     @Column(name = "rating", nullable = false)
