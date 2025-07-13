@@ -216,7 +216,7 @@ class BookControllerTest {
     }
 
     @Test
-    void 제목의_길이가_100자_이상이면_400_에러를_반환한다() throws Exception {
+    void 제목의_길이가_100자_초과이면_400_에러를_반환한다() throws Exception {
 
         // given
         String longTitle = "a".repeat(101);
@@ -246,7 +246,7 @@ class BookControllerTest {
     }
 
     @Test
-    void isbn_길이가_13자_이상이면_400_에러를_반환한다() throws Exception {
+    void isbn_길이가_13자_초과하면_400_에러를_반환한다() throws Exception {
 
         // given
         BookCreateRequest request = BookCreateRequest.builder()

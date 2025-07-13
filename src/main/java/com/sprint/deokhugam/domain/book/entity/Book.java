@@ -10,11 +10,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 @Builder
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@SQLRestriction("is_deleted <> false")
 @Entity
 @Table(name = "books")
 public class Book extends BaseUpdatableEntity  {
