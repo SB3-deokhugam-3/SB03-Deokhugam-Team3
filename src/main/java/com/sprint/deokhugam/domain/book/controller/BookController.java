@@ -1,17 +1,25 @@
 package com.sprint.deokhugam.domain.book.controller;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
+import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.service.BookService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import jakarta.validation.Valid;
+import java.io.IOException;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/books")
@@ -20,6 +28,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookController {
 
     private final BookService bookService;
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BookDto> create(
+        @Valid @RequestPart("bookData") BookCreateRequest bookData,
+        @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
+    ) throws IOException {
+        BookDto result = bookService.create(bookData, thumbnailImage);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
 
     /*
      * 도서 목록 조회 ( 키워드 검색 + 커서 페이지네이션 )
@@ -58,4 +75,3 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 }
-

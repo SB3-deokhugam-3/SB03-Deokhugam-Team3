@@ -1,16 +1,21 @@
 package com.sprint.deokhugam.domain.book.service;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
+import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
+import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Slf4j
@@ -20,6 +25,32 @@ public class BookServiceImpl implements BookService {
 
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
+    private final S3Storage s3Storage;
+
+    @Override
+    public BookDto create(BookCreateRequest bookData, MultipartFile thumbnailImage) throws IOException {
+        log.debug("[BookService]: 책 등록 요청 - bookData: {}", bookData);
+
+        String isbn = bookData.isbn();
+
+        if (bookRepository.existsByIsbn(isbn)) {
+            throw new DuplicateIsbnException(isbn);
+        }
+
+        Book book = bookMapper.toEntity(bookData);
+
+        if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
+            // Book Entity를 저장할 때는 S3의 실제 경로 저장
+            String thumbnailImageUrl = s3Storage.uploadImage(thumbnailImage);
+            book.updateThumbnailUrl(thumbnailImageUrl);
+        }
+
+        Book savedBook = bookRepository.save(book);
+
+        log.info("책 등록 완료: id={}, title={}", savedBook.getId(), savedBook.getTitle());
+
+        return bookMapper.toDto(savedBook, s3Storage);
+    }
 
     @Override
     public CursorPageResponse<BookDto> getBooks(BookSearchRequest request) {
@@ -67,7 +98,7 @@ public class BookServiceImpl implements BookService {
         }
 
         CursorPageResponse<BookDto> response = new CursorPageResponse<>(
-            books.stream().map(bookMapper::toDto).toList(),
+            books.stream().map(book -> bookMapper.toDto(book, s3Storage)).toList(),
             nextCursor,
             nextAfter,
             books.size(),
