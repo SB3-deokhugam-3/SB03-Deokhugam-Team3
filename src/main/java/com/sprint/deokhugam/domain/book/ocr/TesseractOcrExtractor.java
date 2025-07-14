@@ -27,10 +27,60 @@ public class TesseractOcrExtractor implements OcrExtractor{
 
     public TesseractOcrExtractor() {
         this.tesseract = new Tesseract();
-        // Tesseract 설정
-        tesseract.setLanguage("eng");
-        tesseract.setPageSegMode(1);
-        tesseract.setOcrEngineMode(1);
+
+        // Tesseract 데이터 경로 설정
+        try {
+            // 시스템 환경 변수에서 경로 확인
+            String tessDataPath = System.getenv("TESSDATA_PREFIX");
+            log.info("TESSDATA_PREFIX 환경 변수: {}", tessDataPath);
+
+            if (tessDataPath != null && !tessDataPath.isEmpty()) {
+                // 경로 정규화 (슬래시 통일)
+                tessDataPath = tessDataPath.replace("/", "\\");
+                tesseract.setDatapath(tessDataPath);
+                log.info("Tesseract 데이터 경로 설정: {}", tessDataPath);
+            } else {
+                // 기본 경로들을 순서대로 시도
+                String[] defaultPaths = {
+                    "C:\\Program Files\\Tesseract-OCR\\tessdata",
+                    "C:\\Program Files (x86)\\Tesseract-OCR\\tessdata",
+                    "/usr/share/tesseract-ocr/5/tessdata",
+                    "/usr/share/tesseract-ocr/4.00/tessdata",
+                    "/usr/local/share/tessdata",
+                    "./tessdata"
+                };
+
+                boolean pathSet = false;
+                for (String path : defaultPaths) {
+                    java.io.File tessDataDir = new java.io.File(path);
+                    if (tessDataDir.exists() && tessDataDir.isDirectory()) {
+                        tesseract.setDatapath(path);
+                        log.info("Tesseract 데이터 경로 자동 설정: {}", path);
+                        pathSet = true;
+                        break;
+                    }
+                }
+
+                if (!pathSet) {
+                    log.warn("Tesseract 데이터 경로를 찾을 수 없습니다. 기본 경로를 사용합니다.");
+                }
+            }
+
+            // Tesseract 설정
+            tesseract.setLanguage("eng");
+            tesseract.setPageSegMode(1);
+            tesseract.setOcrEngineMode(1);
+
+            // 초기화 테스트
+            log.info("Tesseract 초기화 테스트 시작");
+            BufferedImage testImage = new BufferedImage(100, 50, BufferedImage.TYPE_INT_RGB);
+            tesseract.doOCR(testImage);
+            log.info("Tesseract 초기화 성공");
+
+        } catch (Exception e) {
+            log.error("Tesseract 초기화 실패", e);
+            throw new RuntimeException("Tesseract 초기화에 실패했습니다: " + e.getMessage(), e);
+        }
     }
 
     @Override
