@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
         }
 
         if (userRepository.existsByEmail(userCreateRequest.email())) {
-            throw new DuplicateEmailException(userCreateRequest.email());
+            throw new DuplicateEmailException(userCreateRequest.email(), "이미 존재하는 이메일입니다.");
         }
 
         User user = userMapper.toEntity(userCreateRequest);
@@ -63,7 +63,7 @@ public class UserServiceImpl implements UserService {
                 .map(userMapper::toDto)
                 .orElseThrow(() -> {
                     log.warn("[UserService]: 사용자 조회 실패: id={}", userId);
-                    return new UserNotFoundException("존재하지 않는 사용자 입니다.");
+                    return new UserNotFoundException("user", "존재하지 않는 사용자 입니다.");
                 });
     }
 }
