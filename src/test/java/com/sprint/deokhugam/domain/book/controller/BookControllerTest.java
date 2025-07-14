@@ -43,12 +43,15 @@ class BookControllerTest {
 
     @MockitoBean
     private BookServiceImpl bookService;
+
     private CursorPageResponse<BookDto> mockResponse;
     private List<BookDto> mockBooks;
+    private BookDto book1;
+    private BookDto book2;
 
     @BeforeEach
-    void 초기_설정() {
-        BookDto book1 = new BookDto(
+    void setUp() {
+        book1 = new BookDto(
             UUID.randomUUID(),
             "테스트 도서 1",
             "테스트 저자 1",
@@ -63,7 +66,7 @@ class BookControllerTest {
             Instant.now()
         );
 
-        BookDto book2 = new BookDto(
+        book2 = new BookDto(
             UUID.randomUUID(),
             "테스트 도서 2",
             "테스트 저자 2",
@@ -375,5 +378,29 @@ class BookControllerTest {
             .andExpect(jsonPath("$.content").isEmpty())
             .andExpect(jsonPath("$.content.length()").value(0))
             .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void 도서_상세_조회_요청_시_도서_상세_정보를_반환한다() throws Exception {
+
+        // given
+        UUID bookId = UUID.randomUUID();
+        given(bookService.findById(bookId)).willReturn(book1);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/books/bookId"));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(bookId.toString()))
+            .andExpect(jsonPath("$.title").value("테스트 도서 1"))
+            .andExpect(jsonPath("$.author").value("테스트 저자 1"))
+            .andExpect(jsonPath("$.description").value("테스트 설명 1"))
+            .andExpect(jsonPath("$.publisher").value("테스트 출판사 1"))
+            .andExpect(jsonPath("$.publishedDate").value("2024-01-01"))
+            .andExpect(jsonPath("$.isbn").value("1234567890"))
+            .andExpect(jsonPath("$.thumbnailUrl").value("https://example.com/image1.jpg"))
+            .andExpect(jsonPath("$.rating").value(4.5))
+            .andExpect(jsonPath("$.reviewCount").value(10L));
     }
 }
