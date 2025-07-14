@@ -6,7 +6,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewRequest;
 import com.sprint.deokhugam.domain.review.entity.QReview;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -84,9 +87,9 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
         /* keyword 조건 */
         if (keyword != null) {
             whereCondition.and(
-                review.user.nickname.contains(keyword)
-                    .or(review.book.title.contains(keyword)
-                        .or(review.book.description.contains(keyword)))
+                review.user.nickname.containsIgnoreCase(keyword)
+                    .or(review.book.title.containsIgnoreCase(keyword)
+                        .or(review.book.description.containsIgnoreCase(keyword)))
             );
 
         }
@@ -95,41 +98,52 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
     }
 
     private BooleanBuilder filterByCreatedAt(QReview review, ReviewRequest params) {
-        BooleanBuilder whereCondition = new BooleanBuilder();
-        String direction = params.getDirection();
-        Instant cursor = Instant.parse(params.getCursor().toString());
-        log.info("cursor = {}", Instant.parse(params.getCursor().toString()));
-        Instant after = params.getAfter();
-        // Q. after 넣는게 의미가 있나?
-        if (direction.equals("DESC")) {
-            whereCondition
-                .or(review.createdAt.loe(cursor));
-        } else {
-            whereCondition
-                .or(review.createdAt.goe(cursor));
+        try {
+            BooleanBuilder whereCondition = new BooleanBuilder();
+            String direction = params.getDirection();
+            Instant cursor = Instant.parse(params.getCursor().toString());
+            log.info("cursor = {}", Instant.parse(params.getCursor().toString()));
+            if (direction.equals("DESC")) {
+                whereCondition
+                    .or(review.createdAt.loe(cursor));
+            } else {
+                whereCondition
+                    .or(review.createdAt.goe(cursor));
+            }
+            return whereCondition;
+        } catch (DateTimeParseException e) {
+            throw new InvalidTypeException("review",
+                new HashMap<>() {{
+                    put("requestedCursor", params.getCursor().toString());
+                }});
         }
-
-        return whereCondition;
 
     }
 
     private BooleanBuilder filterByRating(QReview review, ReviewRequest params) {
-        BooleanBuilder whereCondition = new BooleanBuilder();
-        String direction = params.getDirection();
-        Double cursor = Double.valueOf(params.getCursor().toString());
-        Instant after = params.getAfter();
+        try {
+            BooleanBuilder whereCondition = new BooleanBuilder();
+            String direction = params.getDirection();
+            Double cursor = Double.valueOf(params.getCursor().toString());
+            Instant after = params.getAfter();
 
-        if (direction.equals("DESC")) {
-            whereCondition
-                .or(review.rating.lt(cursor))
-                .or(review.rating.eq(cursor).and(review.createdAt.lt(after)));
-        } else {
-            whereCondition
-                .or(review.rating.gt(cursor))
-                .or(review.rating.eq(cursor).and(review.createdAt.gt(after)));
+            if (direction.equals("DESC")) {
+                whereCondition
+                    .or(review.rating.lt(cursor))
+                    .or(review.rating.eq(cursor).and(review.createdAt.lt(after)));
+            } else {
+                whereCondition
+                    .or(review.rating.gt(cursor))
+                    .or(review.rating.eq(cursor).and(review.createdAt.gt(after)));
+            }
+            return whereCondition;
+        } catch (NumberFormatException e) {
+            throw new InvalidTypeException("review",
+                new HashMap<>() {{
+                    put("requestedCursor", params.getCursor().toString());
+                }});
         }
 
-        return whereCondition;
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiers(QReview review, String orderBy,

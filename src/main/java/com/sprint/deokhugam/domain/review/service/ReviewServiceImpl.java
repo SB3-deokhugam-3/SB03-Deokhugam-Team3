@@ -12,7 +12,9 @@ import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -71,10 +73,13 @@ public class ReviewServiceImpl implements ReviewService {
     //(createdAt | rating 어떤값을 기준으로 order하는지에 따라 cursor 타입 달라짐)
     private String calculateNextCursor(Review lastReview, String orderBy) {
         return switch (orderBy) {
+            // TODO : 상수로 뺄것
             case "createdAt" -> lastReview.getCreatedAt().toString();
             case "rating" -> lastReview.getRating().toString();
-            // TODO : error 타입 생성해서 넣기
-            default -> throw new IllegalArgumentException("지원하지않는 정렬타입입니다. ");
+            default -> throw new InvalidTypeException("review",
+                new HashMap<>() {{
+                    put("requestedType", orderBy);
+                }});
         };
     }
 
