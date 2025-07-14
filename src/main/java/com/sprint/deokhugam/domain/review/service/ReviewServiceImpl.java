@@ -10,9 +10,13 @@ import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
+import com.sprint.deokhugam.global.exception.NotFoundException;
+import com.sprint.deokhugam.global.exception.UnauthorizedException;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,5 +65,42 @@ public class ReviewServiceImpl implements ReviewService {
             savedReview.getId(), bookId, userId, rating, content);
 
         return reviewMapper.toDto(savedReview);
+    }
+
+    @Transactional
+    @Override
+    public HttpStatus delete(UUID reviewId, UUID userId) {
+        Review review = reviewRepository.findById(reviewId)
+            .orElseThrow(() -> new NotFoundException("review",
+                Map.of("reviewId", reviewId)));
+
+        /*삭제할 권한이 없는 사용자일때 */
+        if (!review.getUser().getId().equals(userId)) {
+            log.warn("[review] 리뷰 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", reviewId, userId);
+            throw new UnauthorizedException("review",
+                Map.of("userId", userId));
+        }
+        review.softDelete();
+
+        return HttpStatus.NO_CONTENT;
+    }
+
+    @Transactional
+    @Override
+    public HttpStatus hardDelete(UUID reviewId, UUID userId) {
+        Review review = reviewRepository.findDeletedById(reviewId)
+            .orElseThrow(() -> new NotFoundException("review",
+                Map.of("reviewId", reviewId)));
+
+        /*삭제할 권한이 없는 사용자일때 */
+        if (!review.getUser().getId().equals(userId)) {
+            log.warn("[review] 리뷰 하드 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", reviewId,
+                userId);
+            throw new UnauthorizedException("review",
+                Map.of("userId", userId));
+        }
+        reviewRepository.delete(review);
+
+        return HttpStatus.NO_CONTENT;
     }
 }
