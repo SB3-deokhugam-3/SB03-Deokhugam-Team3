@@ -126,7 +126,10 @@ public class BookServiceImpl implements BookService {
 
     private Book findBook(UUID bookId) {
         return bookRepository.findById(bookId)
-            .orElseThrow(() -> new BookNotFoundException(bookId));
+            .orElseThrow(() -> {
+                log.warn("[BookService]: 도서 조회 실패: id={}", bookId);
+                return new BookNotFoundException(bookId);
+            });
     }
 
     private String getCursorValue(Book book, String orderBy) {
