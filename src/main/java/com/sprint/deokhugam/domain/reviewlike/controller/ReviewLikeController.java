@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/api/reviews/{reviewId}/like")
 public class ReviewLikeController {
 
     private final ReviewLikeService reviewLikeService;
 
-    @PostMapping("/{reviewId}/like")
+    @PostMapping
     public ResponseEntity<ReviewLikeDto> toggleLike(
         @PathVariable UUID reviewId,
         @RequestHeader("Deokhugam-Request-User-ID") UUID userId
