@@ -1,13 +1,17 @@
 package com.sprint.deokhugam.domain.reviewlike.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
+import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.reviewlike.dto.data.ReviewLikeDto;
 import com.sprint.deokhugam.domain.reviewlike.entity.ReviewLike;
@@ -101,5 +105,45 @@ public class ReviewLikeServiceImplTest {
         then(review).should().decreaseLikeCount();
         then(reviewLikeRepository).should().deleteByReviewIdAndUserId(reviewId, userId);
         then(reviewLikeRepository).should(never()).save(any());
+    }
+
+    @Test
+    void 존재하지_않는_리뷰이면_리뷰_좋아요_생성에_실패한다() {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.empty());
+
+        // when
+        Throwable thrown = catchThrowable(() -> reviewLikeService.toggleLike(reviewId, userId));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(ReviewNotFoundException.class);
+        then(reviewRepository).should().findById(reviewId);
+        then(userRepository).shouldHaveNoInteractions();
+        then(reviewLikeRepository).shouldHaveNoInteractions();
+        then(reviewLikeMapper).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void 존재하지_않는_유저라면_리뷰_생성에_실패한다() {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Review mockReview = mock(Review.class);
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(mockReview));
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when
+        Throwable thrown = catchThrowable(() -> reviewLikeService.toggleLike(reviewId, userId));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(IllegalArgumentException.class);
+        then(reviewRepository).should().findById(reviewId);
+        then(userRepository).should().findById(userId);
+        then(reviewLikeRepository).shouldHaveNoInteractions();
+        then(reviewLikeMapper).shouldHaveNoInteractions();
     }
 }
