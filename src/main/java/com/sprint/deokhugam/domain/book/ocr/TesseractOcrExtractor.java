@@ -32,7 +32,7 @@ public class TesseractOcrExtractor implements OcrExtractor{
         try {
             // 시스템 환경 변수에서 경로 확인
             String tessDataPath = System.getenv("TESSDATA_PREFIX");
-            log.info("TESSDATA_PREFIX 환경 변수: {}", tessDataPath);
+            log.info("[OCR]: TESSDATA_PREFIX 환경 변수: {}", tessDataPath);
 
             if (tessDataPath != null && !tessDataPath.isEmpty()) {
                 // 경로 정규화 (슬래시 통일)
@@ -55,14 +55,14 @@ public class TesseractOcrExtractor implements OcrExtractor{
                     java.io.File tessDataDir = new java.io.File(path);
                     if (tessDataDir.exists() && tessDataDir.isDirectory()) {
                         tesseract.setDatapath(path);
-                        log.info("Tesseract 데이터 경로 자동 설정: {}", path);
+                        log.info("[OCR]: Tesseract 데이터 경로 자동 설정: {}", path);
                         pathSet = true;
                         break;
                     }
                 }
 
                 if (!pathSet) {
-                    log.warn("Tesseract 데이터 경로를 찾을 수 없습니다. 기본 경로를 사용합니다.");
+                    log.warn("[OCR]: Tesseract 데이터 경로를 찾을 수 없습니다. 기본 경로를 사용합니다.");
                 }
             }
 
@@ -72,13 +72,13 @@ public class TesseractOcrExtractor implements OcrExtractor{
             tesseract.setOcrEngineMode(1);
 
             // 초기화 테스트
-            log.info("Tesseract 초기화 테스트 시작");
+            log.info("[OCR]: Tesseract 초기화 테스트 시작");
             BufferedImage testImage = new BufferedImage(100, 50, BufferedImage.TYPE_INT_RGB);
             tesseract.doOCR(testImage);
-            log.info("Tesseract 초기화 성공");
+            log.info("[OCR]: Tesseract 초기화 성공");
 
         } catch (Exception e) {
-            log.error("Tesseract 초기화 실패", e);
+            log.error("[OCR]: Tesseract 초기화 실패", e);
             throw new RuntimeException("Tesseract 초기화에 실패했습니다: " + e.getMessage(), e);
         }
     }
@@ -86,7 +86,7 @@ public class TesseractOcrExtractor implements OcrExtractor{
     @Override
     public String extractIsbn(MultipartFile imageFile) throws OcrException {
         try {
-            log.info("Tesseract를 사용하여 이미지에서 텍스트 추출 시작");
+            log.info("[OCR]: Tesseract를 사용하여 이미지에서 텍스트 추출 시작");
 
             // 이미지 파일 유효성 검증
             validateImageFile(imageFile);
@@ -101,23 +101,23 @@ public class TesseractOcrExtractor implements OcrExtractor{
 
             // Tesseract OCR 실행
             String extractedText = tesseract.doOCR(preprocessedImage);
-            log.info("Tesseract에서 추출된 텍스트 : {}", extractedText);
+            log.info("[OCR]: Tesseract에서 추출된 텍스트 : {}", extractedText);
 
             if (extractedText == null || extractedText.trim().isEmpty()) {
-                log.warn("텍스트를 추출할 수 없습니다.");
+                log.warn("[OCR]: 텍스트를 추출할 수 없습니다.");
                 return null;
             }
 
             //ISBN 패턴 매칭 및 추출
             String isbn = extractIsbnFromText(extractedText);
-            log.info("추출된 ISBN : {}", isbn);
+            log.info("[OCR]: 추출된 ISBN : {}", isbn);
             return isbn;
 
         } catch (TesseractException e) {
-            log.error("Tesseract OCR 처리 실패", e);
+            log.error("[OCR]: OCR 처리 실패", e);
             throw new OcrException("Tesseract OCR 처리 중 오류가 발생했습니다.",e);
         } catch (IOException e) {
-            log.error("이미지 파일 읽기 실패", e);
+            log.error("[OCR]: 이미지 파일 읽기 실패", e);
             throw new OcrException("이미지 파일을 읽을 수 없습니다.",e);
         }
     }
@@ -148,7 +148,7 @@ public class TesseractOcrExtractor implements OcrExtractor{
         // 텍스트 정규화 ( 개행 문자를 공백으로 변환, 여러 공백을 하나로 통합 )
         String normalizedText = text.replaceAll("\\s+", " ");
 
-        log.debug("정규화된 텍스트 : {}", normalizedText );
+        log.debug("[OCR]: 정규화된 텍스트 : {}", normalizedText );
 
         // ISBN 패턴 매칭
         Matcher matcher = ISBN_PATTERN.matcher(normalizedText);
@@ -158,7 +158,7 @@ public class TesseractOcrExtractor implements OcrExtractor{
 
             // ISBN-10 or ISBN-13 길이 검증
             if (isbn.length() == 10 || isbn.length() == 13) {
-                log.info("유효한 ISBN 패턴 발견 : {} (원본 : {} )", isbn, rawIsbn);
+                log.info("[OCR]: 유효한 ISBN 패턴 발견 : {} (원본 : {} )", isbn, rawIsbn);
                 return isbn;
             }
         }
@@ -172,13 +172,13 @@ public class TesseractOcrExtractor implements OcrExtractor{
             if (candidate.length() == 10 || candidate.length() == 13) {
                 // 간단 ISBN 체크섬 검증
                 if (isValidIsbnFormat(candidate)) {
-                    log.info("숫자 패턴에서 유효한 ISBN 발건 : {} ", candidate);
+                    log.info("[OCR]: 숫자 패턴에서 유효한 ISBN 발건 : {} ", candidate);
                     return candidate;
                 }
             }
         }
 
-        log.warn("유효한 ISBN을 찾을 수 없습니다. 텍스트 : {}", text);
+        log.warn("[OCR]: 유효한 ISBN을 찾을 수 없습니다. 텍스트 : {}", text);
         return null;
     }
 

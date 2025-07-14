@@ -43,7 +43,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
-    /**
+    /*
      * 도서 목록 조회 ( 키워드 검색 + 커서 페이지네이션 )
      * @param keyword 검색 키워드 ( 제목, 저자, ISBN에서 부분 일치 )
      * @param orderBy 정렬 기준 ( 제목, 출판일, 평점, 리뷰수 )
@@ -101,7 +101,7 @@ public class BookController {
     public ResponseEntity<String> extractIsbnFromImage(
         @RequestPart(value = "image") MultipartFile image
     ) throws OcrException {
-        log.info("ISBN 추출 요청 - 파일명 : {}, 크기 : {} bytes", image.getOriginalFilename(), image.getSize());
+        log.info("[BookController]: ISBN 추출 요청 - 파일명 : {}, 크기 : {} bytes", image.getOriginalFilename(), image.getSize());
 
         try {
 
@@ -113,9 +113,9 @@ public class BookController {
 
             log.info("ISBN 추출 완료 - ISBN : {}", extractedIsbn);
 
-            return ResponseEntity.ok(extractedIsbn);
+            return ResponseEntity.status(HttpStatus.OK).body(extractedIsbn);
         } catch (Exception e) {
-            log.error("ISBN 추출 중 오류 발생",e);
+            log.error("[BookController]: ISBN 추출 중 오류 발생",e);
             throw new OcrException("이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
@@ -125,25 +125,25 @@ public class BookController {
      * */
     private void validateImageFile(MultipartFile image) {
         if (image == null || image.isEmpty()) {
-            throw new IllegalArgumentException("이미지 파일이 필요합니다.");
+            throw new IllegalArgumentException("[BookController]: 이미지 파일이 필요합니다.");
         }
 
         // 파일 크기 검사 ( 10MB 제한 )
         long maxSize = 10 * 1024 * 1024;
         if (image.getSize() > maxSize) {
-            throw new IllegalArgumentException("파일 크기는 10MB를 초과할 수 없습니다.");
+            throw new IllegalArgumentException("[BookController]: 파일 크기는 10MB를 초과할 수 없습니다.");
         }
 
         // 파일 형식 검사
         String contentType = image.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+            throw new IllegalArgumentException("[BookController]: 이미지 파일만 업로드 가능합니다.");
         }
 
         // 지원되는 이미 형식 검사
         List<String> supportedTypes = List.of("image/jpeg","image/jpg","image/png","image/gif","image/bmp","image/webp");
         if (!supportedTypes.contains(contentType.toLowerCase())) {
-            throw new IllegalArgumentException("지원되지 않는 이미지 형식입니다. ( 지원 형식 : JPEG, PNG, GIF, BMP, WEBP )");
+            throw new IllegalArgumentException("[BookController]: 지원되지 않는 이미지 형식입니다. ( 지원 형식 : JPEG, PNG, GIF, BMP, WEBP )");
         }
     }
 }

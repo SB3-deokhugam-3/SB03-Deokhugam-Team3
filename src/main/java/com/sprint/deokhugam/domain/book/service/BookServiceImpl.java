@@ -125,14 +125,14 @@ public class BookServiceImpl implements BookService {
         OcrExtractor selectedExtractor = selectAvailableOcrExtractor();
 
         if (selectedExtractor == null) {
-            log.error("사용 가능한 OCR 구현체가 없습니다. 구현체 목록: {}",
+            log.error("[BookService]: 사용 가능한 OCR 구현체가 없습니다. 구현체 목록: {}",
                 ocrExtractors.stream().map(e -> e.getClass().getSimpleName()).toList());
             throw new OcrException("OCR 서비스를 사용할 수 없습니다. 설정을 확인해주세요.");
 
         }
 
         String extractorName = selectedExtractor.getClass().getSimpleName();
-        log.info("선택된 OCR 구현체 : {} ( 우선순위 : {} )", extractorName, selectedExtractor.getPriority());
+        log.info("[BookService]:선택된 OCR 구현체 : {} ( 우선순위 : {} )", extractorName, selectedExtractor.getPriority());
 
         try {
             // OCR 실행
