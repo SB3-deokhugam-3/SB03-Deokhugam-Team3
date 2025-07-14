@@ -2,8 +2,10 @@ package com.sprint.deokhugam.domain.user.service;
 
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.DuplicateEmailException;
+import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.mapper.UserMapper;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
@@ -45,8 +47,27 @@ public class UserServiceImpl implements UserService {
                 .map(userMapper::toDto)
                 .orElseThrow(() -> {
                     log.warn("[UserService]: 사용자 조회 실패: id={}", userId);
-                    return new UserNotFoundException("user", "존재하지 않는 사용자 입니다.");
+                    return new UserNotFoundException(userId, "존재하지 않는 사용자 입니다.");
                 });
+    }
+
+    @Override
+    public UserDto loginUser(UserLoginRequest userLoginRequest) {
+        log.debug("[UserService]: 사용자 로그인 요청 : email={}", userLoginRequest.email());
+        String email = userLoginRequest.email();
+        String password = userLoginRequest.password();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.warn("[UserService]: 사용자 조회 실패: email={}", email);
+                    return new InvalidUserRequestException("email", "해당하는 이메일은 존재하지 않습니다.");
+                });
+
+        if (!user.getPassword().equals(password)) {
+            throw new InvalidUserRequestException("password", "비밀번호가 일치하지 않습니다.");
+        }
+
+        return userMapper.toDto(user);
     }
 
     private void validateUserCreateRequest(UserCreateRequest userCreateRequest) {
