@@ -1,15 +1,12 @@
 package com.sprint.deokhugam.domain.reviewlike.controller;
 
 import com.sprint.deokhugam.domain.reviewlike.dto.data.ReviewLikeDto;
-import com.sprint.deokhugam.domain.reviewlike.dto.request.ReviewLikeRequest;
 import com.sprint.deokhugam.domain.reviewlike.service.ReviewLikeService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,16 +19,11 @@ public class ReviewLikeController {
     private final ReviewLikeService reviewLikeService;
 
     @PostMapping("/{reviewId}/like")
-    public ResponseEntity<ReviewLikeDto> likeReview(
+    public ResponseEntity<ReviewLikeDto> toggleLike(
         @PathVariable UUID reviewId,
-        @RequestHeader("Deokhugam-Request-User-ID") UUID userId,
-        @RequestBody ReviewLikeRequest request
+        @RequestHeader("Deokhugam-Request-User-ID") UUID userId
     ) {
-        ReviewLikeDto reviewLikeDto = reviewLikeService.toggleLike(reviewId, userId,
-            request.liked());
-
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(reviewLikeDto);
+        ReviewLikeDto result = reviewLikeService.toggleLike(reviewId, userId);
+        return ResponseEntity.ok(result);
     }
 }

@@ -19,19 +19,16 @@ import lombok.NoArgsConstructor;
 public class ReviewLike extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "review_id", nullable = false)
     private Review review;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private Boolean isLiked = false;
-
-    public ReviewLike(Review review, User user, Boolean isLiked) {
+    public ReviewLike(Review review, User user) {
         this.review = review;
         this.user = user;
-        this.isLiked = false;
     }
 
 }

@@ -5,6 +5,6 @@ import java.util.UUID;
 
 public interface ReviewLikeService {
 
-    ReviewLikeDto toggleLike(UUID reviewId, UUID userId, boolean liked);
+    ReviewLikeDto toggleLike(UUID reviewId, UUID userId);
 
 }
