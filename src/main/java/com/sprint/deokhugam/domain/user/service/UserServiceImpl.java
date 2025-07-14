@@ -37,6 +37,7 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Override
     public UserDto findUser(UUID userId) {
 
         log.debug("[UserService]: 사용자 조회 요청: id={}", userId);
