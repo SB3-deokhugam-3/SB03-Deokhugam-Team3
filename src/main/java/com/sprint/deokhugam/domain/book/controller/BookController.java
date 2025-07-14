@@ -75,7 +75,7 @@ public class BookController {
 
         CursorPageResponse<BookDto> response = bookService.getBooks(request);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/{bookId}")
@@ -84,6 +84,6 @@ public class BookController {
 
         BookDto result = bookService.findById(bookId);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
