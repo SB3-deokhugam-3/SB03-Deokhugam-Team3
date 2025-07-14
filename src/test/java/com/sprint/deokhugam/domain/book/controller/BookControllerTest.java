@@ -24,6 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.cglib.core.Local;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -46,38 +47,29 @@ class BookControllerTest {
 
     private CursorPageResponse<BookDto> mockResponse;
     private List<BookDto> mockBooks;
+    private String title;
+    private String author;
+    private String description;
+    private String publisher;
+    private LocalDate publishedDate;
+    private String isbn;
 
     @BeforeEach
     void setUp() {
-        BookDto book1 = new BookDto(
-            UUID.randomUUID(),
-            "테스트 도서 1",
-            "테스트 저자 1",
-            "테스트 설명 1",
-            "테스트 출판사 1",
-            LocalDate.of(2024, 1, 1),
-            "1234567890",
-            "https://example.com/image1.jpg",
-            10L,
-            4.5,
-            Instant.now(),
-            Instant.now()
-        );
+        title = "test book";
+        author = "test author";
+        description = "test description";
+        publisher = "test publisher";
+        publishedDate = LocalDate.now();
+        isbn = "1234567890123";
 
-        BookDto book2 = new BookDto(
-            UUID.randomUUID(),
-            "테스트 도서 2",
-            "테스트 저자 2",
-            "테스트 설명 2",
-            "테스트 출판사 2",
-            LocalDate.of(2024, 2, 1),
-            "1234567891",
-            "https://example.com/image2.jpg",
-            5L,
-            4.0,
-            Instant.now(),
-            Instant.now()
-        );
+        BookDto book1 = createBookDto(UUID.randomUUID(), "테스트 도서 1", "테스트 저자 1",
+            "테스트 설명 1", "테스트 출판사 1", LocalDate.of(2024, 1, 1),
+            "1234567890", "https://example.com/image1.jpg", 10L, 4.5);
+
+        BookDto book2 = createBookDto(UUID.randomUUID(), "테스트 도서 2", "테스트 저자 2",
+            "테스트 설명 2", "테스트 출판사 2", LocalDate.of(2024, 2, 1),
+            "1234567891", "https://example.com/image2.jpg", 5L, 4.0);
 
         mockBooks = List.of(book1, book2);
         mockResponse = new CursorPageResponse<>(
@@ -96,21 +88,7 @@ class BookControllerTest {
         UUID bookId = UUID.randomUUID();
         String thumbnailUrl = "testUrl";
 
-        String title = "test book";
-        String author = "test author";
-        String description = "test description";
-        String publisher = "test publisher";
-        LocalDate publishedDate = LocalDate.now();
-        String isbn = "1234567890123";
-
-        BookCreateRequest request = BookCreateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .build();
+        BookCreateRequest request = createRequest(title, author, description, publisher, publishedDate, isbn);
 
         MockMultipartFile bookData = new MockMultipartFile(
             "bookData", "", "application/json", objectMapper.writeValueAsBytes(request));
@@ -118,20 +96,8 @@ class BookControllerTest {
         MockMultipartFile thumbnailImage = new MockMultipartFile(
             "thumbnailImage", "thumbnail.png", "image/png", "fake-image-content".getBytes());
 
-        BookDto expectedResponse = BookDto.builder()
-            .id(bookId)
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .thumbnailUrl(thumbnailUrl)
-            .reviewCount(0L)
-            .rating(0.0)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
-            .build();
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher,
+            publishedDate, isbn, thumbnailUrl, 0L, 0.0);
 
         given(bookService.create(any(BookCreateRequest.class), any(MultipartFile.class)))
             .willReturn(expectedResponse);
@@ -165,14 +131,9 @@ class BookControllerTest {
     void 출간일을_현재_날짜_보다_이후로_설정하면_400_에러를_반환한다() throws Exception {
 
         // given
-        BookCreateRequest request = BookCreateRequest.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.of(2099, 7, 12))
-            .isbn("1234567890123")
-            .build();
+        BookCreateRequest request = createRequest(title, author, description, publisher,
+            LocalDate.of(2099, 7, 12), isbn);
+
 
         MockMultipartFile bookData = new MockMultipartFile(
             "bookData",
@@ -193,13 +154,8 @@ class BookControllerTest {
     void 필수_항목이_빈_값이면_400_에러를_반환한다() throws Exception {
         // given
         // 제목을 입력하지 않은 경우
-        BookCreateRequest request = BookCreateRequest.builder()
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123123")
-            .build();
+        BookCreateRequest request = createRequest(null, author, description, publisher,
+            publishedDate, isbn);
 
         MockMultipartFile bookData = new MockMultipartFile(
             "bookData",
@@ -222,14 +178,8 @@ class BookControllerTest {
         // given
         String longTitle = "a".repeat(101);
 
-        BookCreateRequest request = BookCreateRequest.builder()
-            .title(longTitle)
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .build();
+        BookCreateRequest request = createRequest(longTitle, author, description, publisher,
+            publishedDate, isbn);
 
         MockMultipartFile bookData = new MockMultipartFile(
             "bookData",
@@ -250,14 +200,8 @@ class BookControllerTest {
     void isbn_길이가_13자_초과하면_400_에러를_반환한다() throws Exception {
 
         // given
-        BookCreateRequest request = BookCreateRequest.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123123")
-            .build();
+        BookCreateRequest request = createRequest(title, author, description, publisher,
+            publishedDate, "12345678901234");
 
         MockMultipartFile bookData = new MockMultipartFile(
             "bookData",
@@ -383,18 +327,8 @@ class BookControllerTest {
 
         // given
         UUID bookId = UUID.randomUUID();
-        BookDto book = BookDto.builder()
-            .id(bookId)
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .thumbnailUrl("https://example.com/image1.jpg")
-            .rating(4.5)
-            .reviewCount(10L)
-            .build();
+        BookDto book = createBookDto(bookId, title, author, description, publisher, publishedDate,
+            isbn, "https://example.com/image1.jpg", 10L, 4.5);
 
         given(bookService.findById(bookId)).willReturn(book);
 
@@ -404,14 +338,45 @@ class BookControllerTest {
         // then
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(bookId.toString()))
-            .andExpect(jsonPath("$.title").value("test book"))
-            .andExpect(jsonPath("$.author").value("test author"))
-            .andExpect(jsonPath("$.description").value("test description"))
-            .andExpect(jsonPath("$.publisher").value("test publisher"))
-            .andExpect(jsonPath("$.publishedDate").value(LocalDate.now().toString()))
-            .andExpect(jsonPath("$.isbn").value("1234567890123"))
+            .andExpect(jsonPath("$.title").value(title))
+            .andExpect(jsonPath("$.author").value(author))
+            .andExpect(jsonPath("$.description").value(description))
+            .andExpect(jsonPath("$.publisher").value(publisher))
+            .andExpect(jsonPath("$.publishedDate").value(publishedDate.toString()))
+            .andExpect(jsonPath("$.isbn").value(isbn))
             .andExpect(jsonPath("$.thumbnailUrl").value("https://example.com/image1.jpg"))
             .andExpect(jsonPath("$.rating").value(4.5))
             .andExpect(jsonPath("$.reviewCount").value(10L));
+    }
+
+    private BookCreateRequest createRequest(String title, String author, String description,
+        String publisher, LocalDate publishedDate, String isbn) {
+        return BookCreateRequest.builder()
+            .title(title)
+            .author(author)
+            .description(description)
+            .publisher(publisher)
+            .publishedDate(publishedDate)
+            .isbn(isbn)
+            .build();
+    }
+
+    private BookDto createBookDto(UUID id, String title, String author, String description,
+        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl, Long reviewCount,
+        Double rating) {
+        return BookDto.builder()
+            .id(id)
+            .title(title)
+            .author(author)
+            .description(description)
+            .publisher(publisher)
+            .publishedDate(publishedDate)
+            .isbn(isbn)
+            .thumbnailUrl(thumbnailUrl)
+            .reviewCount(reviewCount)
+            .rating(rating)
+            .createdAt(Instant.now())
+            .updatedAt(Instant.now())
+            .build();
     }
 }

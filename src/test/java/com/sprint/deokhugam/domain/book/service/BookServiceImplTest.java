@@ -57,9 +57,22 @@ class BookServiceImplTest {
 
     private List<Book> testBooks;
     private List<BookDto> testBookDtos;
+    private String title;
+    private String author;
+    private String description;
+    private String publisher;
+    private LocalDate publishedDate;
+    private String isbn;
 
     @BeforeEach
     void setUp() {
+        title = "test book";
+        author = "test author";
+        description = "test description";
+        publisher = "test publisher";
+        publishedDate = LocalDate.now();
+        isbn = "1234567890123";
+
         testBooks = createTestBooks();
         testBookDtos = createTestBookDtos();
     }
@@ -69,14 +82,8 @@ class BookServiceImplTest {
 
         // given
         UUID bookId = UUID.randomUUID();
-        BookCreateRequest request = BookCreateRequest.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .build();
+        BookCreateRequest request = createRequest(title, author, description, publisher, publishedDate,
+            isbn);
 
         MultipartFile thumbnail = new MockMultipartFile(
             "coverImage",
@@ -85,51 +92,20 @@ class BookServiceImplTest {
             "dummy image data".getBytes()
         );
 
-        Book bookEntity =  Book.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .rating(0.0)
-            .reviewCount(0L)
-            .isDeleted(false)
-            .build();
+        Book bookEntity = createBookEntity(title, author, description, publisher, publishedDate,
+            isbn, null, 0.0, 0L);
 
         String thumbnailUrl = "http://test-url.com/cover.png";
 
-        Book savedBook = Book.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .rating(0.0)
-            .reviewCount(0L)
-            .isDeleted(false)
-            .thumbnailUrl(thumbnailUrl)
-            .build();
+        Book savedBook = createBookEntity(title, author, description, publisher, publishedDate,
+            isbn, thumbnailUrl, 0.0, 0L);
 
         ReflectionTestUtils.setField(savedBook, "id", bookId);
 
         String presignedUrl = "https://cdn.example.com/cover.png";
 
-        BookDto expectedResponse = BookDto.builder()
-            .id(bookId)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .thumbnailUrl(presignedUrl)
-            .isbn("1234567890123")
-            .rating(0.0)
-            .reviewCount(0L)
-            .build();
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher, publishedDate,
+            isbn, presignedUrl, 0L, 0.0, Instant.now(), Instant.now());
 
         given(bookRepository.existsByIsbn(anyString())).willReturn(false);
         given(bookMapper.toEntity(request)).willReturn(bookEntity);
@@ -155,55 +131,19 @@ class BookServiceImplTest {
 
         // given
         UUID bookId = UUID.randomUUID();
-        BookCreateRequest request = BookCreateRequest.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .build();
+        BookCreateRequest request = createRequest(title, author, description, publisher,
+            publishedDate, isbn);
 
-        Book bookEntity =  Book.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .rating(0.0)
-            .reviewCount(0L)
-            .isDeleted(false)
-            .build();
+        Book bookEntity =  createBookEntity(title, author, description, publisher, publishedDate,
+            isbn, null, 0.0, 0L);
 
-        Book savedBook = Book.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .rating(0.0)
-            .reviewCount(0L)
-            .isDeleted(false)
-            .thumbnailUrl(null)
-            .build();
+        Book savedBook = createBookEntity(title, author, description, publisher, publishedDate,
+            isbn, null, 0.0, 0L);
 
         ReflectionTestUtils.setField(savedBook, "id", bookId);
 
-        BookDto expectedResponse = BookDto.builder()
-            .id(bookId)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn("1234567890123")
-            .rating(0.0)
-            .reviewCount(0L)
-            .build();
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher, publishedDate,
+            isbn, null, 0L, 0.0, Instant.now(), Instant.now());
 
         given(bookRepository.existsByIsbn(anyString())).willReturn(false);
         given(bookMapper.toEntity(request)).willReturn(bookEntity);
@@ -228,14 +168,8 @@ class BookServiceImplTest {
         // given
         String existsIsbn = "1234567890123";
 
-        BookCreateRequest request = BookCreateRequest.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .isbn(existsIsbn)
-            .build();
+        BookCreateRequest request = createRequest(title, author, description, publisher, publishedDate,
+            existsIsbn);
 
         given(bookRepository.existsByIsbn(existsIsbn)).willReturn(true);
 
@@ -373,33 +307,13 @@ class BookServiceImplTest {
 
         // given
         UUID bookId = UUID.randomUUID();
-        Book book = Book.builder()
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .thumbnailUrl("http://test-url.com/cover.png")
-            .isbn("1234567890123")
-            .isDeleted(false)
-            .rating(0.0)
-            .reviewCount(0L)
-            .build();
+        Book book = createBookEntity(title, author, description, publisher, publishedDate, isbn,
+            "http://test-url.com/cover.png", 0.0, 0L);
 
         String presignedUrl = "https://cdn.example.com/cover.png";
 
-        BookDto expectedResponse = BookDto.builder()
-            .id(bookId)
-            .title("test book")
-            .author("test author")
-            .description("test description")
-            .publisher("test publisher")
-            .publishedDate(LocalDate.now())
-            .thumbnailUrl(presignedUrl)
-            .isbn("1234567890123")
-            .rating(0.0)
-            .reviewCount(0L)
-            .build();
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher, publishedDate,
+            isbn, presignedUrl, 0L, 0.0, Instant.now(), Instant.now());
 
         given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
         given(bookMapper.toDto(eq(book), any(S3Storage.class))).willReturn(expectedResponse);
@@ -435,47 +349,29 @@ class BookServiceImplTest {
         Instant now = Instant.now();
 
         // 첫 번째 Book 생성 및 createdAt 설정
-        Book book1 = Book.builder()
-            .title("Super Hot Day")
-            .author("김현기")
-            .description("덥다 더워 덥다 더워")
-            .publisher("3팀")
-            .publishedDate(LocalDate.of(2023, 1, 1))
-            .isbn("9788123456789")
-            .rating(4.5)
-            .reviewCount(100L)
-            .build();
+        Book book1 = createBookEntity("Super Hot Day", "김현기", "덥다 더워 덥다 더워",
+            "3팀", LocalDate.of(2023, 1, 1), "9788123456789", null,
+            4.5, 100L);
+
         // ReflectionTestUtils를 사용하여 BaseEntity의 필드 설정
         ReflectionTestUtils.setField(book1, "id", UUID.randomUUID());
         ReflectionTestUtils.setField(book1, "createdAt", now.minusSeconds(3600));
         ReflectionTestUtils.setField(book1, "updatedAt", now.minusSeconds(1800));
 
         // 두 번째 Book 생성 및 createdAt 설정
-        Book book2 = Book.builder()
-            .title("Spring Boot Guide")
-            .author("박스프링")
-            .description("스프링 부트 가이드")
-            .publisher("웹출판사")
-            .publishedDate(LocalDate.of(2023, 6, 1))
-            .isbn("9788987654321")
-            .rating(4.8)
-            .reviewCount(200L)
-            .build();
+        Book book2 = createBookEntity("Spring Boot Guide", "박스프링", "스프링 부트 가이드",
+            "웹출판사", LocalDate.of(2023, 6, 1), "9788987654321", null,
+            4.8, 200L);
+
         ReflectionTestUtils.setField(book2, "id", UUID.randomUUID());
         ReflectionTestUtils.setField(book2, "createdAt", now.minusSeconds(7200));
         ReflectionTestUtils.setField(book2, "updatedAt", now.minusSeconds(3600));
 
         // 세 번째 Book 생성 및 createdAt 설정
-        Book book3 = Book.builder()
-            .title("Database Design")
-            .author("이데이터")
-            .description("데이터베이스 설계")
-            .publisher("DB출판사")
-            .publishedDate(LocalDate.of(2023, 3, 1))
-            .isbn("9788555666777")
-            .rating(4.2)
-            .reviewCount(50L)
-            .build();
+        Book book3 = createBookEntity("Database Desing", "이데이터", "데이터베이스 설계",
+            "DB출판사", LocalDate.of(2023, 3, 1), "9788555666777", null,
+            4.2, 50L);
+
         ReflectionTestUtils.setField(book3, "id", UUID.randomUUID());
         ReflectionTestUtils.setField(book3, "createdAt", now.minusSeconds(10800));
         ReflectionTestUtils.setField(book3, "updatedAt", now.minusSeconds(5400));
@@ -486,48 +382,65 @@ class BookServiceImplTest {
     private List<BookDto> createTestBookDtos() {
         Instant now = Instant.now();
         return List.of(
-            new BookDto(
-                UUID.randomUUID(),
-                "Super Hot Day",
-                "김현기",
-                "덥다 더워 덥다 더워",
-                "3팀",
-                LocalDate.of(2023, 1, 1),
-                "9788123456789",
-                null,
-                100L,
-                4.5,
-                now.minusSeconds(3600),
-                now.minusSeconds(1800)
-            ),
-            new BookDto(
-                UUID.randomUUID(),
-                "Spring Boot Guide",
-                "박스프링",
-                "스프링 부트 가이드",
-                "웹출판사",
-                LocalDate.of(2023, 6, 1),
-                "9788987654321",
-                null,
-                200L,
-                4.8,
-                now.minusSeconds(7200),
-                now.minusSeconds(3600)
-            ),
-            new BookDto(
-                UUID.randomUUID(),
-                "Database Design",
-                "이데이터",
-                "데이터베이스 설계",
-                "DB출판사",
-                LocalDate.of(2023, 3, 1),
-                "9788555666777",
-                null,
-                50L,
-                4.2,
-                now.minusSeconds(10800),
-                now.minusSeconds(5400)
-            )
+            createBookDto(UUID.randomUUID(), "Super Hot Day", "김현기", "덥다 더워 덥다 더워",
+                "3팀", LocalDate.of(2023, 1, 1), "9788123456789",
+                null, 100L, 4.5, now.minusSeconds(3600),
+                now.minusSeconds(1800)),
+            createBookDto(UUID.randomUUID(), "Spring Boot Guide", "박스프링", "스프링 부트 가이드",
+                "웹출판사", LocalDate.of(2023, 6, 1), "9788987654321",
+                null, 200L, 4.8, now.minusSeconds(7200),
+                now.minusSeconds(3600)),
+            createBookDto(UUID.randomUUID(), "Database Design", "이데이터", "데이터베이스 설계",
+                "DB출판사", LocalDate.of(2023, 3, 1), "9788555666777",
+                null, 50L, 4.2, now.minusSeconds(10800),
+                now.minusSeconds(5400))
         );
+    }
+
+    private Book createBookEntity(String title, String author, String description, String publisher,
+        LocalDate publishedDate, String isbn, String thumbnailUrl, Double rating, Long reviewCount) {
+        return Book.builder()
+            .title(title)
+            .author(author)
+            .description(description)
+            .publisher(publisher)
+            .publishedDate(publishedDate)
+            .isbn(isbn)
+            .thumbnailUrl(thumbnailUrl)
+            .rating(rating)
+            .reviewCount(reviewCount)
+            .isDeleted(false)
+            .build();
+    }
+
+    private BookCreateRequest createRequest(String title, String author, String description,
+        String publisher, LocalDate publishedDate, String isbn) {
+        return BookCreateRequest.builder()
+            .title(title)
+            .author(author)
+            .description(description)
+            .publisher(publisher)
+            .publishedDate(publishedDate)
+            .isbn(isbn)
+            .build();
+    }
+
+    private BookDto createBookDto(UUID id, String title, String author, String description,
+        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl, Long reviewCount,
+        Double rating, Instant createdAt, Instant updatedAt) {
+        return BookDto.builder()
+            .id(id)
+            .title(title)
+            .author(author)
+            .description(description)
+            .publisher(publisher)
+            .publishedDate(publishedDate)
+            .isbn(isbn)
+            .thumbnailUrl(thumbnailUrl)
+            .reviewCount(reviewCount)
+            .rating(rating)
+            .createdAt(createdAt)
+            .updatedAt(updatedAt)
+            .build();
     }
 }
