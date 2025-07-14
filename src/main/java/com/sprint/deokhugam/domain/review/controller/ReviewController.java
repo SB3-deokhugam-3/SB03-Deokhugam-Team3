@@ -2,10 +2,10 @@ package com.sprint.deokhugam.domain.review.controller;
 
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
-import com.sprint.deokhugam.domain.review.dto.request.ReviewRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
-import jakarta.validation.Valid;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,18 +28,19 @@ public class ReviewController {
 
     /* 리뷰 목록 조회 */
     @GetMapping
-    public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(ReviewRequest reviewRequest,
+    public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(
+        @Valid ReviewGetRequest reviewGetRequest,
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
         CursorPageResponse<ReviewDto> cursorReviewDtoList = this.reviewService.findAll(
-            reviewRequest, requestUserId);
+            reviewGetRequest, requestUserId);
 
         return ResponseEntity
-            .status(HttpStatus.CREATED)
+            .status(HttpStatus.OK)
             .body(cursorReviewDtoList);
     }
 
     @PostMapping
-    public ResponseEntity<ReviewDto> create(@RequestBody @Valid ReviewCreateRequest request){
+    public ResponseEntity<ReviewDto> create(@RequestBody @Valid ReviewCreateRequest request) {
         ReviewDto reviewDto = reviewService.create(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewDto);

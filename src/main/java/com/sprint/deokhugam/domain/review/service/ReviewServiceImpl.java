@@ -4,7 +4,7 @@ import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
-import com.sprint.deokhugam.domain.review.dto.request.ReviewRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
@@ -33,14 +33,14 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewMapper reviewMapper;
 
     @Override
-    public CursorPageResponse<ReviewDto> findAll(ReviewRequest params, UUID requestUserId) {
+    public CursorPageResponse<ReviewDto> findAll(ReviewGetRequest params, UUID requestUserId) {
         // 마지막 요소를 한개 더 가져온 후 다음 페이지 있는지 확인
-        ReviewRequest paramsWithExtraLimit = params.toBuilder().limit(params.getLimit() + 1)
+        ReviewGetRequest paramsWithExtraLimit = params.toBuilder().limit(params.getLimit() + 1)
             .build();
         List<Review> reviewsWithNextCheck = reviewRepository.findAll(paramsWithExtraLimit);
 
         // 데이터 없으면 바로 return
-        if (reviewsWithNextCheck.isEmpty()) {
+        if (reviewsWithNextCheck == null || reviewsWithNextCheck.isEmpty()) {
             return new CursorPageResponse<>(new ArrayList<>(),
                 null, null, params.getLimit(),
                 0L, false);
@@ -62,7 +62,7 @@ public class ReviewServiceImpl implements ReviewService {
         String nextAfter = lastReview.getCreatedAt().toString();
         Long totalElements = reviewRepository.countAllByFilterCondition(params);
 
-        List<ReviewDto> reviewDtoList = updateLikedByMe(reviews, requestUserId);
+        List<ReviewDto> reviewDtoList = toDtoWithLikedByMe(reviews, requestUserId);
 
         return new CursorPageResponse<>(reviewDtoList,
             nextCursor, nextAfter, params.getLimit(),
@@ -84,7 +84,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     // ReviewDto에 likeByMe값 동적 추가
-    private List<ReviewDto> updateLikedByMe(List<Review> reviews, UUID requestUserId) {
+    private List<ReviewDto> toDtoWithLikedByMe(List<Review> reviews, UUID requestUserId) {
         // TODO : likedByMe는 나중에 mapper 에서 처리하는게 좋을듯 -> 서비스 관련 로직이라 서비스에 냅둘것
         boolean likedByMe = false;
 
