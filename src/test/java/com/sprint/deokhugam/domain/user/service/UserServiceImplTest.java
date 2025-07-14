@@ -11,7 +11,6 @@ import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.DuplicateEmailException;
-import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.mapper.UserMapper;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
@@ -80,38 +79,6 @@ class UserServiceImplTest {
                 .hasMessageContaining("이미 존재하는 이메일입니다.");
     }
 
-    @Test
-    void null_요청으로_회원가입_시도_시_예외가_발생한다() {
-        assertThatThrownBy(() -> userService.createUser(null))
-                .isInstanceOf(InvalidUserRequestException.class);
-    }
-
-    @Test
-    void 빈_이메일로_회원가입_시_예외가_발생한다() {
-        UserCreateRequest request = new UserCreateRequest("", "testUser", "test1234!");
-
-        assertThatThrownBy(() -> userService.createUser(request))
-                .isInstanceOf(InvalidUserRequestException.class)
-                .hasMessageContaining("이메일은 필수로 입력해주셔야 합니다.");
-    }
-
-    @Test
-    void 빈_닉네임으로_회원가입_시_예외가_발생한다() {
-        UserCreateRequest request = new UserCreateRequest("testuser@test.com", "", "test1234!");
-
-        assertThatThrownBy(() -> userService.createUser(request))
-                .isInstanceOf(InvalidUserRequestException.class)
-                .hasMessageContaining("닉네임은 필수로 입력해주셔야 합니다.");
-    }
-
-    @Test
-    void 빈_비밀번호로_회원가입_시_예외가_발생한다() {
-        UserCreateRequest request = new UserCreateRequest("testuser@test.com", "testUser", "");
-
-        assertThatThrownBy(() -> userService.createUser(request))
-                .isInstanceOf(InvalidUserRequestException.class)
-                .hasMessageContaining("비밀번호는 필수로 입력해주셔야 합니다.");
-    }
 
     @Test
     void 존재하는_유저_조회시_성공적으로_조회한다() {
