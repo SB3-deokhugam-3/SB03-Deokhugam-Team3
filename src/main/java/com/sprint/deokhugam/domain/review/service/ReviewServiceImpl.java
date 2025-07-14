@@ -6,6 +6,7 @@ import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
+import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
@@ -61,5 +62,17 @@ public class ReviewServiceImpl implements ReviewService {
             savedReview.getId(), bookId, userId, rating, content);
 
         return reviewMapper.toDto(savedReview);
+    }
+
+    @Override
+    public ReviewDto findById(UUID reviewId) {
+        log.info("[review] 조회 요청: id={}", reviewId);
+
+        return reviewRepository.findById(reviewId)
+            .map(reviewMapper::toDto)
+            .orElseThrow(() -> {
+                log.warn("[review] 조회 실패 - 존재하지 않는 id: id={}", reviewId);
+                return new ReviewNotFoundException(reviewId);
+            });
     }
 }
