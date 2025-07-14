@@ -62,7 +62,7 @@ public class BookController {
         @RequestParam(required = false) Long after,
         @RequestParam(defaultValue = "50") Integer limit
     ) {
-        log.info("도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
+        log.info("[BookController]: 도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
             keyword, orderBy, direction, cursor, after, limit);
 
         // Request DTO 생성
@@ -116,7 +116,7 @@ public class BookController {
             return ResponseEntity.status(HttpStatus.OK).body(extractedIsbn);
         } catch (Exception e) {
             log.error("[BookController]: ISBN 추출 중 오류 발생",e);
-            throw new OcrException("이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
+            throw new OcrException("[BookController]: 이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 

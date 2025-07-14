@@ -29,7 +29,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
 
     @Override
     public List<Book> findBooksWithKeyword(BookSearchRequest request) {
-        log.debug("키워드 검색 실행 - keyword: {}, orderBy: {}, direction: {}, limit: {}",
+        log.debug("[BookRepository]: 키워드 검색 실행 - keyword: {}, orderBy: {}, direction: {}, limit: {}",
             request.keyword(), request.orderBy(), request.direction(), request.limit());
 
         return queryFactory
@@ -45,7 +45,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
 
     @Override
     public List<Book> findBooksWithKeywordAndCursor(BookSearchRequest request) {
-        log.debug("커서 기반 검색 실행 - keyword: {}, cursor: {}, after: {}",
+        log.debug("[BookRepository]: 커서 기반 검색 실행 - keyword: {}, cursor: {}, after: {}",
             request.keyword(), request.cursor(), request.after());
 
         BooleanBuilder whereCondition = new BooleanBuilder()
@@ -63,7 +63,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
 
     @Override
     public long countBooksWithKeyword(String keyword) {
-        log.debug("총 개수 조회 실행 - keyword: {}", keyword);
+        log.debug("[BookRepository]: 총 개수 조회 실행 - keyword: {}", keyword);
 
         Long count = queryFactory
             .select(book.count())

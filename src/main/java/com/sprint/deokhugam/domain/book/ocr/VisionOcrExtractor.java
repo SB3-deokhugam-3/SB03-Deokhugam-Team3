@@ -59,22 +59,22 @@ public class VisionOcrExtractor implements OcrExtractor {
             throw new OcrException("이미지 파일을 읽을 수 없습니다.", e);
         } catch (Exception e) {
             log.error("[OCR]: Google Cloud Vision API OCR 처리 실패", e);
-            throw new OcrException("Google Cloud Vision API OCR 처리 중 오류가 발생했습니다.", e);
+            throw new OcrException("[OCR]: Google Cloud Vision API OCR 처리 중 오류가 발생했습니다.", e);
         }
     }
 
     private void validateImageFile(MultipartFile imageFile) throws OcrException {
         if (imageFile == null || imageFile.isEmpty()) {
-            throw new OcrException("이미지 파일이 없습니다.");
+            throw new OcrException("[OCR]: 이미지 파일이 없습니다.");
         }
 
         if (imageFile.getSize() > MAX_FILE_SIZE) {
-            throw new OcrException("이미지 파일 크기가 너무 큽니다. (최대 10MB)");
+            throw new OcrException("[OCR]: 이미지 파일 크기가 너무 큽니다. (최대 10MB)");
         }
 
         String contentType = imageFile.getContentType();
         if (contentType == null || !SUPPORTED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-            throw new OcrException("지원하지 않는 파일 형식입니다. 지원 형식: " + SUPPORTED_CONTENT_TYPES);
+            throw new OcrException("[OCR]: 지원하지 않는 파일 형식입니다. 지원 형식: " + SUPPORTED_CONTENT_TYPES);
         }
     }
 
@@ -117,7 +117,7 @@ public class VisionOcrExtractor implements OcrExtractor {
             // 오류 check
             if (res.hasError()) {
                 log.error("[OCR]: Vision API 오류 : {}", res.getError().getMessage());
-                throw new RuntimeException("Vision API 오류  : " + res.getError().getMessage());
+                throw new RuntimeException("[OCR]: Vision API 오류  : " + res.getError().getMessage());
             }
 
             // 텍스트 추출
@@ -132,7 +132,7 @@ public class VisionOcrExtractor implements OcrExtractor {
             return null;
         } catch (Exception e) {
             log.error("[OCR]: Google Cloud Vision API 호출 중 오류 발생", e);
-            throw new IOException("Google Cloud Vision API 호출 실패",e);
+            throw new IOException("[OCR]: Google Cloud Vision API 호출 실패",e);
         }
     }
 

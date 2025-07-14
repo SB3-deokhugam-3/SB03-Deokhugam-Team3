@@ -38,7 +38,7 @@ public class TesseractOcrExtractor implements OcrExtractor{
                 // 경로 정규화 (슬래시 통일)
                 tessDataPath = tessDataPath.replace("/", "\\");
                 tesseract.setDatapath(tessDataPath);
-                log.info("Tesseract 데이터 경로 설정: {}", tessDataPath);
+                log.info("[OCR]: Tesseract 데이터 경로 설정: {}", tessDataPath);
             } else {
                 // 기본 경로들을 순서대로 시도
                 String[] defaultPaths = {
@@ -93,7 +93,7 @@ public class TesseractOcrExtractor implements OcrExtractor{
 
             BufferedImage image = ImageIO.read(imageFile.getInputStream());
             if (image == null) {
-                throw new OcrException("이미지를 읽을 수 없습니다.");
+                throw new OcrException("[OCR]: 이미지를 읽을 수 없습니다.");
             }
 
             // 이미지 전처리
@@ -115,28 +115,28 @@ public class TesseractOcrExtractor implements OcrExtractor{
 
         } catch (TesseractException e) {
             log.error("[OCR]: OCR 처리 실패", e);
-            throw new OcrException("Tesseract OCR 처리 중 오류가 발생했습니다.",e);
+            throw new OcrException("[OCR]: Tesseract OCR 처리 중 오류가 발생했습니다.",e);
         } catch (IOException e) {
             log.error("[OCR]: 이미지 파일 읽기 실패", e);
-            throw new OcrException("이미지 파일을 읽을 수 없습니다.",e);
+            throw new OcrException("[OCR]: 이미지 파일을 읽을 수 없습니다.",e);
         }
     }
 
 
     private void validateImageFile(MultipartFile imageFile) throws OcrException {
         if (imageFile == null || imageFile.isEmpty()) {
-            throw new OcrException("이미지 파일이 없습니다.");
+            throw new OcrException("[OCR]: 이미지 파일이 없습니다.");
         }
 
         // 파일 크기 검증 (10MB 제한)
         if (imageFile.getSize() > 10 * 1024 * 1024) {
-            throw new OcrException("이미지 파일 크기가 너무 큽니다. (최대 10MB)");
+            throw new OcrException("[OCR]: 이미지 파일 크기가 너무 큽니다. (최대 10MB)");
         }
 
         // 파일 타입 검증
         String contentType = imageFile.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new OcrException("지원하지 않는 파일 형식입니다.");
+            throw new OcrException("[OCR]: 지원하지 않는 파일 형식입니다.");
         }
     }
 
@@ -208,7 +208,7 @@ public class TesseractOcrExtractor implements OcrExtractor{
             tesseract.doOCR(testImage);
             return true;
         } catch (Exception e) {
-            log.warn("Tesseract를 사용할 수 없습니다! : {}", e.getMessage());
+            log.warn("[OCR]: Tesseract를 사용할 수 없습니다! : {}", e.getMessage());
             return false;
         }
     }
