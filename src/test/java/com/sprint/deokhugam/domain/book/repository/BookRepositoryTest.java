@@ -1,30 +1,32 @@
 package com.sprint.deokhugam.domain.book.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
+@Import({JpaAuditingConfig.class, QueryDslConfig.class})
 @ActiveProfiles("test")
-@Import(QueryDslConfig.class)
-@DisplayName("BookRepository JPA 테스트")
-@EnableJpaAuditing
-public class BookRepositoryTest {
+class BookRepositoryTest {
 
     @Autowired
     private BookRepository bookRepository;
@@ -82,13 +84,49 @@ public class BookRepositoryTest {
     }
 
     @Test
+    void 책을_등록하고_조회할_수_있어야_한다() {
+
+        // given
+        Book bookEntity =  Book.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123")
+            .rating(0.0)
+            .reviewCount(0L)
+            .isDeleted(false)
+            .build();
+
+        // when
+        Book savedBook = bookRepository.save(bookEntity);
+
+        // then
+        Optional<Book> foundBook = bookRepository.findById(savedBook.getId());
+        assertTrue(foundBook.isPresent(), "책이 등록되어야 한다.");
+        assertEquals("test book", savedBook.getTitle());
+        assertEquals("1234567890123", savedBook.getIsbn());
+    }
+
+    @Test
+    void 존재하지_않는_isbn_여부를_확인할_수_있어야_한다() {
+
+        // when
+        boolean exist = bookRepository.existsByIsbn("1234567890111");
+
+        // then
+        assertFalse(exist);
+    }
+
+    @Test
     @DisplayName("기본 JPA 메서드 - findAll")
     void 기본_JPA_메서드_findAll() {
         // when
         List<Book> result = bookRepository.findAll();
 
         // then
-        assertThat(result).hasSize(4);
+        assertThat(result).hasSize(3);
     }
 
 
@@ -496,6 +534,4 @@ public class BookRepositoryTest {
         // then: 발생한 예외 메시지가 올바른지 확인
         assertThat(exception.getMessage()).isEqualTo("페이지 크기는 1 이상 100 이하여야 합니다.");
     }
-
-
 }

@@ -1,13 +1,32 @@
 package com.sprint.deokhugam.domain.book.mapper;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
+import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
-import org.springframework.stereotype.Component;
+import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
+import org.mapstruct.Context;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-public class BookMapper {
+@Mapper(componentModel = "spring")
+public interface BookMapper {
 
-    public BookDto toBookDto(Book book) {
+    // BookCreateRequest -> Book
+    @Mapping(target = "rating", expression = "java(0.0)")
+    @Mapping(target = "reviewCount", expression = "java(0L)")
+    @Mapping(target = "isDeleted", expression = "java(false)")
+    Book toEntity(BookCreateRequest request);
+
+    default BookDto toDto(Book book, @Context S3Storage s3Storage) {
+        if (book == null) {
+            return null;
+        }
+
+        String thumbnailUrl = null;
+        if (book.getThumbnailUrl() != null && !book.getThumbnailUrl().isEmpty()) {
+            thumbnailUrl = s3Storage.generatePresignedUrl(book.getThumbnailUrl());
+        }
+
         return new BookDto(
             book.getId(),
             book.getTitle(),
@@ -16,7 +35,7 @@ public class BookMapper {
             book.getPublisher(),
             book.getPublishedDate(),
             book.getIsbn(),
-            book.getThumbnailUrl(),
+            thumbnailUrl,
             book.getReviewCount(),
             book.getRating(),
             book.getCreatedAt(),
