@@ -104,7 +104,6 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
             BooleanBuilder whereCondition = new BooleanBuilder();
             String direction = params.getDirection();
             Instant cursor = Instant.parse(params.getCursor().toString());
-            log.info("cursor = {}", Instant.parse(params.getCursor().toString()));
             if (direction.equals("DESC")) {
                 whereCondition
                     .or(review.createdAt.loe(cursor));
@@ -150,7 +149,6 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
 
     private OrderSpecifier<?>[] getOrderSpecifiers(QReview review, String orderBy,
         String direction) {
-        log.info("orderBy ={}, direction={}", orderBy, direction);
         OrderSpecifier<?> primary;
         OrderSpecifier<?> secondary;
         // 다른 order 조건을 거치고도 정렬이 고정되지 않는다면, id값으로 최종정렬

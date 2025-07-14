@@ -47,10 +47,8 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         List<Review> reviews = reviewsWithNextCheck;
-        log.info("reviews = {}", reviews);
 
         // hasNext 값 구하기 + limit값만큼만 데이터 전달
-        log.warn("params.getLimit() = {}", params.getLimit());
         boolean hasNext = false;
         if (reviewsWithNextCheck.size() > params.getLimit()) {
             reviews = reviewsWithNextCheck.subList(0, params.getLimit());
