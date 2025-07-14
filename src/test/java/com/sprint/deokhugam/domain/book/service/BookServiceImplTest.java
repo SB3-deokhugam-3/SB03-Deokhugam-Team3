@@ -1,6 +1,7 @@
 package com.sprint.deokhugam.domain.book.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.not;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
@@ -411,6 +412,23 @@ class BookServiceImplTest {
         verify(bookRepository).findById(bookId);
         verify(bookService).findById(bookId);
         verify(bookMapper).toDto(book, storage);
+    }
+
+    @Test
+    void 존재하지_않는_도서_ID로_조회하면_BookNotFoundException이_발생한다() {
+
+        // given
+        UUID notExistId = UUID.randomUUID();
+        given(bookRepository.findById(notExistId)).willReturn(Optional.empty());
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.findById(notExistId));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(BookNotFoundException.class)
+            .hasMessageContaining("존재");
+        verify(bookRepository).findById(notExistId);
     }
 
     private List<Book> createTestBooks() {
