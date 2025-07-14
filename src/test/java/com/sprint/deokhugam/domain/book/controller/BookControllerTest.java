@@ -46,12 +46,10 @@ class BookControllerTest {
 
     private CursorPageResponse<BookDto> mockResponse;
     private List<BookDto> mockBooks;
-    private BookDto book1;
-    private BookDto book2;
 
     @BeforeEach
     void setUp() {
-        book1 = new BookDto(
+        BookDto book1 = new BookDto(
             UUID.randomUUID(),
             "테스트 도서 1",
             "테스트 저자 1",
@@ -66,7 +64,7 @@ class BookControllerTest {
             Instant.now()
         );
 
-        book2 = new BookDto(
+        BookDto book2 = new BookDto(
             UUID.randomUUID(),
             "테스트 도서 2",
             "테스트 저자 2",
@@ -385,20 +383,33 @@ class BookControllerTest {
 
         // given
         UUID bookId = UUID.randomUUID();
-        given(bookService.findById(bookId)).willReturn(book1);
+        BookDto book = BookDto.builder()
+            .id(bookId)
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .isbn("1234567890123")
+            .thumbnailUrl("https://example.com/image1.jpg")
+            .rating(4.5)
+            .reviewCount(10L)
+            .build();
+
+        given(bookService.findById(bookId)).willReturn(book);
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/books/bookId"));
+        ResultActions result = mockMvc.perform(get("/api/books/" + bookId));
 
         // then
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(bookId.toString()))
-            .andExpect(jsonPath("$.title").value("테스트 도서 1"))
-            .andExpect(jsonPath("$.author").value("테스트 저자 1"))
-            .andExpect(jsonPath("$.description").value("테스트 설명 1"))
-            .andExpect(jsonPath("$.publisher").value("테스트 출판사 1"))
-            .andExpect(jsonPath("$.publishedDate").value("2024-01-01"))
-            .andExpect(jsonPath("$.isbn").value("1234567890"))
+            .andExpect(jsonPath("$.title").value("test book"))
+            .andExpect(jsonPath("$.author").value("test author"))
+            .andExpect(jsonPath("$.description").value("test description"))
+            .andExpect(jsonPath("$.publisher").value("test publisher"))
+            .andExpect(jsonPath("$.publishedDate").value(LocalDate.now().toString()))
+            .andExpect(jsonPath("$.isbn").value("1234567890123"))
             .andExpect(jsonPath("$.thumbnailUrl").value("https://example.com/image1.jpg"))
             .andExpect(jsonPath("$.rating").value(4.5))
             .andExpect(jsonPath("$.reviewCount").value(10L));
