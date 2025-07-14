@@ -212,6 +212,7 @@ class BookServiceImplTest {
         BookDto result = bookService.create(request, null);
 
         // then
+        assertNotNull(result);
         assertEquals(expectedResponse, result);
         verify(bookRepository).existsByIsbn("1234567890123");
         verify(bookMapper).toEntity(request);
@@ -363,6 +364,53 @@ class BookServiceImplTest {
         assertThatThrownBy(() -> bookService.getBooks(request))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("페이지 크기는 1 이상 100 이하여야 합니다.");
+    }
+
+    @Test
+    void 존재하는_도서_ID로_조회하면_도서_정보를_반환한다() {
+
+        // given
+        UUID bookId = UUID.randomUUID();
+        Book book = Book.builder()
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .thumbnailUrl("http://test-url.com/cover.png")
+            .isbn("1234567890123")
+            .isDeleted(false)
+            .rating(0.0)
+            .reviewCount(0L)
+            .build();
+
+        String presignedUrl = "https://cdn.example.com/cover.png";
+
+        BookDto expectedResponse = BookDto.builder()
+            .id(bookId)
+            .title("test book")
+            .author("test author")
+            .description("test description")
+            .publisher("test publisher")
+            .publishedDate(LocalDate.now())
+            .thumbnailUrl(presignedUrl)
+            .isbn("1234567890123")
+            .rating(0.0)
+            .reviewCount(0L)
+            .build();
+
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+        given(bookMapper.toDto(eq(book), any(S3Storage.class))).willReturn(expectedResponse);
+
+        // when
+        BookDto result = bookService.findById(bookId);
+
+        // then_
+        assertNotNull(result);
+        assertEquals(expectedResponse, result);
+        verify(bookRepository).findById(bookId);
+        verify(bookService).findById(bookId);
+        verify(bookMapper).toDto(book, storage);
     }
 
     private List<Book> createTestBooks() {
