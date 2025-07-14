@@ -4,6 +4,7 @@ import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
@@ -13,6 +14,7 @@ import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class BookServiceImpl implements BookService {
     private final List<OcrExtractor> ocrExtractors;
 
     @Override
+    @Transactional
     public BookDto create(BookCreateRequest bookData, MultipartFile thumbnailImage) throws IOException {
         log.debug("[BookService]: 책 등록 요청 - bookData: {}", bookData);
 
@@ -203,6 +206,24 @@ public class BookServiceImpl implements BookService {
         // 모든 구현체에서 실패
         log.error("모든 OCR 구현체에서 ISBN 추출에 실패했습니다.");
         throw new OcrException("이미지에서 ISBN을 찾을 수 없습니다.");
+    }
+
+    public BookDto findById(UUID bookId) {
+        log.debug("[BookService] 책 상세 정보 조회 요청 - id: {}", bookId);
+
+        Book book = findBook(bookId);
+
+        log.info("책 조회 성공: book: {}", book);
+
+        return bookMapper.toDto(book, s3Storage);
+    }
+
+    private Book findBook(UUID bookId) {
+        return bookRepository.findById(bookId)
+            .orElseThrow(() -> {
+                log.warn("[BookService]: 도서 조회 실패: id: {}", bookId);
+                return new BookNotFoundException(bookId);
+            });
     }
 
     private String getCursorValue(Book book, String orderBy) {
