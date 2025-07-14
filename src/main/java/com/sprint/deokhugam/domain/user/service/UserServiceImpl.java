@@ -21,6 +21,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserCreateRequest userCreateRequest) {
+
+        log.debug("[UserService]: 사용자 등록 요청 - UserCreateRequest: {}", userCreateRequest);
+
         if (userCreateRequest == null) {
             throw new IllegalArgumentException("null 요청은 받을 수 없습니다.");
         }
@@ -44,11 +47,16 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(userCreateRequest);
         User saved = userRepository.save(user);
 
+        log.info("사용자 등록 완료: id={}, nickname={}", saved.getId(), saved.getNickname());
+
         return userMapper.toDto(saved);
 
     }
 
     public UserDto findUser(UUID userId) {
+
+        log.debug("사용자 조회 요청: id={}", userId);
+
         return userRepository.findById(userId)
                 .map(userMapper::toDto)
                 .orElseThrow(() -> {
