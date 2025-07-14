@@ -36,14 +36,14 @@ class ReviewControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void 리뷰_생성_성공() throws Exception {
+    void 리뷰_생성_요청시_201응답을_반환한다() throws Exception {
         // given
         UUID bookId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         Instant now = Instant.now();
         ReviewCreateRequest request = new ReviewCreateRequest(bookId, userId, "굿 입니당~", 4.2);
-        ReviewDto dto = ReviewDto.builder()
+        ReviewDto reviewDto = ReviewDto.builder()
             .id(reviewId)
             .bookId(bookId)
             .bookTitle("테스트 책")
@@ -58,7 +58,7 @@ class ReviewControllerTest {
             .createdAt(now)
             .updatedAt(now)
             .build();
-        given(reviewService.create(any())).willReturn(dto);
+        given(reviewService.create(any())).willReturn(reviewDto);
 
         // when
         ResultActions result = mockMvc.perform(post("/api/reviews")
@@ -82,7 +82,7 @@ class ReviewControllerTest {
     }
 
     @Test
-    void content_가_빈문자면_리뷰_생성에_실패한다() throws Exception {
+    void content_가_빈문자면_400에러를_반환한다() throws Exception {
         // given
         ReviewCreateRequest request = new ReviewCreateRequest(
             UUID.randomUUID(),
