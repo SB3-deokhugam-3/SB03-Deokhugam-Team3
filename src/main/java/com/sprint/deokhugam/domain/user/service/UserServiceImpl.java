@@ -5,6 +5,8 @@ import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.mapper.UserMapper;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
 
     @Override
     public UserDto createUser(UserCreateRequest userCreateRequest) {
@@ -47,4 +48,12 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    public UserDto findUser(UUID userId) {
+        return userRepository.findById(userId)
+                .map(userMapper::toDto)
+                .orElseThrow(() -> {
+                    log.warn("사용자 조회 실패: id={}", userId);
+                    return new NoSuchElementException("존재하지 않는 사용자 입니다.");
+                });
+    }
 }
