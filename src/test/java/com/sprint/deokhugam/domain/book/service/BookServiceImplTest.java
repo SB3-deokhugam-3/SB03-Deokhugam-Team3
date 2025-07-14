@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,16 +140,7 @@ class BookServiceImplTest {
 
         // then
         assertNotNull(result);
-        assertEquals(bookId, result.id());
-        assertEquals("test book", result.title());
-        assertEquals("test author", result.author());
-        assertEquals("test description", result.description());
-        assertEquals("test publisher", result.publisher());
-        assertEquals(LocalDate.now(), result.publishedDate());
-        assertEquals("1234567890123", result.isbn());
-        assertEquals(presignedUrl, result.thumbnailUrl());
-        assertEquals(0.0, result.rating());
-        assertEquals(0L, result.reviewCount());
+        assertEquals(expectedResponse, result);
         verify(bookRepository).existsByIsbn("1234567890123");
         verify(bookMapper).toEntity(request);
         verify(storage).uploadImage(thumbnail);
@@ -220,16 +212,7 @@ class BookServiceImplTest {
         BookDto result = bookService.create(request, null);
 
         // then
-        assertNotNull(result);
-        assertEquals(bookId, result.id());
-        assertEquals("test book", result.title());
-        assertEquals("test author", result.author());
-        assertEquals("test description", result.description());
-        assertEquals("test publisher", result.publisher());
-        assertEquals(LocalDate.now(), result.publishedDate());
-        assertEquals("1234567890123", result.isbn());
-        assertEquals(0.0, result.rating());
-        assertEquals(0L, result.reviewCount());
+        assertEquals(expectedResponse, result);
         verify(bookRepository).existsByIsbn("1234567890123");
         verify(bookMapper).toEntity(request);
         verify(bookMapper).toDto(savedBook, storage);
@@ -381,8 +364,6 @@ class BookServiceImplTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("페이지 크기는 1 이상 100 이하여야 합니다.");
     }
-
-
 
     private List<Book> createTestBooks() {
         Instant now = Instant.now();
