@@ -26,25 +26,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("[UserService]: 사용자 등록 요청 - UserCreateRequest: {}", userCreateRequest);
 
-        if (userCreateRequest == null) {
-            throw new InvalidUserRequestException("request", "null 요청은 받을 수 없습니다.");
-        }
-
-        if (userCreateRequest.email() == null || userCreateRequest.email().isEmpty()) {
-            throw new InvalidUserRequestException("email", "이메일은 필수로 입력해주셔야 합니다.");
-        }
-
-        if (userCreateRequest.nickname() == null || userCreateRequest.nickname().isEmpty()) {
-            throw new InvalidUserRequestException("nickname", "닉네임은 필수로 입력해주셔야 합니다.");
-        }
-
-        if (userCreateRequest.password() == null || userCreateRequest.password().isEmpty()) {
-            throw new InvalidUserRequestException("password", "비밀번호는 필수로 입력해주셔야 합니다.");
-        }
-
-        if (userRepository.existsByEmail(userCreateRequest.email())) {
-            throw new DuplicateEmailException(userCreateRequest.email(), "이미 존재하는 이메일입니다.");
-        }
+        validateUserCreateRequest(userCreateRequest);
 
         User user = userMapper.toEntity(userCreateRequest);
         User saved = userRepository.save(user);
@@ -65,5 +47,27 @@ public class UserServiceImpl implements UserService {
                     log.warn("[UserService]: 사용자 조회 실패: id={}", userId);
                     return new UserNotFoundException("user", "존재하지 않는 사용자 입니다.");
                 });
+    }
+
+    private void validateUserCreateRequest(UserCreateRequest userCreateRequest) {
+        if (userCreateRequest == null) {
+            throw new InvalidUserRequestException("request", "null 요청은 받을 수 없습니다.");
+        }
+
+        if (userCreateRequest.email() == null || userCreateRequest.email().isEmpty()) {
+            throw new InvalidUserRequestException("email", "이메일은 필수로 입력해주셔야 합니다.");
+        }
+
+        if (userCreateRequest.nickname() == null || userCreateRequest.nickname().isEmpty()) {
+            throw new InvalidUserRequestException("nickname", "닉네임은 필수로 입력해주셔야 합니다.");
+        }
+
+        if (userCreateRequest.password() == null || userCreateRequest.password().isEmpty()) {
+            throw new InvalidUserRequestException("password", "비밀번호는 필수로 입력해주셔야 합니다.");
+        }
+
+        if (userRepository.existsByEmail(userCreateRequest.email())) {
+            throw new DuplicateEmailException(userCreateRequest.email(), "이미 존재하는 이메일입니다.");
+        }
     }
 }
