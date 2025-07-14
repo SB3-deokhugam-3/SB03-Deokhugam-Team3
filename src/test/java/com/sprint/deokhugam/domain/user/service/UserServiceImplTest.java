@@ -5,13 +5,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.mapper.UserMapper;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +32,13 @@ class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl userService;
+
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        user = new User("testuser@test.com", "testUser", "test1234!");
+    }
 
     @Test
     void 회원가입을_하면_회원이_저장된다() {
@@ -106,6 +117,40 @@ class UserServiceImplTest {
         // when & then
         assertThatThrownBy(() -> userService.createUser(request))
                 .hasMessageContaining("비밀번호는 필수로 입력해주셔야 합니다.");
+    }
+
+    @Test
+    void 존재하는_유저_조회시_성공적으로_조회한다() {
+        // given
+        UUID userId = user.getId();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(user)).thenReturn(
+                UserDto.builder()
+                        .id(userId)
+                        .email(user.getEmail())
+                        .nickname(user.getNickname())
+                        .build()
+        );
+
+        // when
+        UserDto result = userService.findUser(userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(userId);
+        assertThat(result.email()).isEqualTo(user.getEmail());
+        assertThat(result.nickname()).isEqualTo(user.getNickname());
+    }
+
+    @Test
+    void 존재하지_않는_유저_조회시_예외가_발생한다() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.findUser(id))
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessageContaining("존재하지 않는 사용자 입니다.");
     }
 
 }
