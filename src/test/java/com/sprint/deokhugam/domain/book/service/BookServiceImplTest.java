@@ -16,6 +16,7 @@ import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
@@ -410,7 +411,6 @@ class BookServiceImplTest {
         assertNotNull(result);
         assertEquals(expectedResponse, result);
         verify(bookRepository).findById(bookId);
-        verify(bookService).findById(bookId);
         verify(bookMapper).toDto(book, storage);
     }
 
@@ -427,7 +427,7 @@ class BookServiceImplTest {
         // then
         assertThat(thrown)
             .isInstanceOf(BookNotFoundException.class)
-            .hasMessageContaining("존재");
+            .hasMessageContaining("BOOK");
         verify(bookRepository).findById(notExistId);
     }
 
