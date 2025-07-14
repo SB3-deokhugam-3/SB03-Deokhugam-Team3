@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -32,33 +33,19 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDto create(ReviewCreateRequest request) {
         UUID bookId = request.bookId();
         UUID userId = request.userId();
-        log.info("[review] 생성 요청: bookId={}, userId={}", bookId, userId);
+        log.info("[review] 생성 요청 - bookId: {}, userId: {}", bookId, userId);
 
-        Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> {
-                log.warn("[review] 생성 실패 - 존재하지 않는 bookId={}", bookId);
-                return new IllegalArgumentException();
-//                return new BookNotFoundException(bookId);
-            });
+        Book book = findByBookId(bookId);
+        User user = findByUserId(userId);
 
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> {
-                log.warn("[review] 생성 실패 - 존재하지 않는 userId={}", userId);
-                return new IllegalArgumentException();
-//                return new UserNotFoundException(userId);
-            });
-
-        if (reviewRepository.existsByBookIdAndUserId(bookId, userId)) {
-            log.warn("[review] 생성 실패 - 해당 review가 이미 존재함: bookId={}, userId={}", bookId, userId);
-            throw new DuplicationReviewException(bookId, userId);
-        }
+        validateDuplicateReview(bookId, userId);
 
         String content = request.content();
         double rating = request.rating();
 
         Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);
-        log.info("[review] 생성 완료 : reviewId={}, bookId={}, userId={}, rating={}, content={}",
+        log.info("[review] 생성 완료 - reviewId: {}, bookId: {}, userId: {}, rating: {}, content: {}",
             savedReview.getId(), bookId, userId, rating, content);
 
         return reviewMapper.toDto(savedReview);
@@ -68,11 +55,40 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDto findById(UUID reviewId) {
         log.info("[review] 조회 요청: id={}", reviewId);
 
-        return reviewRepository.findById(reviewId)
-            .map(reviewMapper::toDto)
+        return reviewMapper.toDto(findByReviewId(reviewId));
+    }
+
+    // 검증 메서드
+    private Book findByBookId(UUID bookId) {
+        return bookRepository.findById(bookId)
             .orElseThrow(() -> {
-                log.warn("[review] 조회 실패 - 존재하지 않는 id: id={}", reviewId);
-                return new ReviewNotFoundException(reviewId);
+                log.warn("[review] 생성 실패 - 존재하지 않는 bookId: {}", bookId);
+                return new IllegalArgumentException();
+//                return new BookNotFoundException(bookId);
+            });
+    }
+
+    private User findByUserId(UUID userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> {
+                log.warn("[review] 생성 실패 - 존재하지 않는 userId: {}", userId);
+                return new IllegalArgumentException();
+//                return new UserNotFoundException(userId);
+            });
+    }
+
+    private void validateDuplicateReview(UUID bookId, UUID userId) {
+        if (reviewRepository.existsByBookIdAndUserId(bookId, userId)) {
+            log.warn("[review] 생성 실패 - 해당 review가 이미 존재함 bookId: {}, userId: {}", bookId, userId);
+            throw new DuplicationReviewException(bookId, userId);
+        }
+    }
+
+    private Review findByReviewId(UUID reviewId) {
+        return reviewRepository.findById(reviewId)
+            .orElseThrow(() -> {
+                log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
+                throw new ReviewNotFoundException(reviewId);
             });
     }
 }
