@@ -38,7 +38,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
-    /*
+    /**
      * 도서 목록 조회 ( 키워드 검색 + 커서 페이지네이션 )
      * @param keyword 검색 키워드 ( 제목, 저자, ISBN에서 부분 일치 )
      * @param orderBy 정렬 기준 ( 제목, 출판일, 평점, 리뷰수 )

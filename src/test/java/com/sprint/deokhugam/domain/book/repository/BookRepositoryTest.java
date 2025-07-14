@@ -130,7 +130,7 @@ class BookRepositoryTest {
     }
 
 
-    /* 정렬 기준별 분기 테스트 */
+    /** 정렬 기준별 분기 테스트 **/
 
     @Test
     @DisplayName("정렬 기준: title - ASC")
@@ -277,7 +277,7 @@ class BookRepositoryTest {
         assertThat(result.get(2).getTitle()).isEqualTo("내일은 일요일");
     }
 
-    /* 키워드 검색 분기 테스트 */
+    /** 키워드 검색 분기 테스트 **/
 
     @Test
     @DisplayName("키워드 검색 - 제목으로 검색")
@@ -364,7 +364,7 @@ class BookRepositoryTest {
         assertThat(result).isEmpty();
     }
 
-    /*  커서 기반 페이지네이션 분기 테스트 */
+    /** 커서 기반 페이지네이션 분기 테스트 **/
 
     @Test
     @DisplayName("커서 조건 - title 기준 커서")
@@ -458,7 +458,7 @@ class BookRepositoryTest {
         assertThat(result).allMatch(book -> book.getCreatedAt().isBefore(after));
     }
 
-    /* 삭제된 도서 필터링 테스트 */
+    /** 삭제된 도서 필터링 테스트 **/
 
     @Test
     @DisplayName("삭제된 도서 필터링 - 삭제된 도서는 조회되지 않음")
@@ -473,7 +473,7 @@ class BookRepositoryTest {
         assertThat(result).isEmpty(); // 삭제된 도서는 조회되지 않음
     }
 
-    /* 총 개수 조회 테스트 */
+    /** 총 개수 조회 테스트 **/
     @Test
     @DisplayName("총 개수 조회 - 키워드 있음")
     void 총_개수_조회_키워드_있음() {
@@ -500,7 +500,7 @@ class BookRepositoryTest {
         assertThat(count).isEqualTo(3); // 삭제되지 않은 모든 도서 수
     }
 
-    /*  기존 유효성 검증 테스트 */
+    /**  기존 유효성 검증 테스트 **/
 
     @Test
     @DisplayName("정렬기준 및 방향 유효성 검증 - 잘못된 값 입력")
