@@ -2,8 +2,9 @@ package com.sprint.deokhugam.domain.review.controller;
 
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
-import com.sprint.deokhugam.domain.review.dto.request.ReviewRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,15 +29,21 @@ public class ReviewController {
 
     /* 리뷰 목록 조회 */
     @GetMapping
-    public ResponseEntity<ReviewDto> findAll(ReviewRequest reviewRequest) {
+    public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(
+        @Valid ReviewGetRequest reviewGetRequest,
+        @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
+        log.info("[ReviewController] 리뷰 조회 : reviewGetRequest: {}, requestUserId:{}", reviewGetRequest.toString(), requestUserId);
+        CursorPageResponse<ReviewDto> cursorReviewDtoList = this.reviewService.findAll(
+            reviewGetRequest, requestUserId);
+
         return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(null);
+            .status(HttpStatus.OK)
+            .body(cursorReviewDtoList);
     }
 
     @PostMapping
     public ResponseEntity<ReviewDto> createReview(@RequestBody @Valid ReviewCreateRequest request) {
-        log.info("[BookController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(), request.userId());
+        log.info("[ReviewController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(), request.userId());
         ReviewDto reviewDto = reviewService.create(request);
 
         return ResponseEntity

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.Builder;
 
-@Builder
+@Builder(toBuilder = true)
 public record ReviewDto(
     UUID id,
     UUID bookId,
@@ -21,5 +21,4 @@ public record ReviewDto(
     Instant updatedAt
 
 ) {
-
 }

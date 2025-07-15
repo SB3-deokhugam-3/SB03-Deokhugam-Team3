@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.review.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,12 +14,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.domain.user.entity.User;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +45,52 @@ class ReviewControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+    private CursorPageResponse<ReviewDto> mockResponse;
+    private List<ReviewDto> mockReviews;
+
+    @BeforeEach
+    void 초기_설정() {
+        ReviewDto review1 = ReviewDto.builder()
+            .id(UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d"))
+            .bookId(UUID.fromString("f6601c1d-c9b9-4ae1-a7aa-b4345921f4ca"))
+            .userId(UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"))
+            .bookTitle("책1")
+            .bookThumbnailUrl("https://example.com/image1.jpg")
+            .userNickname("유저1")
+            .content("리뷰1")
+            .likeCount(10L)
+            .commentCount(12L)
+            .likedByMe(false)
+            .createdAt(Instant.now())
+            .updatedAt(Instant.now())
+            .build();
+
+        ReviewDto review2 = ReviewDto.builder()
+            .id(UUID.fromString("044458f4-72a3-49aa-96f8-1a5160f444e2"))
+            .bookId(UUID.fromString("17fede2c-5df9-4655-999c-03829265850e"))
+            .userId(UUID.fromString("04e8e411-dd9c-451e-b03e-b393557b283e"))
+            .bookTitle("책2")
+            .bookThumbnailUrl("https://example.com/image2.jpg")
+            .userNickname("유저2")
+            .content("리뷰2")
+            .likeCount(382L)
+            .commentCount(2L)
+            .likedByMe(true)
+            .createdAt(Instant.now())
+            .updatedAt(Instant.now())
+            .build();
+
+        mockReviews = List.of(review1, review2);
+        mockResponse = new CursorPageResponse<>(
+            mockReviews,
+            null,
+            null,
+            mockReviews.size(),
+            (long) mockReviews.size(),
+            false
+        );
+    }
+
 
     UUID bookId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
@@ -97,6 +148,44 @@ class ReviewControllerTest {
         result.andExpect(status().isBadRequest())
             .andDo(print());
     }
+
+    @Test
+    void 리뷰를_전체조회하면_200을_반환한다() throws Exception {
+        //given
+        given(reviewService.findAll(any(ReviewGetRequest.class), any(UUID.class))).willReturn(
+            mockResponse);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            get("/api/reviews")
+                .param("requestUserId", "cea1a965-2817-4431-90e3-e5701c70d43d")
+                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
+        );
+
+        //then
+        result
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.size").value(2))
+            .andExpect(jsonPath("$.content[0].userNickname").value("유저1"))
+            .andExpect(jsonPath("$.content[0].content").value("리뷰1"));
+    }
+
+    @Test
+    void requestId가_없이_전체조회하면_400_에러를__반환한다() throws Exception {
+        //given
+        given(reviewService.findAll(any(ReviewGetRequest.class), any(UUID.class))).willReturn(
+            mockResponse);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            get("/api/reviews")
+                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
+        );
+
+        //then
+        result.andExpect(status().isBadRequest());
+    }
+
 
     @Test
     void 리뷰_정보_조회에_성공하면_200응답을_반환한다() throws Exception {
