@@ -6,6 +6,7 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,7 @@ public class ReviewController {
 
     /* 리뷰 논리 삭제 */
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<ReviewDto> deleteReview(@PathVariable UUID reviewId,
+    public ResponseEntity<ReviewDto> deleteReview(@PathVariable @NotNull UUID reviewId,
         @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
         HttpStatus status = reviewService.delete(reviewId, userId);
 
@@ -61,7 +62,7 @@ public class ReviewController {
 
     /* 리뷰 물리 삭제 */
     @DeleteMapping("/{reviewId}/hard")
-    public ResponseEntity<ReviewDto> hardDeleteReview(@PathVariable UUID reviewId,
+    public ResponseEntity<ReviewDto> hardDeleteReview(@PathVariable @NotNull UUID reviewId,
         @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
         HttpStatus status = reviewService.hardDelete(reviewId, userId);
 

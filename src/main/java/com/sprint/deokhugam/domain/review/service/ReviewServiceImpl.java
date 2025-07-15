@@ -11,11 +11,10 @@ import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
-import com.sprint.deokhugam.global.exception.NotFoundException;
-import com.sprint.deokhugam.global.exception.UnauthorizedException;
-import java.util.Map;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
+import com.sprint.deokhugam.global.exception.NotFoundException;
+import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -138,10 +137,12 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public HttpStatus delete(UUID reviewId, UUID userId) {
         Review review = reviewRepository.findById(reviewId)
-            .orElseThrow(() -> new NotFoundException("review",
-                Map.of("reviewId", reviewId)));
+            .orElseThrow(() -> {
+                log.warn("[review] 리뷰 삭제 실패 - 해당 리뷰 없음: reviewId={}", reviewId);
+                return new NotFoundException("review",
+                    Map.of("reviewId", reviewId));
+            });
 
-        /*삭제할 권한이 없는 사용자일때 */
         if (!review.getUser().getId().equals(userId)) {
             log.warn("[review] 리뷰 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", reviewId, userId);
             throw new UnauthorizedException("review",
