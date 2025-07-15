@@ -27,6 +27,16 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
     private final CommentMapper commentMapper;
 
+    /**
+     * Creates a new comment for a given review and user, and returns its DTO representation.
+     *
+     * If the specified review or user does not exist, throws a corresponding exception.
+     *
+     * @param request the request containing review ID, user ID, and comment content
+     * @return the created comment as a CommentDto
+     * @throws ReviewNotFoundException if the review with the given ID does not exist
+     * @throws UserNotFoundException if the user with the given ID does not exist
+     */
     @Transactional
     @Override
     public CommentDto create(CommentCreateRequest request) {

@@ -13,6 +13,12 @@ public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomRev
 
     boolean existsByBookIdAndUserId(UUID bookId, UUID userId);
 
+    /**
+     * Retrieves a deleted review by its unique identifier.
+     *
+     * @param reviewId the unique identifier of the review
+     * @return an Optional containing the deleted Review if found, or empty if not found
+     */
     @Query(value = "SELECT * FROM reviews WHERE id = :id AND is_deleted = true", nativeQuery = true)
     Optional<Review> findDeletedById(@Param("id") UUID reviewId);
 
