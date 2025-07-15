@@ -7,6 +7,6 @@ import java.util.UUID;
 public class ReviewNotFoundException extends NotFoundException {
 
     public ReviewNotFoundException(UUID reviewId) {
-        super("Review", Map.of("reviewId", reviewId));
+        super("Review", Map.of("id", reviewId));
     }
 }
