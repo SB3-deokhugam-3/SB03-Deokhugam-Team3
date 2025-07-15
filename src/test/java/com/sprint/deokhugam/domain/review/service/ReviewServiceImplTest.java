@@ -261,7 +261,6 @@ public class ReviewServiceImplTest {
         );
     }
 
-
     UUID bookId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     String content = "이 책 따봉임";
@@ -385,32 +384,6 @@ public class ReviewServiceImplTest {
             .isInstanceOf(ReviewNotFoundException.class);
     }
 
-    private ReviewCreateRequest createRequest() {
-        return new ReviewCreateRequest(bookId, userId, content, rating);
-    }
-
-    private Review createReview(Book book, User user) {
-        return new Review(rating, content, book, user);
-    }
-
-    private ReviewDto createDto(UUID reviewId) {
-        return ReviewDto.builder()
-            .id(reviewId)
-            .bookId(bookId)
-            .bookTitle("테스트 책")
-            .bookThumbnailUrl("http://image.url")
-            .userId(userId)
-            .userNickname("테스터")
-            .content(content)
-            .rating(rating)
-            .likeCount(0L)
-            .commentCount(0L)
-            .likedByMe(false)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-    }
-
     @Test
     @DisplayName("첫 페이지 조회 - 데이터 있을때")
     void 최신순_오름차순으로_리뷰를_전체조회한다() throws Exception {
@@ -486,6 +459,32 @@ public class ReviewServiceImplTest {
         // then
         assertThat(thrown)
             .isInstanceOf(InvalidTypeException.class);
+    }
+
+    private ReviewCreateRequest createRequest() {
+        return new ReviewCreateRequest(bookId, userId, content, rating);
+    }
+
+    private Review createReview(Book book, User user) {
+        return new Review(rating, content, book, user);
+    }
+
+    private ReviewDto createDto(UUID reviewId) {
+        return ReviewDto.builder()
+            .id(reviewId)
+            .bookId(bookId)
+            .bookTitle("테스트 책")
+            .bookThumbnailUrl("http://image.url")
+            .userId(userId)
+            .userNickname("테스터")
+            .content(content)
+            .rating(rating)
+            .likeCount(0L)
+            .commentCount(0L)
+            .likedByMe(false)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
     }
 
 
