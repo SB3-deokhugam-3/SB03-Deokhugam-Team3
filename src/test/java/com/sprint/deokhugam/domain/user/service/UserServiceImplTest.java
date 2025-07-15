@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.DuplicateEmailException;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
@@ -36,10 +37,16 @@ class UserServiceImplTest {
     private UserServiceImpl userService;
 
     private User user;
+    private UserDto userDto;
 
     @BeforeEach
     void setUp() {
-        user = new User("testuser@test.com", "testUser", "test1234!");
+        user = new User("testUser@test.com", "testUser", "test1234!");
+        userDto = UserDto.builder()
+                .id(UUID.randomUUID())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .build();
     }
 
     @Test
@@ -109,5 +116,20 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.findUser(id))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessageContaining("존재하지 않는 사용자 입니다.");
+    }
+
+    @Test
+    void 사용자_로그인_테스트() {
+        UserLoginRequest request = new UserLoginRequest(user.getEmail(), user.getPassword());
+        when(userRepository.findByEmail(user.getEmail()))
+                .thenReturn(Optional.of(user));
+        when(userMapper.toDto(user))
+                .thenReturn(userDto);
+
+        UserDto result = userService.loginUser(request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.email()).isEqualTo(user.getEmail());
+        assertThat(result.nickname()).isEqualTo(user.getNickname());
     }
 }
