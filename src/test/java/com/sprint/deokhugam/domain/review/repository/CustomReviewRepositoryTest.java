@@ -53,10 +53,6 @@ public class CustomReviewRepositoryTest {
             .nickname("유저1")
             .password("encryptedPwd1")
             .build();
-//        ReflectionTestUtils.setField(user1, "id",
-//            UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
-//        ReflectionTestUtils.setField(user1, "createdAt", createdAt1);
-//        ReflectionTestUtils.setField(user1, "updatedAt", createdAt1);
 
         // ---------- [BOOK 1] ----------
         Book book1 = Book.builder()
@@ -71,10 +67,6 @@ public class CustomReviewRepositoryTest {
             .rating(4.5)
             .isDeleted(false)
             .build();
-//        ReflectionTestUtils.setField(book1, "id",
-//            UUID.fromString("f6601c1d-c9b9-4ae1-a7aa-b4345921f4ca"));
-//        ReflectionTestUtils.setField(book1, "createdAt", createdAt1);
-//        ReflectionTestUtils.setField(book1, "updatedAt", createdAt1);
 
         // ---------- [REVIEW 1] ----------
         Review review1 = Review.builder()
@@ -86,10 +78,6 @@ public class CustomReviewRepositoryTest {
             .user(user1)
             .book(book1)
             .build();
-//        ReflectionTestUtils.setField(review1, "id",
-//            UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d"));
-//        ReflectionTestUtils.setField(review1, "createdAt", createdAt1);
-//        ReflectionTestUtils.setField(review1, "updatedAt", createdAt1);
 
         // ---------- [USER 2] ----------
         User user2 = User.builder()
@@ -97,10 +85,6 @@ public class CustomReviewRepositoryTest {
             .nickname("유저2")
             .password("encryptedPwd2")
             .build();
-//        ReflectionTestUtils.setField(user2, "id",
-//            UUID.fromString("04e8e411-dd9c-451e-b03e-b393557b283e"));
-//        ReflectionTestUtils.setField(user2, "createdAt", createdAt2);
-//        ReflectionTestUtils.setField(user2, "updatedAt", createdAt2);
 
         // ---------- [BOOK 2] ----------
         Book book2 = Book.builder()
@@ -115,10 +99,6 @@ public class CustomReviewRepositoryTest {
             .rating(3.8)
             .isDeleted(false)
             .build();
-//        ReflectionTestUtils.setField(book2, "id",
-//            UUID.fromString("17fede2c-5df9-4655-999c-03829265850e"));
-//        ReflectionTestUtils.setField(book2, "createdAt", createdAt2);
-//        ReflectionTestUtils.setField(book2, "updatedAt", createdAt2);
 
         // ---------- [REVIEW 2] ----------
         Review review2 = Review.builder()
@@ -130,10 +110,6 @@ public class CustomReviewRepositoryTest {
             .user(user2)
             .book(book2)
             .build();
-//        ReflectionTestUtils.setField(review2, "id",
-//            UUID.fromString("044458f4-72a3-49aa-96f8-1a5160f444e2"));
-//        ReflectionTestUtils.setField(review2, "createdAt", createdAt2);
-//        ReflectionTestUtils.setField(review2, "updatedAt", createdAt2);
 
         // ---------- [USER 3] ----------
         User user3 = User.builder()
@@ -141,10 +117,6 @@ public class CustomReviewRepositoryTest {
             .nickname("유저3")
             .password("encryptedPwd3")
             .build();
-//        ReflectionTestUtils.setField(user3, "id",
-//            UUID.fromString("92b2771b-59ea-420f-87b0-eafe16ec4321"));
-//        ReflectionTestUtils.setField(user3, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
-//        ReflectionTestUtils.setField(user3, "updatedAt", Instant.parse("2025-01-04T00:00:00Z"));
 
         // ---------- [BOOK 3] ----------
         Book book3 = Book.builder()
@@ -159,10 +131,6 @@ public class CustomReviewRepositoryTest {
             .rating(4.2)
             .isDeleted(false)
             .build();
-//        ReflectionTestUtils.setField(book3, "id",
-//            UUID.fromString("7c315598-cdbe-491b-a2a7-36b6f1fc9473"));
-//        ReflectionTestUtils.setField(book3, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
-//        ReflectionTestUtils.setField(book3, "updatedAt", Instant.parse("2025-01-04T00:00:00Z"));
 
         // ---------- [REVIEW 3] ----------
         Review review3 = Review.builder()
@@ -174,10 +142,6 @@ public class CustomReviewRepositoryTest {
             .user(user3)
             .book(book3)
             .build();
-//        ReflectionTestUtils.setField(review3, "id",
-//            UUID.fromString("b99bc315-2400-4ff6-8891-9a42f4c31bc4"));
-//        ReflectionTestUtils.setField(review3, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
-//        ReflectionTestUtils.setField(review3, "updatedAt", Instant.parse("2025-01-04T00:00:00Z"));
 
         em.persist(user1);
         em.persist(user2);
