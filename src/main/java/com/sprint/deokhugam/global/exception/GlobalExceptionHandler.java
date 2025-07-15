@@ -51,7 +51,8 @@ public class GlobalExceptionHandler {
             }
         });
 
-        DeokhugamException validationException = new DeokhugamException(ErrorCode.INVALID_INPUT_VALUE, details);
+        DeokhugamException validationException = new DeokhugamException(
+            ErrorCode.INVALID_INPUT_VALUE, details);
 
         return toErrorResponse(validationException);
     }
@@ -62,13 +63,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
         IllegalArgumentException ex) {
-        log.warn("[ILLEGAL_ARGUMENT] code={}, message={}", ErrorCode.INVALID_INPUT_VALUE.name(), ex.getMessage());
+        log.warn("[ILLEGAL_ARGUMENT] code={}, message={}", ErrorCode.INVALID_INPUT_VALUE.name(),
+            ex.getMessage());
 
         Map<String, Object> details = debugEnabled
             ? Map.of("originalMessage", ex.getMessage())
             : Map.of();
 
-        DeokhugamException argumentException = new DeokhugamException(ErrorCode.INVALID_INPUT_VALUE, details);
+        DeokhugamException argumentException = new DeokhugamException(ErrorCode.INVALID_INPUT_VALUE,
+            details);
 
         return toErrorResponse(argumentException);
     }
@@ -85,7 +88,8 @@ public class GlobalExceptionHandler {
             ? Map.of("originalMessage", ex.getMessage() != null ? ex.getMessage() : "Unknown error")
             : Map.of();
 
-        DeokhugamException internalException = new DeokhugamException(ErrorCode.INTERNAL_SERVER_ERROR, details);
+        DeokhugamException internalException = new DeokhugamException(
+            ErrorCode.INTERNAL_SERVER_ERROR, details);
 
         return toErrorResponse(internalException);
     }

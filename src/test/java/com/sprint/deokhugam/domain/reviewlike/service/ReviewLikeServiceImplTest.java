@@ -8,8 +8,6 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
-import com.sprint.deokhugam.domain.book.entity.Book;
-import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
@@ -34,25 +32,20 @@ import org.springframework.test.util.ReflectionTestUtils;
 @DisplayName("ReviewLikeService 단위 테스트")
 public class ReviewLikeServiceImplTest {
 
-    @Mock
-    private ReviewLikeRepository reviewLikeRepository;
-
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private ReviewRepository reviewRepository;
-
-    @Mock
-    private ReviewLikeMapper reviewLikeMapper;
-
-    @InjectMocks
-    private ReviewLikeServiceImpl reviewLikeService;
-
     UUID reviewId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     Review review;
     User user;
+    @Mock
+    private ReviewLikeRepository reviewLikeRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private ReviewRepository reviewRepository;
+    @Mock
+    private ReviewLikeMapper reviewLikeMapper;
+    @InjectMocks
+    private ReviewLikeServiceImpl reviewLikeService;
 
     @BeforeEach
     void setUp() {

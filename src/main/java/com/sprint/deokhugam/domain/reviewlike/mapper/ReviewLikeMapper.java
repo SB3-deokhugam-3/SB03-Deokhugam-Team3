@@ -2,7 +2,6 @@ package com.sprint.deokhugam.domain.reviewlike.mapper;
 
 import com.sprint.deokhugam.domain.reviewlike.dto.data.ReviewLikeDto;
 import com.sprint.deokhugam.domain.reviewlike.entity.ReviewLike;
-import java.util.UUID;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
