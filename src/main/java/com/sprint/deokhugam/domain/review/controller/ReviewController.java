@@ -31,6 +31,7 @@ public class ReviewController {
     public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(
         @Valid ReviewGetRequest reviewGetRequest,
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
+        log.debug("[review] 목록 조회 request 요청");
         CursorPageResponse<ReviewDto> cursorReviewDtoList = this.reviewService.findAll(
             reviewGetRequest, requestUserId);
 
@@ -41,8 +42,8 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<ReviewDto> create(@RequestBody @Valid ReviewCreateRequest request) {
+        log.debug("[review] 생성 request 요청");
         ReviewDto reviewDto = reviewService.create(request);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewDto);
     }
 
