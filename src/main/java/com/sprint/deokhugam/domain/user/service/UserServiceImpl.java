@@ -89,7 +89,9 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
 
     }
-    @jakarta.transaction.Transactional
+
+    @Transactional
+    @Override
     public UserDto deleteUser(UUID userID) {
         User user = userRepository.findById(userID)
                 .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
@@ -99,8 +101,9 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 
-    @jakarta.transaction.Transactional
-    public void hareDeleteUser(UUID userID) {
+    @Transactional
+    @Override
+    public void hardDeleteUser(UUID userID) {
         User user = userRepository.findById(userID)
                 .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
 
@@ -111,9 +114,7 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
     }
 
-
-
-        private void validateUserCreateRequest(UserCreateRequest userCreateRequest) {
+    private void validateUserCreateRequest(UserCreateRequest userCreateRequest) {
         if (userRepository.existsByEmail(userCreateRequest.email())) {
             throw new DuplicateEmailException(userCreateRequest.email(), "이미 존재하는 이메일입니다.");
         }
