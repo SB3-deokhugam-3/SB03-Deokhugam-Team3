@@ -30,7 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReviewService 단위 테스트")
-public class ReviewServiceTest {
+public class ReviewServiceImplTest {
 
     @Mock
     private ReviewRepository reviewRepository;

@@ -23,8 +23,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -35,7 +35,7 @@ class ReviewControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private ReviewService reviewService;
 
     @Autowired
@@ -48,7 +48,7 @@ class ReviewControllerTest {
     Instant now = Instant.now();
 
     @Test
-    void 리뷰_생성_성공() throws Exception {
+    void 리뷰_생성_요청시_201응답을_반환한다() throws Exception {
         // given
         UUID reviewId = UUID.randomUUID();
         Book book = mock(Book.class);
@@ -59,8 +59,8 @@ class ReviewControllerTest {
 
         // when
         ResultActions result = mockMvc.perform(post("/api/reviews")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest())));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(createRequest())));
 
         // then
         result.andExpect(status().isCreated())
@@ -79,7 +79,7 @@ class ReviewControllerTest {
     }
 
     @Test
-    void content_가_빈문자면_리뷰_생성에_실패한다() throws Exception {
+    void content_가_빈문자면_400에러를_반환한다() throws Exception {
         // given
         ReviewCreateRequest request = new ReviewCreateRequest(
             UUID.randomUUID(),
@@ -90,8 +90,8 @@ class ReviewControllerTest {
 
         // when
         ResultActions result = mockMvc.perform(post("/api/reviews")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)));
 
         // then
         result.andExpect(status().isBadRequest())

@@ -3,7 +3,6 @@ package com.sprint.deokhugam.domain.review.controller;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewRequest;
-import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -36,11 +34,13 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ResponseEntity<ReviewDto> create(@RequestBody @Valid ReviewCreateRequest request){
+    public ResponseEntity<ReviewDto> createReview(@RequestBody @Valid ReviewCreateRequest request) {
         log.info("[BookController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(), request.userId());
         ReviewDto reviewDto = reviewService.create(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewDto);
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(reviewDto);
     }
 
     @GetMapping("/{reviewId}")

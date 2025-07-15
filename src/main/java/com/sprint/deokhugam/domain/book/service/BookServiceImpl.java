@@ -4,6 +4,7 @@ import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
@@ -11,6 +12,7 @@ import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class BookServiceImpl implements BookService {
     private final S3Storage s3Storage;
 
     @Override
+    @Transactional
     public BookDto create(BookCreateRequest bookData, MultipartFile thumbnailImage) throws IOException {
         log.debug("[BookService]: 책 등록 요청 - bookData: {}", bookData);
 
@@ -109,6 +112,24 @@ public class BookServiceImpl implements BookService {
         log.info("도서 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(), response.hasNext());
 
         return response;
+    }
+
+    public BookDto findById(UUID bookId) {
+        log.debug("[BookService] 책 상세 정보 조회 요청 - id: {}", bookId);
+
+        Book book = findBook(bookId);
+
+        log.info("책 조회 성공: book: {}", book);
+
+        return bookMapper.toDto(book, s3Storage);
+    }
+
+    private Book findBook(UUID bookId) {
+        return bookRepository.findById(bookId)
+            .orElseThrow(() -> {
+                log.warn("[BookService]: 도서 조회 실패: id: {}", bookId);
+                return new BookNotFoundException(bookId);
+            });
     }
 
     private String getCursorValue(Book book, String orderBy) {

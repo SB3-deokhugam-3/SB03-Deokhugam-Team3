@@ -5,6 +5,7 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import java.util.UUID;
 
 public interface ReviewService {
+
     ReviewDto create(ReviewCreateRequest request);
 
     ReviewDto findById(UUID reviewId);
