@@ -34,7 +34,8 @@ public class ReviewController {
     public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(
         @Valid ReviewGetRequest reviewGetRequest,
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
-        log.info("[ReviewController] 리뷰 조회 : reviewGetRequest: {}, requestUserId:{}", reviewGetRequest.toString(), requestUserId);
+        log.info("[ReviewController] 리뷰 조회 : reviewGetRequest: {}, requestUserId:{}",
+            reviewGetRequest.toString(), requestUserId);
         CursorPageResponse<ReviewDto> cursorReviewDtoList = this.reviewService.findAll(
             reviewGetRequest, requestUserId);
 
@@ -45,7 +46,8 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<ReviewDto> createReview(@RequestBody @Valid ReviewCreateRequest request) {
-        log.info("[ReviewController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(), request.userId());
+        log.info("[ReviewController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(),
+            request.userId());
         ReviewDto reviewDto = reviewService.create(request);
 
         return ResponseEntity
@@ -54,7 +56,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
-    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId){
+    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId) {
         log.info("[ReviewController] 리뷰 상세 정보 요청 - id: {}", reviewId);
         ReviewDto reviewDto = reviewService.findById(reviewId);
 
@@ -62,26 +64,28 @@ public class ReviewController {
             .status(HttpStatus.OK)
             .body(reviewDto);
     }
+
     /* 리뷰 논리 삭제 */
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<ReviewDto> deleteReview(@PathVariable @NotNull UUID reviewId,
+    public ResponseEntity<Void> deleteReview(@PathVariable @NotNull UUID reviewId,
         @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
-        HttpStatus status = reviewService.delete(reviewId, userId);
+        reviewService.delete(reviewId, userId);
 
         return ResponseEntity
-            .status(status)
-            .body(null);
+            .noContent()
+            .build();
     }
 
     /* 리뷰 물리 삭제 */
     @DeleteMapping("/{reviewId}/hard")
-    public ResponseEntity<ReviewDto> hardDeleteReview(@PathVariable @NotNull UUID reviewId,
+    public ResponseEntity<Void> hardDeleteReview(@PathVariable @NotNull UUID reviewId,
         @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
-        HttpStatus status = reviewService.hardDelete(reviewId, userId);
+        reviewService.hardDelete(reviewId, userId);
 
         return ResponseEntity
-            .status(status)
-            .body(null);
+            .noContent()
+            .build();
+
     }
 
 }

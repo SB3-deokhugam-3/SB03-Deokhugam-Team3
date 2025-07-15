@@ -14,7 +14,6 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
-import com.sprint.deokhugam.global.exception.NotFoundException;
 import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,6 +126,32 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toDto(findByReviewId(reviewId));
     }
 
+    @Transactional
+    @Override
+    public void delete(UUID reviewId, UUID userId) {
+        Review review = findByReviewId(reviewId);
+
+        validateAuthorizedUser(review, userId);
+
+        review.softDelete();
+
+    }
+
+    @Transactional
+    @Override
+    public void hardDelete(UUID reviewId, UUID userId) {
+        Review review = reviewRepository.findDeletedById(reviewId)
+            .orElseThrow(() -> {
+                log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
+                throw new ReviewNotFoundException(reviewId);
+            });
+
+        validateAuthorizedUser(review, userId);
+
+        reviewRepository.delete(review);
+
+    }
+
     // 검증 메서드
     private Book findByBookId(UUID bookId) {
         return bookRepository.findById(bookId)
@@ -154,50 +178,21 @@ public class ReviewServiceImpl implements ReviewService {
         }
     }
 
+    private void validateAuthorizedUser(Review review, UUID userId) {
+        if (!review.getUser().getId().equals(userId)) {
+            log.warn("[review] 리뷰 하드 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", review.getId(),
+                userId);
+            throw new UnauthorizedException("review",
+                Map.of("userId", userId));
+        }
+
+    }
+
     private Review findByReviewId(UUID reviewId) {
         return reviewRepository.findById(reviewId)
             .orElseThrow(() -> {
                 log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
                 throw new ReviewNotFoundException(reviewId);
             });
-    }
-
-    @Transactional
-    @Override
-    public HttpStatus delete(UUID reviewId, UUID userId) {
-        Review review = reviewRepository.findById(reviewId)
-            .orElseThrow(() -> {
-                log.warn("[review] 리뷰 삭제 실패 - 해당 리뷰 없음: reviewId={}", reviewId);
-                return new NotFoundException("review",
-                    Map.of("reviewId", reviewId));
-            });
-
-        if (!review.getUser().getId().equals(userId)) {
-            log.warn("[review] 리뷰 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", reviewId, userId);
-            throw new UnauthorizedException("review",
-                Map.of("userId", userId));
-        }
-        review.softDelete();
-
-        return HttpStatus.NO_CONTENT;
-    }
-
-    @Transactional
-    @Override
-    public HttpStatus hardDelete(UUID reviewId, UUID userId) {
-        Review review = reviewRepository.findDeletedById(reviewId)
-            .orElseThrow(() -> new NotFoundException("review",
-                Map.of("reviewId", reviewId)));
-
-        /*삭제할 권한이 없는 사용자일때 */
-        if (!review.getUser().getId().equals(userId)) {
-            log.warn("[review] 리뷰 하드 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", reviewId,
-                userId);
-            throw new UnauthorizedException("review",
-                Map.of("userId", userId));
-        }
-        reviewRepository.delete(review);
-
-        return HttpStatus.NO_CONTENT;
     }
 }
