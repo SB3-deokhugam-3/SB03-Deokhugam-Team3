@@ -13,6 +13,6 @@ public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomRev
 
     boolean existsByBookIdAndUserId(UUID bookId, UUID userId);
 
-    @Query(value = "SELECT * FROM reviews WHERE id = :id AND is_DELETED = true", nativeQuery = true)
+    @Query(value = "SELECT * FROM reviews WHERE id = :id AND is_deleted = true", nativeQuery = true)
     Optional<Review> findDeletedById(@Param("id") UUID reviewId);
 }
