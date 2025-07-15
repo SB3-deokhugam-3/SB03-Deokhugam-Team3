@@ -158,6 +158,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Transactional
+    @Override
     public ReviewDto update(UUID reviewId, UUID userId, ReviewUpdateRequest request) {
         Review review = findByReviewId(reviewId);
         validateAuthorizedUser(review, userId, ReviewFeature.UPDATE);
