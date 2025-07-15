@@ -1,5 +1,7 @@
 package com.sprint.deokhugam.domain.book.controller;
 
+import com.sprint.deokhugam.domain.api.BookInfoProvider;
+import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
@@ -30,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class BookController {
 
     private final BookService bookService;
+    private final BookInfoProvider provider;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BookDto> create(
@@ -60,7 +63,8 @@ public class BookController {
         @RequestParam(required = false) Long after,
         @RequestParam(defaultValue = "50") Integer limit
     ) {
-        log.info("도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
+        log.info(
+            "도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
             keyword, orderBy, direction, cursor, after, limit);
 
         // Request DTO 생성
@@ -83,6 +87,15 @@ public class BookController {
         log.info("[BookController] 도서 상세 정보 요청 - id: {}", bookId);
 
         BookDto result = bookService.findById(bookId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<NaverBookDto> getBookInfoByIsbn(@RequestParam String isbn) {
+        log.info("[BookController] 도서 정보 조회 요청 - isbn: {}", isbn);
+
+        NaverBookDto result = provider.fetchInfoByIsbn(isbn);
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
