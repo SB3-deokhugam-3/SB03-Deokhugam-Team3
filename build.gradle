@@ -51,6 +51,8 @@ dependencies {
 
     implementation 'software.amazon.awssdk:s3:2.31.7'
 
+    // webclient
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 // querydsl Q클래스 생성 경로설정
