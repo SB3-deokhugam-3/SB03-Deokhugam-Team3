@@ -34,6 +34,7 @@ public class ReviewController {
     public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(
         @Valid ReviewGetRequest reviewGetRequest,
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
+        log.info("[ReviewController] 리뷰 조회 : reviewGetRequest: {}, requestUserId:{}", reviewGetRequest.toString(), requestUserId);
         CursorPageResponse<ReviewDto> cursorReviewDtoList = this.reviewService.findAll(
             reviewGetRequest, requestUserId);
 
@@ -43,12 +44,24 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ResponseEntity<ReviewDto> create(@RequestBody @Valid ReviewCreateRequest request) {
+    public ResponseEntity<ReviewDto> createReview(@RequestBody @Valid ReviewCreateRequest request) {
+        log.info("[ReviewController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(), request.userId());
         ReviewDto reviewDto = reviewService.create(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewDto);
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(reviewDto);
     }
 
+    @GetMapping("/{reviewId}")
+    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId){
+        log.info("[ReviewController] 리뷰 상세 정보 요청 - id: {}", reviewId);
+        ReviewDto reviewDto = reviewService.findById(reviewId);
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(reviewDto);
+    }
     /* 리뷰 논리 삭제 */
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<ReviewDto> deleteReview(@PathVariable @NotNull UUID reviewId,

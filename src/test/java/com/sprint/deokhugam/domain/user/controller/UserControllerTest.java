@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.service.UserService;
 import java.util.List;
@@ -17,8 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -30,7 +31,7 @@ class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     @Autowired
@@ -146,6 +147,33 @@ class UserControllerTest {
         result.andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
-
     }
+
+    @Test
+    void 로그인_요청이_정상이라면_200과_사용자_정보를_반환한다() throws Exception {
+        // given
+        UserDto userDto = UserDto.builder()
+                .id(UUID.randomUUID())
+                .email("test@test.com")
+                .nickname("testUser")
+                .build();
+
+        UserLoginRequest loginRequest = new UserLoginRequest("test@test.com", "test1234!");
+
+        Mockito.when(userService.loginUser(any(UserLoginRequest.class)))
+                .thenReturn(userDto);
+
+        // when
+        ResultActions result = mockMvc.perform(post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)));
+
+        // then
+        result.andExpectAll(
+                status().isOk(),
+                jsonPath("$.email").value("test@test.com"),
+                jsonPath("$.nickname").value("testUser")
+        );
+    }
+
 }

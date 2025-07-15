@@ -78,27 +78,6 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * MissingRequestHeaderException 처리 (400)
-     */
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<ErrorResponse> handleMissingRequestHeaderException(
-        MissingRequestHeaderException ex) {
-        log.warn("[MISSING_REQUEST_HEADER] code={}, message={}",
-            ErrorCode.MISSING_REQUEST_HEADER.name(),
-            ex.getMessage());
-
-        Map<String, Object> details = debugEnabled
-            ? Map.of("originalMessage", ex.getMessage())
-            : Map.of();
-
-        DeokhugamException argumentException = new DeokhugamException(
-            ErrorCode.MISSING_REQUEST_HEADER,
-            details);
-
-        return toErrorResponse(argumentException);
-    }
-
-    /**
      * 예상치 못한 서버 오류 처리 (500)
      */
     @ExceptionHandler(Exception.class)

@@ -30,9 +30,15 @@ deokhugam:
     s3:
       access-key: ${AWS_S3_ACCESS_KEY}
       secret-key: ${AWS_S3_SECRET_KEY}
-      region: ${AWS_S3_REGION:ap-northeast-2}
-      bucket: ${AWS_S3_BUCKET:deokhugam-thumbnail-image-storage-leader-squad}
+      region: ${AWS_S3_REGION}
+      bucket: ${AWS_S3_BUCKET}
       presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600}
+
+books:
+  api:
+    naver:
+      client-id: ${X-Naver-Client-Id}
+      client-secret: ${X-Naver-Client-Secret}
 
 # Swagger UI
 springdoc:

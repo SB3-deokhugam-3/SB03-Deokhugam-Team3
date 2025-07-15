@@ -12,6 +12,8 @@ public interface ReviewService {
 
     ReviewDto create(ReviewCreateRequest request);
 
+    ReviewDto findById(UUID reviewId);
+
     CursorPageResponse<ReviewDto> findAll(ReviewGetRequest reviewGetRequest, UUID requestUserId);
     HttpStatus delete(UUID reviewId, UUID userId);
 

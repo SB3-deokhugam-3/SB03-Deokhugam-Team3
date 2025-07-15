@@ -6,6 +6,7 @@ import lombok.Getter;
 
 @Getter
 public class DeokhugamException extends RuntimeException {
+
     private final Instant timestamp;
     private final ErrorCode baseErrorCode;
     private final String errorCode;      // 도메인 + 에러 코드 (BOOK_NOT_FOUND)
@@ -13,7 +14,8 @@ public class DeokhugamException extends RuntimeException {
     private final Map<String, Object> details;
 
     // 1. 도메인 있을 때
-    protected DeokhugamException(String domain, ErrorCode baseErrorCode, Map<String, Object> details) {
+    protected DeokhugamException(String domain, ErrorCode baseErrorCode,
+        Map<String, Object> details) {
         super(baseErrorCode.getMessageWithDomain(domain));
         this.timestamp = Instant.now();
         this.baseErrorCode = baseErrorCode;

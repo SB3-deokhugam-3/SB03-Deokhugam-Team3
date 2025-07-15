@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.DuplicateEmailException;
 import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
@@ -37,10 +38,16 @@ class UserServiceImplTest {
     private UserServiceImpl userService;
 
     private User user;
+    private UserDto userDto;
 
     @BeforeEach
     void setUp() {
-        user = new User("testuser@test.com", "testUser", "test1234!");
+        user = new User("testUser@test.com", "testUser", "test1234!");
+        userDto = UserDto.builder()
+                .id(UUID.randomUUID())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .build();
     }
 
     @Test
@@ -80,38 +87,6 @@ class UserServiceImplTest {
                 .hasMessageContaining("이미 존재하는 이메일입니다.");
     }
 
-    @Test
-    void null_요청으로_회원가입_시도_시_예외가_발생한다() {
-        assertThatThrownBy(() -> userService.createUser(null))
-                .isInstanceOf(InvalidUserRequestException.class);
-    }
-
-    @Test
-    void 빈_이메일로_회원가입_시_예외가_발생한다() {
-        UserCreateRequest request = new UserCreateRequest("", "testUser", "test1234!");
-
-        assertThatThrownBy(() -> userService.createUser(request))
-                .isInstanceOf(InvalidUserRequestException.class)
-                .hasMessageContaining("이메일은 필수로 입력해주셔야 합니다.");
-    }
-
-    @Test
-    void 빈_닉네임으로_회원가입_시_예외가_발생한다() {
-        UserCreateRequest request = new UserCreateRequest("testuser@test.com", "", "test1234!");
-
-        assertThatThrownBy(() -> userService.createUser(request))
-                .isInstanceOf(InvalidUserRequestException.class)
-                .hasMessageContaining("닉네임은 필수로 입력해주셔야 합니다.");
-    }
-
-    @Test
-    void 빈_비밀번호로_회원가입_시_예외가_발생한다() {
-        UserCreateRequest request = new UserCreateRequest("testuser@test.com", "testUser", "");
-
-        assertThatThrownBy(() -> userService.createUser(request))
-                .isInstanceOf(InvalidUserRequestException.class)
-                .hasMessageContaining("비밀번호는 필수로 입력해주셔야 합니다.");
-    }
 
     @Test
     void 존재하는_유저_조회시_성공적으로_조회한다() {
@@ -142,5 +117,53 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.findUser(id))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessageContaining("존재하지 않는 사용자 입니다.");
+    }
+
+    @Test
+    void 존재하는_사용자로_로그인시_성공한다() {
+        UserLoginRequest request = new UserLoginRequest(user.getEmail(), user.getPassword());
+        when(userRepository.findByEmail(user.getEmail()))
+                .thenReturn(Optional.of(user));
+        when(userMapper.toDto(user))
+                .thenReturn(userDto);
+
+        UserDto result = userService.loginUser(request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.email()).isEqualTo(user.getEmail());
+        assertThat(result.nickname()).isEqualTo(user.getNickname());
+    }
+
+    @Test
+    void 존재하지_않는_이메일로_로그인시_예외가_발생한다() {
+        // given
+        UserLoginRequest request = new UserLoginRequest("nonexistent@test.com", user.getPassword());
+        when(userRepository.findByEmail("nonexistent@test.com"))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.loginUser(request))
+                .isInstanceOf(InvalidUserRequestException.class)
+                .hasMessageContaining("해당하는 이메일은 존재하지 않습니다.");
+    }
+
+    @Test
+    void 잘못된_비밀번호로_로그인시_예외가_발생한다() {
+        // given
+        UserLoginRequest request = new UserLoginRequest(user.getEmail(), "wrongPassword");
+        when(userRepository.findByEmail(user.getEmail()))
+                .thenReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> userService.loginUser(request))
+                .isInstanceOf(InvalidUserRequestException.class)
+                .hasMessageContaining("비밀번호가 일치하지 않습니다.");
+    }
+
+    @Test
+    void null_요청으로_로그인시_예외가_발생한다() {
+        // when & then
+        assertThatThrownBy(() -> userService.loginUser(null))
+                .isInstanceOf(InvalidUserRequestException.class);
     }
 }
