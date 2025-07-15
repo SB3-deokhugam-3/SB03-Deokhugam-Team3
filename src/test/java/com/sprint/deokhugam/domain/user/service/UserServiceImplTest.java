@@ -5,11 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.DuplicateEmailException;
 import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
@@ -39,6 +41,7 @@ class UserServiceImplTest {
 
     private User user;
     private UserDto userDto;
+    private UUID userId;
 
     @BeforeEach
     void setUp() {
@@ -48,6 +51,7 @@ class UserServiceImplTest {
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .build();
+        userId = user.getId();
     }
 
     @Test
@@ -164,6 +168,46 @@ class UserServiceImplTest {
     void null_요청으로_로그인시_예외가_발생한다() {
         // when & then
         assertThatThrownBy(() -> userService.loginUser(null))
+                .isInstanceOf(InvalidUserRequestException.class);
+    }
+
+    @Test
+    void 닉네임_수정에_성공한다() {
+        // given
+        String newNickname = "updatedNickName";
+
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .nickname(newNickname)
+                .build();
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+
+        UserDto expectedDto = UserDto.builder()
+                .id(userId)
+                .email(user.getEmail())
+                .nickname(newNickname)
+                .build();
+
+        when(userMapper.toDto(user))
+                .thenReturn(expectedDto);
+
+        // when
+        UserDto result = userService.updateUserNickName(request, userId);
+
+        // then
+        assertThat(result.nickname()).isEqualTo(newNickname);
+        assertThat(result.id()).isEqualTo(userId);
+        assertThat(result.email()).isEqualTo(user.getEmail());
+
+        verify(userRepository).findById(userId);
+        verify(userMapper).toDto(user);
+    }
+
+    @Test
+    void null값으로_닉네임_수정할_시_예외가_발생한다() {
+
+        assertThatThrownBy(() -> userService.updateUserNickName(null, userId))
                 .isInstanceOf(InvalidUserRequestException.class);
     }
 }

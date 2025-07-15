@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.user.service;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.DuplicateEmailException;
 import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -72,6 +74,20 @@ public class UserServiceImpl implements UserService {
         }
 
         return userMapper.toDto(user);
+    }
+
+    @Transactional
+    public UserDto updateUserNickName(UserUpdateRequest request, UUID userId) {
+        if (request == null) {
+            throw new InvalidUserRequestException("null", "null값으로 닉네임을 수정할 수 없습니다.");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId, "존재하지 않는 사용자 입니다."));
+
+        user.update(request.nickname());
+
+        return userMapper.toDto(user);
+
     }
 
     private void validateUserCreateRequest(UserCreateRequest userCreateRequest) {
