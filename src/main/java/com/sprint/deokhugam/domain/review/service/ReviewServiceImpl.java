@@ -19,7 +19,6 @@ import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
-import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -150,6 +149,12 @@ public class ReviewServiceImpl implements ReviewService {
                 log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
                 throw new ReviewNotFoundException(reviewId);
             });
+//
+//        Review review = findByReviewId(reviewId);
+//        if (!review.isDeleted()) {
+//            log.warn("[review] 하드 삭제 실패 - 논리 삭제되지 않은 리뷰: {}", reviewId);
+//            throw new ReviewNotSoftDeletedException(reviewId);
+//        }
 
         validateAuthorizedUser(review, userId, ReviewFeature.HARD_DELETE);
 
@@ -197,7 +202,6 @@ public class ReviewServiceImpl implements ReviewService {
                 userId);
             throw new ReviewUnauthorizedAccessException(review.getId(), userId);
         }
-
     }
 
     private Review findByReviewId(UUID reviewId) {
