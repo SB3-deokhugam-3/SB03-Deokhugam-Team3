@@ -53,6 +53,10 @@ dependencies {
 
     // webclient
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Google Cloud Vision API
+    implementation 'com.google.cloud:google-cloud-vision:3.4.0'
+    implementation 'net.sourceforge.tess4j:tess4j:5.11.0'
 }
 
 // querydsl Q클래스 생성 경로설정
