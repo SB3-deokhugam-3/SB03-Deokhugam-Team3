@@ -5,6 +5,7 @@ import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
@@ -149,6 +150,13 @@ public class ReviewServiceImpl implements ReviewService {
         validateAuthorizedUser(review, userId);
 
         reviewRepository.delete(review);
+
+    }
+
+    @Transactional
+    public ReviewDto update(UUID reviewId, UUID userId, ReviewUpdateRequest request) {
+        return new ReviewDto(reviewId, null, null, null, userId, null, request.content(),
+            request.rating(), 0L, 0L, false, null, null);
 
     }
 
