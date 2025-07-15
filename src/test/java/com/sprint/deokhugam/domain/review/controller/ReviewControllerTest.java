@@ -2,9 +2,9 @@ package com.sprint.deokhugam.domain.review.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -19,8 +19,8 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
-import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.domain.user.entity.User;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +29,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -211,7 +210,8 @@ class ReviewControllerTest {
     void 존재하지_않는_리뷰ID로_조회시_404를_반환한다() throws Exception {
         // given
         UUID notFoundId = UUID.randomUUID();
-        given(reviewService.findById(notFoundId)).willThrow(new ReviewNotFoundException(notFoundId));
+        given(reviewService.findById(notFoundId)).willThrow(
+            new ReviewNotFoundException(notFoundId));
 
         // when
         ResultActions result = mockMvc.perform(get("/api/reviews/{reviewId}", notFoundId));
@@ -224,8 +224,7 @@ class ReviewControllerTest {
     @Test
     void review_소프트_삭제를_성공하면_204를_반환한다() throws Exception {
         //given
-        given(reviewService.delete(any(UUID.class), any(UUID.class))).willReturn(
-            HttpStatus.NO_CONTENT);
+        willDoNothing().given(reviewService).delete(any(UUID.class), any(UUID.class));
 
         //when
         ResultActions result = mockMvc.perform(
@@ -266,8 +265,7 @@ class ReviewControllerTest {
     @Test
     void review_하드_삭제를_성공하면_204를_반환한다() throws Exception {
         //given
-        given(reviewService.hardDelete(any(UUID.class), any(UUID.class))).willReturn(
-            HttpStatus.NO_CONTENT);
+        willDoNothing().given(reviewService).hardDelete(any(UUID.class), any(UUID.class));
 
         //when
         ResultActions result = mockMvc.perform(
@@ -304,7 +302,6 @@ class ReviewControllerTest {
             .andExpect(jsonPath("$.code").value("MISSING_REQUEST_HEADER"));
 
     }
-
 
 
     private ReviewCreateRequest createRequest() {

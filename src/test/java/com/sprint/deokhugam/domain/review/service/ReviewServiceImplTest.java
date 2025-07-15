@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.review.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -36,10 +37,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -106,7 +107,7 @@ public class ReviewServiceImplTest {
             .rating(0.0)
             .likeCount(10L)
             .commentCount(12L)
-            .isDeleted(false)
+            .isDeleted(true)
             .user(user1)
             .book(book1)
             .build();
@@ -472,11 +473,11 @@ public class ReviewServiceImplTest {
         given(reviewRepository.findById(any(UUID.class)))
             .willReturn(Optional.of(mockReviews.get(0)));
 
-        //when
-        HttpStatus result = reviewService.delete(reviewId, userId);
+        // when
+        Executable executable = () -> reviewService.delete(reviewId, userId);
 
-        //then
-        Assertions.assertThat(result).isEqualTo(HttpStatus.NO_CONTENT);
+        // then
+        assertDoesNotThrow(executable);
     }
 
     @Test
@@ -520,11 +521,11 @@ public class ReviewServiceImplTest {
         given(reviewRepository.findDeletedById(any(UUID.class)))
             .willReturn(Optional.of(mockReviews.get(0)));
 
-        //when
-        HttpStatus result = reviewService.hardDelete(reviewId, userId);
+        // when
+        Executable executable = () -> reviewService.hardDelete(reviewId, userId);
 
-        //then
-        Assertions.assertThat(result).isEqualTo(HttpStatus.NO_CONTENT);
+        // then
+        assertDoesNotThrow(executable);
     }
 
     @Test
@@ -558,6 +559,7 @@ public class ReviewServiceImplTest {
         Assertions.assertThat(thrown).isInstanceOf(UnauthorizedException.class);
 
     }
+
     private ReviewCreateRequest createRequest() {
         return new ReviewCreateRequest(bookId, userId, content, rating);
     }

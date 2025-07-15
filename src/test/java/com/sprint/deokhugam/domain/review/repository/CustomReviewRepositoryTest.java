@@ -16,7 +16,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -172,8 +171,8 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         //then
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result.get(0).getContent()).isEqualTo("리뷰1");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getContent()).isEqualTo("리뷰1");
     }
 
     @Test
@@ -191,8 +190,8 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result.get(0).getUser().getId()).isEqualTo(userId);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getUser().getId()).isEqualTo(userId);
     }
 
     @Test
@@ -210,8 +209,8 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result.get(0).getBook().getId()).isEqualTo(bookId);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getBook().getId()).isEqualTo(bookId);
     }
 
     /*pagination*/
@@ -231,7 +230,7 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result)
+        assertThat(result)
             .extracting(r -> r.getCreatedAt())
             .allMatch(t -> t.isAfter(after));
     }
@@ -272,12 +271,12 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result).isSortedAccordingTo(
+        assertThat(result).isSortedAccordingTo(
             Comparator.comparingDouble(Review::getRating)
         );
 
-        Assertions.assertThat(result)
-            .allSatisfy(r -> Assertions.assertThat(r.getRating()).isGreaterThanOrEqualTo(1.0));
+        assertThat(result)
+            .allSatisfy(r -> assertThat(r.getRating()).isGreaterThanOrEqualTo(1.0));
     }
 
     @Test
@@ -314,7 +313,7 @@ public class CustomReviewRepositoryTest {
         Long result = reviewRepository.countAllByFilterCondition(request);
 
         // then
-        Assertions.assertThat(result).isEqualTo(3);
+        assertThat(result).isEqualTo(3);
     }
 
 
@@ -333,7 +332,7 @@ public class CustomReviewRepositoryTest {
         Long result = reviewRepository.countAllByFilterCondition(request);
 
         // then
-        Assertions.assertThat(result).isEqualTo(1);
+        assertThat(result).isEqualTo(1);
     }
 
     @Test
@@ -355,9 +354,9 @@ public class CustomReviewRepositoryTest {
         UUID reviewId = mockReviews.get(1).getId();
 
         // when
-        Throwable thrown = catchThrowable(() -> reviewRepository.findDeletedById(reviewId));
+        Optional<Review> result = reviewRepository.findDeletedById(reviewId);
 
         // then
-        assertThat(thrown).isNull();
+        assertThat(result).isEmpty();
     }
 }
