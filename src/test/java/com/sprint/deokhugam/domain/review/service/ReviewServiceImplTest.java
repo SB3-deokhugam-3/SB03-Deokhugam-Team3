@@ -563,9 +563,16 @@ public class ReviewServiceImplTest {
         // given
         UUID reviewId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        String newContent = "업데이트된 내용";
+        Book mockBook = mock(Book.class);
+        User mockUser = mock(User.class);
+        String newContent = "업데이트된 리뷰";
         Double newRating = 3.5;
-        ReviewUpdateRequest updateRequest = new ReviewUpdateRequest(newContent, newRating);
+        ReviewUpdateRequest updateRequest = updateRequest();
+        Review basedReview = createReview(mockBook, mockUser);
+        ReviewDto updatedDto = updateDto(reviewId);
+        given(mockUser.getId()).willReturn(userId);
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(basedReview));
+        given(reviewMapper.toDto(basedReview)).willReturn(updatedDto);
 
         // when
         ReviewDto result = reviewService.update(reviewId, userId, updateRequest);
@@ -573,6 +580,10 @@ public class ReviewServiceImplTest {
         //then
         assertThat(result.content()).isEqualTo(newContent);
         assertThat(result.rating()).isEqualTo(newRating);
+        then(reviewRepository).should().findById(reviewId);
+        then(reviewMapper).should().toDto(basedReview);
+        assertThat(basedReview.getContent()).isEqualTo(newContent);
+        assertThat(basedReview.getRating()).isEqualTo(newRating);
     }
 
     private ReviewCreateRequest createRequest() {
@@ -600,27 +611,27 @@ public class ReviewServiceImplTest {
             .updatedAt(now)
             .build();
     }
-//
-//    private ReviewDto updateDto(UUID reviewId) {
-//        return ReviewDto.builder()
-//            .id(reviewId)
-//            .bookId(bookId)
-//            .bookTitle("테스트 책")
-//            .bookThumbnailUrl("http://image.url")
-//            .userId(userId)
-//            .userNickname("테스터")
-//            .content("업데이트된 리뷰")
-//            .rating(3.2)
-//            .likeCount(0L)
-//            .commentCount(0L)
-//            .likedByMe(false)
-//            .createdAt(now)
-//            .updatedAt(now)
-//            .build();
-//    }
-//
-//    private ReviewUpdateRequest updateRequest() {
-//        return new ReviewUpdateRequest("업데이트된 리뷰", 3.2);
-//    }
+
+    private ReviewDto updateDto(UUID reviewId) {
+        return ReviewDto.builder()
+            .id(reviewId)
+            .bookId(bookId)
+            .bookTitle("테스트 책")
+            .bookThumbnailUrl("http://image.url")
+            .userId(userId)
+            .userNickname("테스터")
+            .content("업데이트된 리뷰")
+            .rating(3.5)
+            .likeCount(0L)
+            .commentCount(0L)
+            .likedByMe(false)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+    }
+
+    private ReviewUpdateRequest updateRequest() {
+        return new ReviewUpdateRequest("업데이트된 리뷰", 3.5);
+    }
 
 }
