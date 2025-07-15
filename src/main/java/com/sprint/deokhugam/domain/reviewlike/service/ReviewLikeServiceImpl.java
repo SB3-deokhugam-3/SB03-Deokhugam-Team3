@@ -28,15 +28,18 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     @Transactional
     @Override
     public ReviewLikeDto toggleLike(UUID reviewId, UUID userId) {
+        if (reviewId == null || userId == null) {
+            throw new IllegalArgumentException("reviewId와 userId는 필수 파라미터입니다");
+        }
         Review review = reviewRepository.findById(reviewId)
             .orElseThrow(() -> {
-                log.warn("[reviewLike] 생성/삭제 실패 - 존재하지 않는 reviewId={}", reviewId);
+                log.warn("[reviewLike] 생성/삭제 실패 - 존재하지 않는 reviewId: {}", reviewId);
                 throw new ReviewNotFoundException(reviewId);
             });
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> {
-                log.warn("[reviewLike] 생성/삭제 실패 - 존재하지 않는 userId={}", userId);
+                log.warn("[reviewLike] 생성/삭제 실패 - 존재하지 않는 userId: {}", userId);
                 throw new IllegalArgumentException();
 //                throw new UserNotFoundException();
             });
@@ -46,7 +49,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
         if (alreadyLiked) {
             reviewLikeRepository.deleteByReviewIdAndUserId(reviewId, userId);
-            log.info("[reviewLike] 좋아요 취소 완료: reviewId={}, userId={}", reviewId, userId);
+            log.info("[reviewLike] 좋아요 취소 완료 - reviewId: {}, userId: {}", reviewId, userId);
 
             review.decreaseLikeCount();
 
@@ -55,7 +58,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         } else {
             ReviewLike reviewLike = new ReviewLike(review, user);
             ReviewLike savedReviewLike = reviewLikeRepository.save(reviewLike);
-            log.info("[reviewLike] 생성 완료 : reviewLikeId={}, reviewId={}, userId={}, isLiked={}",
+            log.info("[reviewLike] 생성 완료 - reviewLikeId: {}, reviewId: {}, userId: {}, isLiked: {}",
                 savedReviewLike.getId(), reviewId, userId, true);
 
             review.increaseLikeCount();
