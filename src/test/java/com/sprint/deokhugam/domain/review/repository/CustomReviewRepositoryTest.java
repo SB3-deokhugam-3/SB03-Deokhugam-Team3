@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +83,7 @@ public class CustomReviewRepositoryTest {
             .rating(4.0)
             .likeCount(10L)
             .commentCount(12L)
-            .isDeleted(false)
+            .isDeleted(true)
             .user(user1)
             .book(book1)
             .build();
@@ -190,6 +191,7 @@ public class CustomReviewRepositoryTest {
         em.persist(review3);
         em.flush();  // DB 반영
         em.clear();  // 영속성 컨텍스트 초기화
+        mockReviews = List.of(review1, review2, review3);
     }
 
     @Test
@@ -368,5 +370,30 @@ public class CustomReviewRepositoryTest {
 
         // then
         Assertions.assertThat(result).isEqualTo(1);
+    }
+
+    @Test
+    void 리뷰를_하드_삭제할때_해당하는_리뷰가_이미_소프트_삭제가_되어있어야_한다() throws Exception {
+        // given
+        UUID reviewId = mockReviews.get(0).getId();
+
+        // when
+        Optional<Review> result = reviewRepository.findDeletedById(reviewId);
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().getIsDeleted()).isEqualTo(true);
+    }
+
+    @Test
+    void 리뷰를_하드_삭제할때_해당하는_리뷰가_이미_소프트_삭제가_되어있지않으면_null을_반환한다() throws Exception {
+        // given
+        UUID reviewId = mockReviews.get(1).getId();
+
+        // when
+        Throwable thrown = catchThrowable(() -> reviewRepository.findDeletedById(reviewId));
+
+        // then
+        assertThat(thrown).isNull();
     }
 }

@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.review.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -187,6 +189,90 @@ class ReviewControllerTest {
 
         //then
         result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void review_소프트_삭제를_성공하면_204를_반환한다() throws Exception {
+        //given
+        given(reviewService.delete(any(UUID.class), any(UUID.class))).willReturn(
+            HttpStatus.NO_CONTENT);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            delete("/api/reviews/cea1a965-2817-4431-90e3-e5701c70d43d")
+                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
+        );
+
+        //then
+        result.andExpect(status().isNoContent());
+    }
+
+    @Test
+    void reviewId없이_소프트_삭제를_하면_에러를_반환한다() throws Exception {
+        //when
+        ResultActions result = mockMvc.perform(
+            delete("/api/reviews/")
+                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
+
+        );
+
+        //then
+        result.andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void 헤더에_DeokhugamRequestUserID가_없을때_소프트_삭제를_하면_에러를_반환한다() throws Exception {
+        //when
+        ResultActions result = mockMvc.perform(
+            delete("/api/reviews/cea1a965-2817-4431-90e3-e5701c70d43d")
+        );
+
+        //then
+        result.andExpect(status().is4xxClientError())
+            .andExpect(jsonPath("$.code").value("MISSING_REQUEST_HEADER"));
+
+    }
+
+    @Test
+    void review_하드_삭제를_성공하면_204를_반환한다() throws Exception {
+        //given
+        given(reviewService.hardDelete(any(UUID.class), any(UUID.class))).willReturn(
+            HttpStatus.NO_CONTENT);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            delete("/api/reviews/cea1a965-2817-4431-90e3-e5701c70d43d/hard")
+                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
+        );
+
+        //then
+        result.andExpect(status().isNoContent());
+    }
+
+    @Test
+    void reviewId없이_하드_삭제를_하면_에러를_반환한다() throws Exception {
+        //when
+        ResultActions result = mockMvc.perform(
+            delete("/api/reviews/hard")
+                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
+
+        );
+
+        //then
+        result.andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void 헤더에_DeokhugamRequestUserID가_없을때_하드_삭제를_하면_에러를_반환한다() throws Exception {
+        //when
+        ResultActions result = mockMvc.perform(
+            delete("/api/reviews/cea1a965-2817-4431-90e3-e5701c70d43d/hard")
+        );
+
+        //then
+        result.andExpect(status().is4xxClientError())
+            .andExpect(jsonPath("$.code").value("MISSING_REQUEST_HEADER"));
+
     }
 
 }
