@@ -146,4 +146,33 @@ public class ReviewLikeServiceImplTest {
         then(reviewLikeRepository).shouldHaveNoInteractions();
         then(reviewLikeMapper).shouldHaveNoInteractions();
     }
+
+    @Test
+    void reviewId가_null이면_예외가_발생한다() {
+        // given
+        UUID userId = UUID.randomUUID();
+
+        // when
+        Throwable thrown = catchThrowable(() -> reviewLikeService.toggleLike(null, userId));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("reviewId와 userId는 필수 파라미터입니다");
+    }
+
+    @Test
+    void userId가_null이면_예외가_발생한다() {
+        // given
+        UUID reviewId = UUID.randomUUID();
+
+        // when
+        Throwable thrown = catchThrowable(() -> reviewLikeService.toggleLike(reviewId, null));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("reviewId와 userId는 필수 파라미터입니다");
+    }
+
 }
