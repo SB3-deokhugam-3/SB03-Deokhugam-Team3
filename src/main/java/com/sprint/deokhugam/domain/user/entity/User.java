@@ -40,4 +40,8 @@ public class User extends BaseUpdatableEntity {
         }
     }
 
+    public void deleted() {
+        this.isDeleted = true;
+    }
+
 }
