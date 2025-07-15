@@ -1,7 +1,10 @@
 package com.sprint.deokhugam.domain.user.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -10,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.service.UserService;
 import java.util.List;
@@ -50,7 +54,6 @@ class UserControllerTest {
                 .id(UUID.randomUUID())
                 .email("test@example.com")
                 .nickname("testuser")
-                .isDeleted(false)
                 .build();
 
         Mockito.when(userService.createUser(any(UserCreateRequest.class)))
@@ -120,12 +123,7 @@ class UserControllerTest {
     void 사용자_조회시_200을_반환한다() throws Exception {
         // Given
         UUID userId = UUID.randomUUID();
-        UserDto userDto = UserDto.builder()
-                .id(userId)
-                .nickname("testUser")
-                .email("testUser@test.com")
-                .isDeleted(false)
-                .build();
+        UserDto userDto = new UserDto(userId, "testUser", "testUser@test.com");
         Mockito.when(userService.findUser(userId)).thenReturn(userDto);
 
         // When
@@ -162,7 +160,6 @@ class UserControllerTest {
                 .id(UUID.randomUUID())
                 .email("test@test.com")
                 .nickname("testUser")
-                .isDeleted(false)
                 .build();
 
         UserLoginRequest loginRequest = new UserLoginRequest("test@test.com", "test1234!");
@@ -182,5 +179,63 @@ class UserControllerTest {
                 jsonPath("$.nickname").value("testUser")
         );
     }
+    @Test
+    void 사용자_닉네임_수정_요청시_200을_반환한다() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        String newNickname = "updatedNickName";
 
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .nickname(newNickname)
+                .build();
+
+        UserDto responseDto = UserDto.builder()
+                .id(userId)
+                .email("test@example.com")
+                .nickname(newNickname)
+                .build();
+
+        when(userService.updateUserNickName(eq(request), eq(userId)))
+                .thenReturn(responseDto);
+
+        // when
+        ResultActions result = mockMvc.perform(
+                patch("/api/users/{userId}", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+        );
+
+        // then
+        result.andExpectAll(
+                status().isOk(),
+                jsonPath("$.id").value(userId.toString()),
+                jsonPath("$.nickname").value(newNickname),
+                jsonPath("$.email").value("test@example.com")
+        );
+    }
+
+    @Test
+    void 닉네임_형식이_잘못되면_400을_반환한다() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        List<String> invalidNicknames = List.of(
+                "",            // 빈 문자열
+                "a",           // 1자
+                "a".repeat(21) // 21자 초과
+        );
+
+        for (String invalidNickname : invalidNicknames) {
+            UserUpdateRequest request = UserUpdateRequest.builder()
+                    .nickname(invalidNickname)
+                    .build();
+
+            // when
+            ResultActions result = mockMvc.perform(patch("/api/users/{userId}", userId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)));
+
+            // then
+            result.andExpect(status().isBadRequest());
+        }
+    }
 }

@@ -13,4 +13,8 @@ public interface ReviewService {
     ReviewDto findById(UUID reviewId);
 
     CursorPageResponse<ReviewDto> findAll(ReviewGetRequest reviewGetRequest, UUID requestUserId);
+
+    void delete(UUID reviewId, UUID userId);
+
+    void hardDelete(UUID reviewId, UUID userId);
 }

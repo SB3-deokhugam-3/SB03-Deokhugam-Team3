@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.review.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -23,17 +24,19 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
+import com.sprint.deokhugam.global.exception.NotFoundException;
+import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -103,7 +106,7 @@ public class ReviewServiceImplTest {
             .rating(0.0)
             .likeCount(10L)
             .commentCount(12L)
-            .isDeleted(false)
+            .isDeleted(true)
             .user(user1)
             .book(book1)
             .build();
@@ -405,11 +408,11 @@ public class ReviewServiceImplTest {
             UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
 
         //then
-        Assertions.assertThat(result.content()).hasSize(2);
-        Assertions.assertThat(result.totalElements()).isEqualTo(100L);
-        Assertions.assertThat(result.hasNext()).isTrue();
-        Assertions.assertThat(result.nextCursor()).isNotNull();
-        Assertions.assertThat(result.nextAfter()).isNotNull();
+        assertThat(result.content()).hasSize(2);
+        assertThat(result.totalElements()).isEqualTo(100L);
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextCursor()).isNotNull();
+        assertThat(result.nextAfter()).isNotNull();
         then(reviewMapper).should(atLeastOnce()).toDto(any(Review.class));
         then(reviewRepository).should().countAllByFilterCondition(any());
     }
@@ -435,7 +438,7 @@ public class ReviewServiceImplTest {
             null, null, 2,
             0L, false);
         //then
-        Assertions.assertThat(result).isEqualTo(expectedCursorPage);
+        assertThat(result).isEqualTo(expectedCursorPage);
         then(reviewMapper).shouldHaveNoInteractions();
         then(reviewRepository).should(never()).countAllByFilterCondition(any());
     }
@@ -459,6 +462,101 @@ public class ReviewServiceImplTest {
         // then
         assertThat(thrown)
             .isInstanceOf(InvalidTypeException.class);
+    }
+
+    @Test
+    void 리뷰를_삭제하면_성공한다() throws Exception {
+        //given
+        UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
+        UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b");
+        given(reviewRepository.findById(any(UUID.class)))
+            .willReturn(Optional.of(mockReviews.get(0)));
+
+        // when
+        Executable executable = () -> reviewService.delete(reviewId, userId);
+
+        // then
+        assertDoesNotThrow(executable);
+    }
+
+    @Test
+    void 삭제하려는_리뷰가_없다면_NotFoundException_에러를_반환한다() throws Exception {
+        //given
+        UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
+        UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b");
+        given(reviewRepository.findById(any(UUID.class)))
+            .willReturn(Optional.empty());
+
+        //when
+        Throwable thrown = catchThrowable(() -> reviewService.delete(reviewId, userId));
+
+        //then
+        assertThat(thrown).isInstanceOf(NotFoundException.class);
+
+    }
+
+    @Test
+    void 삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_UnauthorizedException_에러를_반환한다() throws Exception {
+        //given
+        UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
+        UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-111111111111");
+        given(reviewRepository.findById(any(UUID.class)))
+            .willReturn(Optional.of(mockReviews.get(0)));
+
+        //when
+        Throwable thrown = catchThrowable(() -> reviewService.delete(reviewId, userId));
+
+        //then
+        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+
+    }
+
+
+    @Test
+    void 리뷰를_하드_삭제하면_성공한다() throws Exception {
+        //given
+        UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
+        UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b");
+        given(reviewRepository.findDeletedById(any(UUID.class)))
+            .willReturn(Optional.of(mockReviews.get(0)));
+
+        // when
+        Executable executable = () -> reviewService.hardDelete(reviewId, userId);
+
+        // then
+        assertDoesNotThrow(executable);
+    }
+
+    @Test
+    void 하드_삭제하려는_리뷰가_없다면_NotFoundException_에러를_반환한다() throws Exception {
+        //given
+        UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
+        UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b");
+        given(reviewRepository.findDeletedById(any(UUID.class)))
+            .willReturn(Optional.empty());
+
+        //when
+        Throwable thrown = catchThrowable(() -> reviewService.hardDelete(reviewId, userId));
+
+        //then
+        assertThat(thrown).isInstanceOf(NotFoundException.class);
+
+    }
+
+    @Test
+    void 하드_삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_UnauthorizedException_에러를_반환한다() throws Exception {
+        //given
+        UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
+        UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-111111111111");
+        given(reviewRepository.findDeletedById(any(UUID.class)))
+            .willReturn(Optional.of(mockReviews.get(0)));
+
+        //when
+        Throwable thrown = catchThrowable(() -> reviewService.hardDelete(reviewId, userId));
+
+        //then
+        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+
     }
 
     private ReviewCreateRequest createRequest() {
@@ -486,6 +584,5 @@ public class ReviewServiceImplTest {
             .updatedAt(now)
             .build();
     }
-
 
 }

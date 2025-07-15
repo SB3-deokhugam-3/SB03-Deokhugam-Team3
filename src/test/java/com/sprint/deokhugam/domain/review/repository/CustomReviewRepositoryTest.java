@@ -14,8 +14,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ public class CustomReviewRepositoryTest {
             .rating(4.0)
             .likeCount(10L)
             .commentCount(12L)
-            .isDeleted(false)
+            .isDeleted(true)
             .user(user1)
             .book(book1)
             .build();
@@ -154,6 +154,7 @@ public class CustomReviewRepositoryTest {
         em.persist(review3);
         em.flush();  // DB 반영
         em.clear();  // 영속성 컨텍스트 초기화
+        mockReviews = List.of(review1, review2, review3);
     }
 
     @Test
@@ -170,8 +171,8 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         //then
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result.get(0).getContent()).isEqualTo("리뷰1");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getContent()).isEqualTo("리뷰1");
     }
 
     @Test
@@ -189,8 +190,8 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result.get(0).getUser().getId()).isEqualTo(userId);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getUser().getId()).isEqualTo(userId);
     }
 
     @Test
@@ -208,8 +209,8 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result).hasSize(1);
-        Assertions.assertThat(result.get(0).getBook().getId()).isEqualTo(bookId);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getBook().getId()).isEqualTo(bookId);
     }
 
     /*pagination*/
@@ -229,7 +230,7 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result)
+        assertThat(result)
             .extracting(r -> r.getCreatedAt())
             .allMatch(t -> t.isAfter(after));
     }
@@ -270,12 +271,12 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAll(request);
 
         // then
-        Assertions.assertThat(result).isSortedAccordingTo(
+        assertThat(result).isSortedAccordingTo(
             Comparator.comparingDouble(Review::getRating)
         );
 
-        Assertions.assertThat(result)
-            .allSatisfy(r -> Assertions.assertThat(r.getRating()).isGreaterThanOrEqualTo(1.0));
+        assertThat(result)
+            .allSatisfy(r -> assertThat(r.getRating()).isGreaterThanOrEqualTo(1.0));
     }
 
     @Test
@@ -312,7 +313,7 @@ public class CustomReviewRepositoryTest {
         Long result = reviewRepository.countAllByFilterCondition(request);
 
         // then
-        Assertions.assertThat(result).isEqualTo(3);
+        assertThat(result).isEqualTo(3);
     }
 
 
@@ -331,6 +332,31 @@ public class CustomReviewRepositoryTest {
         Long result = reviewRepository.countAllByFilterCondition(request);
 
         // then
-        Assertions.assertThat(result).isEqualTo(1);
+        assertThat(result).isEqualTo(1);
+    }
+
+    @Test
+    void 리뷰를_하드_삭제할때_해당하는_리뷰가_이미_소프트_삭제가_되어있어야_한다() throws Exception {
+        // given
+        UUID reviewId = mockReviews.get(0).getId();
+
+        // when
+        Optional<Review> result = reviewRepository.findDeletedById(reviewId);
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().getIsDeleted()).isEqualTo(true);
+    }
+
+    @Test
+    void 리뷰를_하드_삭제할때_해당하는_리뷰가_이미_소프트_삭제가_되어있지않으면_null을_반환한다() throws Exception {
+        // given
+        UUID reviewId = mockReviews.get(1).getId();
+
+        // when
+        Optional<Review> result = reviewRepository.findDeletedById(reviewId);
+
+        // then
+        assertThat(result).isEmpty();
     }
 }
