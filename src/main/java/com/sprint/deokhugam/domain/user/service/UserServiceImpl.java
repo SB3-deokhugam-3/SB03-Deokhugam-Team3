@@ -53,7 +53,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto loginUser(UserLoginRequest userLoginRequest) {
+        if (userLoginRequest == null) {
+            throw new InvalidUserRequestException("null", "null 값으로 로그인 할 수 없습니다.");
+        }
         log.debug("[UserService]: 사용자 로그인 요청 : email={}", userLoginRequest.email());
+
         String email = userLoginRequest.email();
         String password = userLoginRequest.password();
 
