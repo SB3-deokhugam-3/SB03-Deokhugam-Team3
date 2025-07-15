@@ -92,11 +92,10 @@ class ReviewControllerTest {
         );
     }
 
-
     UUID bookId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     String content = "굿 입니당~";
-    double rating = 4.2;
+    Integer rating = 4;
     Instant now = Instant.now();
 
     @Test
@@ -120,7 +119,7 @@ class ReviewControllerTest {
             .andExpect(jsonPath("$.bookId").value(bookId.toString()))
             .andExpect(jsonPath("$.userId").value(userId.toString()))
             .andExpect(jsonPath("$.content").value("굿 입니당~"))
-            .andExpect(jsonPath("$.rating").value(4.2))
+            .andExpect(jsonPath("$.rating").value(4))
             .andExpect(jsonPath("$.bookTitle").value("테스트 책"))
             .andExpect(jsonPath("$.bookThumbnailUrl").value("http://image.url"))
             .andExpect(jsonPath("$.userNickname").value("리뷰어"))
@@ -137,7 +136,7 @@ class ReviewControllerTest {
             UUID.randomUUID(),
             UUID.randomUUID(),
             "", // 빈 내용
-            3.0
+            3
         );
 
         // when
@@ -302,7 +301,6 @@ class ReviewControllerTest {
             .andExpect(jsonPath("$.code").value("MISSING_REQUEST_HEADER"));
 
     }
-
 
     private ReviewCreateRequest createRequest() {
         return new ReviewCreateRequest(bookId, userId, content, rating);

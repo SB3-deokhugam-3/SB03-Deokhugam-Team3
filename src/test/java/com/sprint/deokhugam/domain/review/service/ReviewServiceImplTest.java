@@ -11,6 +11,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
@@ -22,6 +23,7 @@ import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
+import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
@@ -104,7 +106,7 @@ public class ReviewServiceImplTest {
         // ---------- [REVIEW 1] ----------
         Review review1 = Review.builder()
             .content("리뷰1")
-            .rating(0.0)
+            .rating(0)
             .likeCount(10L)
             .commentCount(12L)
             .isDeleted(true)
@@ -148,7 +150,7 @@ public class ReviewServiceImplTest {
         // ---------- [REVIEW 2] ----------
         Review review2 = Review.builder()
             .content("리뷰2")
-            .rating(0.0)
+            .rating(0)
             .likeCount(382L)
             .commentCount(2L)
             .isDeleted(false)
@@ -192,7 +194,7 @@ public class ReviewServiceImplTest {
         // ---------- [REVIEW 3] ----------
         Review review3 = Review.builder()
             .content("리뷰3")
-            .rating(0.0)
+            .rating(0)
             .likeCount(77L)
             .commentCount(6L)
             .isDeleted(false)
@@ -304,7 +306,7 @@ public class ReviewServiceImplTest {
 
         // then
         assertThat(thrown)
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(BookNotFoundException.class);
         then(bookRepository).should().findById(bookId);
         then(userRepository).shouldHaveNoInteractions();
         then(reviewRepository).shouldHaveNoInteractions();
@@ -324,7 +326,7 @@ public class ReviewServiceImplTest {
 
         // then
         assertThat(thrown)
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(UserNotFoundException.class);
         then(bookRepository).should().findById(bookId);
         then(userRepository).should().findById(userId);
         then(reviewRepository).shouldHaveNoInteractions();
@@ -566,7 +568,7 @@ public class ReviewServiceImplTest {
         Book mockBook = mock(Book.class);
         User mockUser = mock(User.class);
         String newContent = "업데이트된 리뷰";
-        Double newRating = 3.5;
+        Integer newRating = 3;
         ReviewUpdateRequest updateRequest = updateRequest();
         Review basedReview = createReview(mockBook, mockUser);
         ReviewDto updatedDto = updateDto(reviewId);
@@ -587,11 +589,11 @@ public class ReviewServiceImplTest {
     }
 
     private ReviewCreateRequest createRequest() {
-        return new ReviewCreateRequest(bookId, userId, "이 책 따봉임", 4.5);
+        return new ReviewCreateRequest(bookId, userId, "이 책 따봉임", 4);
     }
 
     private Review createReview(Book book, User user) {
-        return new Review(4.5, "이 책 따봉임", book, user);
+        return new Review(4, "이 책 따봉임", book, user);
     }
 
     private ReviewDto createDto(UUID reviewId) {
@@ -603,7 +605,7 @@ public class ReviewServiceImplTest {
             .userId(userId)
             .userNickname("테스터")
             .content("이 책 따봉임")
-            .rating(4.5)
+            .rating(4)
             .likeCount(0L)
             .commentCount(0L)
             .likedByMe(false)
@@ -621,7 +623,7 @@ public class ReviewServiceImplTest {
             .userId(userId)
             .userNickname("테스터")
             .content("업데이트된 리뷰")
-            .rating(3.5)
+            .rating(3)
             .likeCount(0L)
             .commentCount(0L)
             .likedByMe(false)
@@ -631,7 +633,7 @@ public class ReviewServiceImplTest {
     }
 
     private ReviewUpdateRequest updateRequest() {
-        return new ReviewUpdateRequest("업데이트된 리뷰", 3.5);
+        return new ReviewUpdateRequest("업데이트된 리뷰", 3);
     }
 
 }

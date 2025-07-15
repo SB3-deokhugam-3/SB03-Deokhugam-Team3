@@ -114,7 +114,7 @@ public class ReviewServiceImpl implements ReviewService {
         validateDuplicateReview(bookId, userId);
 
         String content = request.content();
-        double rating = request.rating();
+        Integer rating = request.rating();
 
         Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);

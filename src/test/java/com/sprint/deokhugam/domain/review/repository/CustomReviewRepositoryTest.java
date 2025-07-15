@@ -71,7 +71,7 @@ public class CustomReviewRepositoryTest {
         // ---------- [REVIEW 1] ----------
         Review review1 = Review.builder()
             .content("리뷰1")
-            .rating(4.0)
+            .rating(4)
             .likeCount(10L)
             .commentCount(12L)
             .isDeleted(true)
@@ -103,7 +103,7 @@ public class CustomReviewRepositoryTest {
         // ---------- [REVIEW 2] ----------
         Review review2 = Review.builder()
             .content("리뷰2")
-            .rating(3.0)
+            .rating(3)
             .likeCount(382L)
             .commentCount(2L)
             .isDeleted(false)
@@ -135,7 +135,7 @@ public class CustomReviewRepositoryTest {
         // ---------- [REVIEW 3] ----------
         Review review3 = Review.builder()
             .content("리뷰3")
-            .rating(0.0)
+            .rating(0)
             .likeCount(77L)
             .commentCount(6L)
             .isDeleted(false)
@@ -163,7 +163,7 @@ public class CustomReviewRepositoryTest {
         ReviewGetRequest request = ReviewGetRequest.builder()
             .orderBy("createdAt")
             .direction("DESC")
-            .keyword("유저1") // 닉네임
+            .keyword("유저2") // 닉네임
             .limit(2)
             .build();
 
@@ -172,7 +172,7 @@ public class CustomReviewRepositoryTest {
 
         //then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getContent()).isEqualTo("리뷰1");
+        assertThat(result.get(0).getContent()).isEqualTo("리뷰2");
     }
 
     @Test
@@ -262,7 +262,7 @@ public class CustomReviewRepositoryTest {
         ReviewGetRequest request = ReviewGetRequest.builder()
             .orderBy("rating")
             .direction("ASC")
-            .cursor("1.0")
+            .cursor("1")
             .after(after)
             .limit(10)
             .build();
@@ -276,11 +276,11 @@ public class CustomReviewRepositoryTest {
         );
 
         assertThat(result)
-            .allSatisfy(r -> assertThat(r.getRating()).isGreaterThanOrEqualTo(1.0));
+            .allSatisfy(r -> assertThat(r.getRating()).isGreaterThanOrEqualTo(1));
     }
 
     @Test
-    void 평점순으로_조회하지만_cursor값이_double타입이_아니라면_400에러를_반환한다() throws Exception {
+    void 평점순으로_조회하지만_cursor값이_Integer타입이_아니라면_400에러를_반환한다() throws Exception {
         // given
         Instant after = Instant.parse("2025-01-02T00:00:00Z");
         ReviewGetRequest request = ReviewGetRequest.builder()
@@ -313,7 +313,7 @@ public class CustomReviewRepositoryTest {
         Long result = reviewRepository.countAllByFilterCondition(request);
 
         // then
-        assertThat(result).isEqualTo(3);
+        assertThat(result).isEqualTo(2);
     }
 
 
