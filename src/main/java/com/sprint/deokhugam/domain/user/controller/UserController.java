@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.user.controller;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -72,5 +74,17 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(loginUser);
+    }
+
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserDto> update(
+            @PathVariable UUID userId,
+            @Valid @RequestBody UserUpdateRequest userUpdateRequest
+    ) {
+        UserDto updateUser = userService.updateUserNickName(userUpdateRequest, userId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(updateUser);
     }
 }
