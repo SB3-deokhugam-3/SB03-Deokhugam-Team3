@@ -11,6 +11,7 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
+import com.sprint.deokhugam.domain.review.exception.ReviewNotSoftDeletedException;
 import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
@@ -146,15 +147,9 @@ public class ReviewServiceImpl implements ReviewService {
     public void hardDelete(UUID reviewId, UUID userId) {
         Review review = reviewRepository.findDeletedById(reviewId)
             .orElseThrow(() -> {
-                log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
-                throw new ReviewNotFoundException(reviewId);
+            log.warn("[review] 하드 삭제 실패 - 논리 삭제되지 않은 리뷰: {}", reviewId);
+            throw new ReviewNotSoftDeletedException(reviewId);
             });
-//
-//        Review review = findByReviewId(reviewId);
-//        if (!review.isDeleted()) {
-//            log.warn("[review] 하드 삭제 실패 - 논리 삭제되지 않은 리뷰: {}", reviewId);
-//            throw new ReviewNotSoftDeletedException(reviewId);
-//        }
 
         validateAuthorizedUser(review, userId, ReviewFeature.HARD_DELETE);
 
