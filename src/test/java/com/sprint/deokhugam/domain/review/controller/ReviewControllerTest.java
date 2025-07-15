@@ -110,9 +110,10 @@ class ReviewControllerTest {
         given(reviewService.create(any())).willReturn(expectedDto);
 
         // when
-        ResultActions result = mockMvc.perform(post("/api/reviews")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(createRequest())));
+        ResultActions result = mockMvc.perform(
+            post("/api/reviews")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest())));
 
         // then
         result.andExpect(status().isCreated())
