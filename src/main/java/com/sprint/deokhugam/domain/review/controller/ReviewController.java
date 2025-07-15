@@ -30,11 +30,12 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ResponseEntity<ReviewDto> create(@RequestBody @Valid ReviewCreateRequest request){
+    public ResponseEntity<ReviewDto> createReview(@RequestBody @Valid ReviewCreateRequest request) {
         ReviewDto reviewDto = reviewService.create(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewDto);
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(reviewDto);
     }
-
 
 }
