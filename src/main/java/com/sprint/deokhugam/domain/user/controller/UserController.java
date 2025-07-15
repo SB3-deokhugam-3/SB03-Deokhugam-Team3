@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
@@ -30,13 +29,12 @@ public class UserController {
     public ResponseEntity<UserDto> create(
             @Valid @RequestBody UserCreateRequest userCreateRequest
     ) {
-
-        log.info("[UserController] 사용자 회원가입 요청: email={}, nickname={}",
+        log.info("[UserController] 사용자 회원가입 요청: email: {}, nickname: {}",
                 userCreateRequest.email(), userCreateRequest.nickname());
 
         UserDto createdUser = userService.createUser(userCreateRequest);
 
-        log.info("[UserController] 사용자 회원가입 완료: id={}, email={}",
+        log.info("[UserController] 사용자 회원가입 완료: id: {}, email: {}",
                 createdUser.id(), createdUser.email());
 
         return ResponseEntity
@@ -47,26 +45,28 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> find(
             @PathVariable("userId") UUID userId
-
     ) {
-        log.info("[UserController] 사용자 조회 요청: userId={}", userId);
+        log.info("[UserController] 사용자 조회 요청: userId: {}", userId);
 
         UserDto user = userService.findUser(userId);
 
-        log.info("[UserController] 사용자 조회 완료: id={}, email={}",
+        log.info("[UserController] 사용자 조회 완료: id: {}, email: {}",
                 user.id(), user.email());
-        return ResponseEntity.ok(user);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(user);
     }
 
     @PostMapping("/login")
     public ResponseEntity<UserDto> login(
             @Valid @RequestBody UserLoginRequest userLoginRequest
     ) {
-        log.info("[UserController] 사용자 로그인 요청: email={}", userLoginRequest.email());
+        log.info("[UserController] 사용자 로그인 요청: email: {}", userLoginRequest.email());
 
         UserDto loginUser = userService.loginUser(userLoginRequest);
 
-        log.info("[UserController] 사용자 로그인 성공: id={}, email={}",
+        log.info("[UserController] 사용자 로그인 성공: id: {}, email: {}",
                 loginUser.id(), loginUser.email());
 
         return ResponseEntity
