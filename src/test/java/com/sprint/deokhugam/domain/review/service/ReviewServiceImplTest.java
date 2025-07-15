@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -409,11 +408,11 @@ public class ReviewServiceImplTest {
             UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
 
         //then
-        Assertions.assertThat(result.content()).hasSize(2);
-        Assertions.assertThat(result.totalElements()).isEqualTo(100L);
-        Assertions.assertThat(result.hasNext()).isTrue();
-        Assertions.assertThat(result.nextCursor()).isNotNull();
-        Assertions.assertThat(result.nextAfter()).isNotNull();
+        assertThat(result.content()).hasSize(2);
+        assertThat(result.totalElements()).isEqualTo(100L);
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextCursor()).isNotNull();
+        assertThat(result.nextAfter()).isNotNull();
         then(reviewMapper).should(atLeastOnce()).toDto(any(Review.class));
         then(reviewRepository).should().countAllByFilterCondition(any());
     }
@@ -439,7 +438,7 @@ public class ReviewServiceImplTest {
             null, null, 2,
             0L, false);
         //then
-        Assertions.assertThat(result).isEqualTo(expectedCursorPage);
+        assertThat(result).isEqualTo(expectedCursorPage);
         then(reviewMapper).shouldHaveNoInteractions();
         then(reviewRepository).should(never()).countAllByFilterCondition(any());
     }
@@ -492,7 +491,7 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.delete(reviewId, userId));
 
         //then
-        Assertions.assertThat(thrown).isInstanceOf(NotFoundException.class);
+        assertThat(thrown).isInstanceOf(NotFoundException.class);
 
     }
 
@@ -508,7 +507,7 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.delete(reviewId, userId));
 
         //then
-        Assertions.assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
 
     }
 
@@ -540,7 +539,7 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.hardDelete(reviewId, userId));
 
         //then
-        Assertions.assertThat(thrown).isInstanceOf(NotFoundException.class);
+        assertThat(thrown).isInstanceOf(NotFoundException.class);
 
     }
 
@@ -556,7 +555,7 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.hardDelete(reviewId, userId));
 
         //then
-        Assertions.assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
 
     }
 
