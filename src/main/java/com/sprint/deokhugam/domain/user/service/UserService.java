@@ -14,4 +14,8 @@ public interface UserService {
     UserDto loginUser(UserLoginRequest userLoginRequest);
 
     UserDto updateUserNickName(UserUpdateRequest request, UUID userId);
+
+    UserDto deleteUser(UUID userID);
+
+    void hardDeleteUser(UUID userID);
 }
