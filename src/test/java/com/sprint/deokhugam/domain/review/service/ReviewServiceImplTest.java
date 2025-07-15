@@ -20,12 +20,14 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
+import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.exception.ForbiddenException;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import com.sprint.deokhugam.global.exception.NotFoundException;
 import com.sprint.deokhugam.global.exception.UnauthorizedException;
@@ -497,7 +499,7 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_UnauthorizedException_에러를_반환한다() throws Exception {
+    void 삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_ReviewUnauthorizedAccessException_에러를_반환한다() throws Exception {
         //given
         UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
         UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-111111111111");
@@ -508,7 +510,7 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.delete(reviewId, userId));
 
         //then
-        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+        assertThat(thrown).isInstanceOf(ReviewUnauthorizedAccessException.class);
 
     }
 
@@ -545,7 +547,7 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 하드_삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_UnauthorizedException_에러를_반환한다() throws Exception {
+    void 하드_삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_ReviewUnauthorizedAccessException_에러를_반환한다() throws Exception {
         //given
         UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
         UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-111111111111");
@@ -556,7 +558,7 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.hardDelete(reviewId, userId));
 
         //then
-        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+        assertThat(thrown).isInstanceOf(ReviewUnauthorizedAccessException.class);
 
     }
 
