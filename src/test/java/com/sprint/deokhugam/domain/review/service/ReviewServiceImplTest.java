@@ -15,6 +15,7 @@ import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
@@ -266,8 +267,6 @@ public class ReviewServiceImplTest {
 
     UUID bookId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
-    String content = "이 책 따봉임";
-    double rating = 4.2;
     Instant now = Instant.now();
 
     @Test
@@ -559,12 +558,29 @@ public class ReviewServiceImplTest {
 
     }
 
+    @Test
+    void 리뷰가_존재하면_정상_수정된다() {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        String newContent = "업데이트된 내용";
+        Double newRating = 3.5;
+        ReviewUpdateRequest updateRequest = new ReviewUpdateRequest(newContent, newRating);
+
+        // when
+        ReviewDto result = reviewService.update(reviewId, userId, updateRequest);
+
+        //then
+        assertThat(result.content()).isEqualTo(newContent);
+        assertThat(result.rating()).isEqualTo(newRating);
+    }
+
     private ReviewCreateRequest createRequest() {
-        return new ReviewCreateRequest(bookId, userId, content, rating);
+        return new ReviewCreateRequest(bookId, userId, "이 책 따봉임", 4.5);
     }
 
     private Review createReview(Book book, User user) {
-        return new Review(rating, content, book, user);
+        return new Review(4.5, "이 책 따봉임", book, user);
     }
 
     private ReviewDto createDto(UUID reviewId) {
@@ -575,8 +591,8 @@ public class ReviewServiceImplTest {
             .bookThumbnailUrl("http://image.url")
             .userId(userId)
             .userNickname("테스터")
-            .content(content)
-            .rating(rating)
+            .content("이 책 따봉임")
+            .rating(4.5)
             .likeCount(0L)
             .commentCount(0L)
             .likedByMe(false)
@@ -584,5 +600,27 @@ public class ReviewServiceImplTest {
             .updatedAt(now)
             .build();
     }
+//
+//    private ReviewDto updateDto(UUID reviewId) {
+//        return ReviewDto.builder()
+//            .id(reviewId)
+//            .bookId(bookId)
+//            .bookTitle("테스트 책")
+//            .bookThumbnailUrl("http://image.url")
+//            .userId(userId)
+//            .userNickname("테스터")
+//            .content("업데이트된 리뷰")
+//            .rating(3.2)
+//            .likeCount(0L)
+//            .commentCount(0L)
+//            .likedByMe(false)
+//            .createdAt(now)
+//            .updatedAt(now)
+//            .build();
+//    }
+//
+//    private ReviewUpdateRequest updateRequest() {
+//        return new ReviewUpdateRequest("업데이트된 리뷰", 3.2);
+//    }
 
 }
