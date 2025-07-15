@@ -9,6 +9,7 @@ import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.mapper.UserMapper;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,28 @@ public class UserServiceImpl implements UserService {
         }
 
         return userMapper.toDto(user);
+    }
+
+    @Transactional
+    public UserDto deleteUser(UUID userID) {
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+
+        user.deleted();
+
+        return userMapper.toDto(user);
+    }
+
+    @Transactional
+    public void hareDeleteUser(UUID userID) {
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+
+        if (!user.getIsDeleted()) {
+            throw new InvalidUserRequestException("userId", "논리 삭제되지 않은 사용자는 물리 삭제할 수 없습니다.");
+        }
+
+        userRepository.delete(user);
     }
 
     private void validateUserCreateRequest(UserCreateRequest userCreateRequest) {
