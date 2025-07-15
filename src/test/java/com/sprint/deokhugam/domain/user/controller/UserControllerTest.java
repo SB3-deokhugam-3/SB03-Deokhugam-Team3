@@ -50,6 +50,7 @@ class UserControllerTest {
                 .id(UUID.randomUUID())
                 .email("test@example.com")
                 .nickname("testuser")
+                .isDeleted(false)
                 .build();
 
         Mockito.when(userService.createUser(any(UserCreateRequest.class)))
@@ -119,7 +120,12 @@ class UserControllerTest {
     void 사용자_조회시_200을_반환한다() throws Exception {
         // Given
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(userId, "testUser", "testUser@test.com");
+        UserDto userDto = UserDto.builder()
+                .id(userId)
+                .nickname("testUser")
+                .email("testUser@test.com")
+                .isDeleted(false)
+                .build();
         Mockito.when(userService.findUser(userId)).thenReturn(userDto);
 
         // When
@@ -156,6 +162,7 @@ class UserControllerTest {
                 .id(UUID.randomUUID())
                 .email("test@test.com")
                 .nickname("testUser")
+                .isDeleted(false)
                 .build();
 
         UserLoginRequest loginRequest = new UserLoginRequest("test@test.com", "test1234!");
