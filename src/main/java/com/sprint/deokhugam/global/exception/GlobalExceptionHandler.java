@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -25,9 +24,9 @@ public class GlobalExceptionHandler {
     /**
      * 도메인 예외 공통 처리 메서드
      */
-    @ExceptionHandler(DeokhugamException.class)
-    public ResponseEntity<ErrorResponse> handleDeokhugamException(DeokhugamException ex) {
-        log.warn("[예외 처리] DeokhugamException 발생: {}", ex.getMessage(), ex);
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDeokhugamException(DomainException ex) {
+        log.warn("[예외 처리] DomainException 발생: {}", ex.getMessage(), ex);
         log.debug("[예외 처리] 에러 코드: {}, HTTP 상태: {}", ex.getErrorCodeString(),
             ex.getErrorCode().getStatus());
 
@@ -52,7 +51,7 @@ public class GlobalExceptionHandler {
             }
         });
 
-        DeokhugamException validationException = new DeokhugamException(
+        DomainException validationException = new DomainException(
             ErrorCode.INVALID_INPUT_VALUE, details);
 
         return toErrorResponse(validationException);
@@ -71,7 +70,7 @@ public class GlobalExceptionHandler {
             ? Map.of("originalMessage", ex.getMessage())
             : Map.of();
 
-        DeokhugamException argumentException = new DeokhugamException(ErrorCode.INVALID_INPUT_VALUE,
+        DomainException argumentException = new DomainException(ErrorCode.INVALID_INPUT_VALUE,
             details);
 
         return toErrorResponse(argumentException);
@@ -89,13 +88,13 @@ public class GlobalExceptionHandler {
             ? Map.of("originalMessage", ex.getMessage() != null ? ex.getMessage() : "Unknown error")
             : Map.of();
 
-        DeokhugamException internalException = new DeokhugamException(
+        DomainException internalException = new DomainException(
             ErrorCode.INTERNAL_SERVER_ERROR, details);
 
         return toErrorResponse(internalException);
     }
 
-    private ResponseEntity<ErrorResponse> toErrorResponse(DeokhugamException ex) {
+    private ResponseEntity<ErrorResponse> toErrorResponse(DomainException ex) {
         return ResponseEntity.status(ex.getErrorCode().getHttpStatus())
             .body(ErrorResponse.of(ex));
     }

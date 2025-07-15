@@ -1,6 +1,6 @@
 package com.sprint.deokhugam.global.dto.response;
 
-import com.sprint.deokhugam.global.exception.DeokhugamException;
+import com.sprint.deokhugam.global.exception.DomainException;
 import java.time.Instant;
 import java.util.Map;
 
@@ -13,7 +13,7 @@ public record ErrorResponse(
     int status
 ) {
 
-    public static ErrorResponse of(DeokhugamException ex) {
+    public static ErrorResponse of(DomainException ex) {
         return new ErrorResponse(
             ex.getTimestamp(),
             ex.getErrorCodeString(),

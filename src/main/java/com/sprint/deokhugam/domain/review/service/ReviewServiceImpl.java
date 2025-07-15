@@ -1,20 +1,25 @@
 package com.sprint.deokhugam.domain.review.service;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewFeature;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
+import com.sprint.deokhugam.domain.review.exception.ReviewNotSoftDeletedException;
+import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
+import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
-import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +114,7 @@ public class ReviewServiceImpl implements ReviewService {
         validateDuplicateReview(bookId, userId);
 
         String content = request.content();
-        double rating = request.rating();
+        Integer rating = request.rating();
 
         Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);
@@ -131,7 +136,7 @@ public class ReviewServiceImpl implements ReviewService {
     public void delete(UUID reviewId, UUID userId) {
         Review review = findByReviewId(reviewId);
 
-        validateAuthorizedUser(review, userId);
+        validateAuthorizedUser(review, userId, ReviewFeature.SOFT_DELETE);
 
         review.softDelete();
 
@@ -142,14 +147,25 @@ public class ReviewServiceImpl implements ReviewService {
     public void hardDelete(UUID reviewId, UUID userId) {
         Review review = reviewRepository.findDeletedById(reviewId)
             .orElseThrow(() -> {
-                log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
-                throw new ReviewNotFoundException(reviewId);
+            log.warn("[review] 하드 삭제 실패 - 논리 삭제되지 않은 리뷰: {}", reviewId);
+            throw new ReviewNotSoftDeletedException(reviewId);
             });
 
-        validateAuthorizedUser(review, userId);
+        validateAuthorizedUser(review, userId, ReviewFeature.HARD_DELETE);
 
         reviewRepository.delete(review);
 
+    }
+
+    @Transactional
+    @Override
+    public ReviewDto update(UUID reviewId, UUID userId, ReviewUpdateRequest request) {
+        Review review = findByReviewId(reviewId);
+        validateAuthorizedUser(review, userId, ReviewFeature.UPDATE);
+
+        review.update(request.content(), request.rating());
+
+        return reviewMapper.toDto(review);
     }
 
     // 검증 메서드
@@ -157,8 +173,7 @@ public class ReviewServiceImpl implements ReviewService {
         return bookRepository.findById(bookId)
             .orElseThrow(() -> {
                 log.warn("[review] 생성 실패 - 존재하지 않는 bookId: {}", bookId);
-                return new IllegalArgumentException();
-//                return new BookNotFoundException(bookId);
+                return new BookNotFoundException(bookId);
             });
     }
 
@@ -166,8 +181,7 @@ public class ReviewServiceImpl implements ReviewService {
         return userRepository.findById(userId)
             .orElseThrow(() -> {
                 log.warn("[review] 생성 실패 - 존재하지 않는 userId: {}", userId);
-                return new IllegalArgumentException();
-//                return new UserNotFoundException(userId);
+                return new UserNotFoundException(userId, "존재하지 않는 userId");
             });
     }
 
@@ -178,14 +192,12 @@ public class ReviewServiceImpl implements ReviewService {
         }
     }
 
-    private void validateAuthorizedUser(Review review, UUID userId) {
+    private void validateAuthorizedUser(Review review, UUID userId, ReviewFeature feature) {
         if (!review.getUser().getId().equals(userId)) {
-            log.warn("[review] 리뷰 하드 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", review.getId(),
+            log.warn("[review] {} - 해당 유저는 권한이 없음: reviewId={}, userId={}", feature.getMessage(), review.getId(),
                 userId);
-            throw new UnauthorizedException("review",
-                Map.of("userId", userId));
+            throw new ReviewUnauthorizedAccessException(review.getId(), userId);
         }
-
     }
 
     private Review findByReviewId(UUID reviewId) {
