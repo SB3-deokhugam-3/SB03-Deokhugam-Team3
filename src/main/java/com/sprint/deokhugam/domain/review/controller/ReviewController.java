@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -31,7 +32,7 @@ public class ReviewController {
     public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(
         @Valid ReviewGetRequest reviewGetRequest,
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
-        log.debug("[review] 목록 조회 request 요청");
+        log.info("[ReviewController] 리뷰 조회 : reviewGetRequest: {}, requestUserId:{}", reviewGetRequest.toString(), requestUserId);
         CursorPageResponse<ReviewDto> cursorReviewDtoList = this.reviewService.findAll(
             reviewGetRequest, requestUserId);
 
@@ -41,11 +42,23 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ResponseEntity<ReviewDto> create(@RequestBody @Valid ReviewCreateRequest request) {
-        log.debug("[review] 생성 request 요청");
+    public ResponseEntity<ReviewDto> createReview(@RequestBody @Valid ReviewCreateRequest request) {
+        log.info("[ReviewController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(), request.userId());
         ReviewDto reviewDto = reviewService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewDto);
+
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(reviewDto);
     }
 
+    @GetMapping("/{reviewId}")
+    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId){
+        log.info("[ReviewController] 리뷰 상세 정보 요청 - id: {}", reviewId);
+        ReviewDto reviewDto = reviewService.findById(reviewId);
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(reviewDto);
+    }
 
 }
