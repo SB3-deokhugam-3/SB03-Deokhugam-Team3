@@ -6,11 +6,13 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +34,8 @@ public class ReviewController {
     public ResponseEntity<CursorPageResponse<ReviewDto>> findAll(
         @Valid ReviewGetRequest reviewGetRequest,
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
-        log.info("[ReviewController] 리뷰 조회 : reviewGetRequest: {}, requestUserId:{}", reviewGetRequest.toString(), requestUserId);
+        log.info("[ReviewController] 리뷰 조회 : reviewGetRequest: {}, requestUserId:{}",
+            reviewGetRequest.toString(), requestUserId);
         CursorPageResponse<ReviewDto> cursorReviewDtoList = this.reviewService.findAll(
             reviewGetRequest, requestUserId);
 
@@ -43,7 +46,8 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<ReviewDto> createReview(@RequestBody @Valid ReviewCreateRequest request) {
-        log.info("[ReviewController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(), request.userId());
+        log.info("[ReviewController] 리뷰 생성 요청 - bookId: {}, userId: {}", request.bookId(),
+            request.userId());
         ReviewDto reviewDto = reviewService.create(request);
 
         return ResponseEntity
@@ -52,13 +56,36 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
-    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId){
+    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId) {
         log.info("[ReviewController] 리뷰 상세 정보 요청 - id: {}", reviewId);
         ReviewDto reviewDto = reviewService.findById(reviewId);
 
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(reviewDto);
+    }
+
+    /* 리뷰 논리 삭제 */
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<Void> deleteReview(@PathVariable @NotNull UUID reviewId,
+        @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
+        reviewService.delete(reviewId, userId);
+
+        return ResponseEntity
+            .noContent()
+            .build();
+    }
+
+    /* 리뷰 물리 삭제 */
+    @DeleteMapping("/{reviewId}/hard")
+    public ResponseEntity<Void> hardDeleteReview(@PathVariable @NotNull UUID reviewId,
+        @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
+        reviewService.hardDelete(reviewId, userId);
+
+        return ResponseEntity
+            .noContent()
+            .build();
+
     }
 
 }

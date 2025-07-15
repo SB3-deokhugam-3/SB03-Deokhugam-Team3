@@ -14,6 +14,7 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
+import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +126,32 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toDto(findByReviewId(reviewId));
     }
 
+    @Transactional
+    @Override
+    public void delete(UUID reviewId, UUID userId) {
+        Review review = findByReviewId(reviewId);
+
+        validateAuthorizedUser(review, userId);
+
+        review.softDelete();
+
+    }
+
+    @Transactional
+    @Override
+    public void hardDelete(UUID reviewId, UUID userId) {
+        Review review = reviewRepository.findDeletedById(reviewId)
+            .orElseThrow(() -> {
+                log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
+                throw new ReviewNotFoundException(reviewId);
+            });
+
+        validateAuthorizedUser(review, userId);
+
+        reviewRepository.delete(review);
+
+    }
+
     // 검증 메서드
     private Book findByBookId(UUID bookId) {
         return bookRepository.findById(bookId)
@@ -149,6 +176,16 @@ public class ReviewServiceImpl implements ReviewService {
             log.warn("[review] 생성 실패 - 해당 review가 이미 존재함 bookId: {}, userId: {}", bookId, userId);
             throw new DuplicationReviewException(bookId, userId);
         }
+    }
+
+    private void validateAuthorizedUser(Review review, UUID userId) {
+        if (!review.getUser().getId().equals(userId)) {
+            log.warn("[review] 리뷰 하드 삭제 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}", review.getId(),
+                userId);
+            throw new UnauthorizedException("review",
+                Map.of("userId", userId));
+        }
+
     }
 
     private Review findByReviewId(UUID reviewId) {
