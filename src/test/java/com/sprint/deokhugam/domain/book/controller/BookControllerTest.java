@@ -413,7 +413,7 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -433,7 +433,7 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -454,7 +454,7 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -474,7 +474,7 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -497,7 +497,7 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -520,7 +520,7 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -570,7 +570,7 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
 

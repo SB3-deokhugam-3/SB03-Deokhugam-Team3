@@ -140,7 +140,7 @@ class TesseractOcrExtractorTest {
         // then
         assertThat(thrown)
             .isInstanceOf(OcrException.class)
-            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+            .hasMessageContaining("OCR 잘못된 입력 값입니다.");
     }
 
     @Test
@@ -155,7 +155,7 @@ class TesseractOcrExtractorTest {
         // then
         assertThat(thrown)
             .isInstanceOf(OcrException.class)
-            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+            .hasMessageContaining("OCR 잘못된 입력 값입니다.");
     }
 
     @Test
@@ -170,7 +170,7 @@ class TesseractOcrExtractorTest {
         // then
         assertThat(thrown)
             .isInstanceOf(OcrException.class)
-            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+            .hasMessageContaining("OCR 잘못된 입력 값입니다.");
     }
 
     @Test
@@ -186,7 +186,7 @@ class TesseractOcrExtractorTest {
         // then
         assertThat(thrown)
             .isInstanceOf(OcrException.class)
-            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+            .hasMessageContaining("OCR 잘못된 입력 값입니다.");
     }
 
     @Test
@@ -201,7 +201,7 @@ class TesseractOcrExtractorTest {
         // then
         assertThat(thrown)
             .isInstanceOf(OcrException.class)
-            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+            .hasMessageContaining("OCR 잘못된 입력 값입니다.");
     }
 
     @Test
@@ -288,7 +288,7 @@ class TesseractOcrExtractorTest {
         // then
         assertThat(thrown)
             .isInstanceOf(OcrException.class)
-            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+            .hasMessageContaining("OCR 잘못된 입력 값입니다.");
     }
 
     @Test
