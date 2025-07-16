@@ -56,9 +56,12 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
-    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId) {
+    public ResponseEntity<ReviewDto> getReview(
+        @PathVariable UUID reviewId,
+        @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId
+    ) {
         log.info("[ReviewController] 리뷰 상세 정보 요청 - id: {}", reviewId);
-        ReviewDto reviewDto = reviewService.findById(reviewId);
+        ReviewDto reviewDto = reviewService.findById(reviewId, requestUserId);
 
         return ResponseEntity
             .status(HttpStatus.OK)

@@ -10,6 +10,7 @@ import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
+import com.sprint.deokhugam.domain.reviewlike.repository.ReviewLikeRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
@@ -33,6 +34,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
     private final ReviewMapper reviewMapper;
 
     private static final String ORDER_BY_CREATED_AT = "createdAt";
@@ -86,15 +88,13 @@ public class ReviewServiceImpl implements ReviewService {
     // ReviewDto에 likeByMe값 동적 추가
     private List<ReviewDto> toDtoWithLikedByMe(List<Review> reviews, UUID requestUserId) {
         // TODO : likedByMe는 나중에 mapper 에서 처리하는게 좋을듯 -> 서비스 관련 로직이라 서비스에 냅둘것
-        boolean likedByMe = false;
 
         return reviews.stream().map((review -> {
             ReviewDto reviewDto = reviewMapper.toDto(review);
-            //TODO: review-like 테이블 생성 후 query 로 가져올것
+            boolean likedByMe = reviewLikeRepository.existsByReviewIdAndUserId(review.getId(), requestUserId);
             return reviewDto.toBuilder().likedByMe(likedByMe).build();
         })).toList();
     }
-
 
     @Transactional
     @Override
@@ -113,6 +113,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);
+        book.increaseReviewCount();
         log.info("[review] 생성 완료 - reviewId: {}, bookId: {}, userId: {}, rating: {}, content: {}",
             savedReview.getId(), bookId, userId, rating, content);
 
@@ -120,10 +121,13 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public ReviewDto findById(UUID reviewId) {
+    public ReviewDto findById(UUID reviewId, UUID requestUserId) {
         log.info("[review] 조회 요청: id={}", reviewId);
+        Review review = findByReviewId(reviewId);
+        ReviewDto reviewDto = reviewMapper.toDto(review);
 
-        return reviewMapper.toDto(findByReviewId(reviewId));
+        boolean likedByMe = reviewLikeRepository.existsByReviewIdAndUserId(reviewId, requestUserId);
+        return reviewDto.toBuilder().likedByMe(likedByMe).build();
     }
 
     @Transactional
@@ -134,6 +138,7 @@ public class ReviewServiceImpl implements ReviewService {
         validateAuthorizedUser(review, userId);
 
         review.softDelete();
+        review.getBook().decreaseReviewCount();
 
     }
 
@@ -195,4 +200,5 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new ReviewNotFoundException(reviewId);
             });
     }
+
 }
