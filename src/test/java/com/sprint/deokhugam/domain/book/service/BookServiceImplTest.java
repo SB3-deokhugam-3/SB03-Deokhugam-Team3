@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -19,7 +20,9 @@ import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
+import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
+import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
@@ -55,6 +58,10 @@ class BookServiceImplTest {
 
     @Mock
     private S3Storage storage;
+
+    @Mock
+    TesseractOcrExtractor tesseractOcrExtractor;
+
 
     private List<Book> testBooks;
     private List<BookDto> testBookDtos;
@@ -495,6 +502,185 @@ class BookServiceImplTest {
             .isInstanceOf(BookNotFoundException.class);
         verify(bookRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("OCR 서비스 사용 가능 - ISBN 추출 성공")
+    void OCR_서비스_사용_가능_ISBN_추출_성공() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        String expectedIsbn = "9780134685991";
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn(expectedIsbn);
+
+        // when
+        String result = bookService.extractIsbnFromImage(testImage);
+
+        // then
+        assertThat(result).isEqualTo(expectedIsbn);
+        then(tesseractOcrExtractor).should().isAvailable();
+        then(tesseractOcrExtractor).should().extractIsbn(testImage);
+    }
+
+    @Test
+    @DisplayName("OCR 서비스 사용 불가능 - 예외 발생")
+    void OCR_서비스_사용_불가능_예외_발생() {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(false);
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.extractIsbnFromImage(testImage));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(OcrException.class)
+            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+        then(tesseractOcrExtractor).should().isAvailable();
+        then(tesseractOcrExtractor).should(never()).extractIsbn(any());
+    }
+
+    @Test
+    @DisplayName("OCR에서 null 반환 - 예외 발생")
+    void OCR에서_null_반환_예외_발생() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn(null);
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.extractIsbnFromImage(testImage));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(OcrException.class)
+            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+        then(tesseractOcrExtractor).should().isAvailable();
+        then(tesseractOcrExtractor).should().extractIsbn(testImage);
+    }
+
+    @Test
+    @DisplayName("OCR에서 빈 문자열 반환 - 예외 발생")
+    void OCR에서_빈_문자열_반환_예외_발생() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn("");
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.extractIsbnFromImage(testImage));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(OcrException.class)
+            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+        then(tesseractOcrExtractor).should().isAvailable();
+        then(tesseractOcrExtractor).should().extractIsbn(testImage);
+    }
+
+    @Test
+    @DisplayName("OCR에서 공백만 있는 문자열 반환 - 예외 발생")
+    void OCR에서_공백만_있는_문자열_반환_예외_발생() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn("   ");
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.extractIsbnFromImage(testImage));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(OcrException.class)
+            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+        then(tesseractOcrExtractor).should().isAvailable();
+        then(tesseractOcrExtractor).should().extractIsbn(testImage);
+    }
+
+    @Test
+    @DisplayName("OCR 처리 중 예외 발생")
+    void OCR_처리_중_예외_발생() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class)))
+            .willThrow(OcrException.serverError("OCR 처리 중 예상치 못한 오류가 발생했습니다."));
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.extractIsbnFromImage(testImage));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(OcrException.class)
+            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+        then(tesseractOcrExtractor).should().isAvailable();
+        then(tesseractOcrExtractor).should().extractIsbn(testImage);
+    }
+
+    @Test
+    @DisplayName("OCR 처리 중 RuntimeException 발생")
+    void OCR_처리_중_RuntimeException_발생() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class)))
+            .willThrow(new RuntimeException("예상치 못한 오류"));
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.extractIsbnFromImage(testImage));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(OcrException.class)
+            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
+        then(tesseractOcrExtractor).should().isAvailable();
+        then(tesseractOcrExtractor).should().extractIsbn(testImage);
+    }
+
+    @Test
+    @DisplayName("유효한 ISBN-13 추출 성공")
+    void 유효한_ISBN13_추출_성공() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        String expectedIsbn = "9780134685991";
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn(expectedIsbn);
+
+        // when
+        String result = bookService.extractIsbnFromImage(testImage);
+
+        // then
+        assertThat(result).isEqualTo(expectedIsbn);
+        assertThat(result).hasSize(13);
+        assertThat(result).startsWith("978");
+    }
+
+    @Test
+    @DisplayName("유효한 ISBN-10 추출 성공")
+    void 유효한_ISBN10_추출_성공() throws OcrException {
+        // given
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        String expectedIsbn = "0134685997";
+
+        given(tesseractOcrExtractor.isAvailable()).willReturn(true);
+        given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn(expectedIsbn);
+
+        // when
+        String result = bookService.extractIsbnFromImage(testImage);
+
+        // then
+        assertThat(result).isEqualTo(expectedIsbn);
+        assertThat(result).hasSize(10);
+        assertThat(result).matches("\\d{10}");
+    }
+
 
     private List<Book> createTestBooks() {
         Instant now = Instant.now();

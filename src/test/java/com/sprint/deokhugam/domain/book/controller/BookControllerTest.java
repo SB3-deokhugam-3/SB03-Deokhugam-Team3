@@ -3,9 +3,13 @@ package com.sprint.deokhugam.domain.book.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,6 +20,8 @@ import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
+import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
+import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookServiceImpl;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
@@ -27,7 +33,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.cglib.core.Local;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -357,6 +362,238 @@ class BookControllerTest {
     }
 
     @Test
+    void OCR_API_호출_성공_ISBN_추출_성공() throws Exception {
+        // given
+        String expectedIsbn = "9780134685991";
+        MockMultipartFile testImage = new MockMultipartFile(
+            "image",
+            "test.jpg",
+            "image/jpeg",
+            "test image content".getBytes()
+        );
+
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class))).willReturn(expectedIsbn);
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
+            .file(testImage));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(content().string(expectedIsbn));
+        then(bookService).should().extractIsbnFromImage(any(MultipartFile.class));
+    }
+
+    @Test
+    void OCR_API_호출_이미지_파일_없음() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr"));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void OCR_API_호출_빈_이미지_파일() throws Exception {
+        // given
+        MockMultipartFile emptyImage = new MockMultipartFile(
+            "image",
+            "empty.jpg",
+            "image/jpeg",
+            new byte[0]
+        );
+
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new IllegalArgumentException("빈 이미지 파일은 처리할 수 없습니다."));
+
+        // when
+        ResultActions result = mockMvc.perform(
+            multipart("/api/books/isbn/ocr")
+                .file(emptyImage)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+        );
+
+        // then
+        result.andExpect(status().isBadRequest());
+
+        verify(bookService).extractIsbnFromImage(any(MultipartFile.class));
+    }
+
+
+    @Test
+    void OCR_API_호출_지원하지_않는_파일_형식() throws Exception {
+        // given
+        MockMultipartFile emptyImage = new MockMultipartFile(
+            "image", "empty.jpg", "image/jpeg", new byte[0]);
+
+        when(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .thenThrow(new IllegalArgumentException("빈 이미지 파일은 처리할 수 없습니다."));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
+            .file(emptyImage));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void OCR_API_호출_파일_크기_제한_초과() throws Exception {
+        // given
+        byte[] largeImageData = new byte[6 * 1024 * 1024]; // 6MB 데이터
+        MockMultipartFile largeImage = new MockMultipartFile(
+            "image",
+            "large.jpg",
+            "image/jpeg",
+            largeImageData
+        );
+
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new IllegalArgumentException("파일 크기가 5MB를 초과합니다."));
+
+        // when
+        ResultActions result = mockMvc.perform(
+            multipart("/api/books/isbn/ocr")
+                .file(largeImage)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+        );
+
+        // then
+        result.andExpect(status().isBadRequest());
+
+        verify(bookService).extractIsbnFromImage(any(MultipartFile.class));
+    }
+
+    @Test
+    void OCR_API_호출_지원하지_않는_이미지_형식() throws Exception {
+        // given
+        MockMultipartFile unsupportedImage = new MockMultipartFile(
+            "image",
+            "test.tiff",
+            "image/tiff", // 지원하지 않는 형식
+            "test content".getBytes()
+        );
+
+        // Mock 서비스가 InvalidFileTypeException을 던지도록 설정
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new InvalidFileTypeException("지원하지 않는 파일 형식입니다. (지원 형식: jpg, jpeg, png)"));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
+            .file(unsupportedImage));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("FILE_INVALID_INPUT_VALUE"))
+            .andExpect(jsonPath("$.message").value("FILE 잘못된 입력 값입니다."))
+            .andExpect(jsonPath("$.details.contentType").value("지원하지 않는 파일 형식입니다. (지원 형식: jpg, jpeg, png)"));
+    }
+
+    @Test
+    void OCR_API_호출_서비스에서_OcrException_발생() throws Exception {
+        // given
+        MockMultipartFile testImage = new MockMultipartFile(
+            "image",
+            "test.jpg",
+            "image/jpeg",
+            "test content".getBytes()
+        );
+
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(OcrException.serverError("OCR 서버 내부 오류가 발생했습니다."));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
+            .file(testImage));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.code").value("OCR_INTERNAL_SERVER_ERROR"))
+            .andExpect(jsonPath("$.message").value("OCR 서버 내부 오류가 발생했습니다."));
+    }
+
+    @Test
+    void OCR_API_호출_서비스에서_RuntimeException_발생() throws Exception {
+        // given
+        MockMultipartFile testImage = new MockMultipartFile(
+            "image",
+            "test.jpg",
+            "image/jpeg",
+            "test content".getBytes()
+        );
+
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new RuntimeException("예상치 못한 오류"));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
+            .file(testImage));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
+            .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void OCR_API_호출_다양한_유효한_이미지_형식() throws Exception {
+        // given
+        String expectedIsbn = "9780134685991";
+        String[] validFormats = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"};
+        String[] fileExtensions = {"jpg", "png", "gif", "bmp", "webp"};
+
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class))).willReturn(expectedIsbn);
+
+        for (int i = 0; i < validFormats.length; i++) {
+            // given
+            MockMultipartFile testImage = new MockMultipartFile(
+                "image",
+                "test." + fileExtensions[i],
+                validFormats[i],
+                "test content".getBytes()
+            );
+
+            // when
+            ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
+                .file(testImage));
+
+            // then
+            result.andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectedIsbn));
+        }
+    }
+
+    @Test
+    void OCR_API_호출_null_ContentType_처리() throws Exception {
+        // given
+        MockMultipartFile testImage = new MockMultipartFile(
+            "image",
+            "test.jpg",
+            null,
+            "test content".getBytes()
+        );
+
+        // Mock 서비스가 InvalidFileTypeException을 던지도록 설정
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new InvalidFileTypeException("[BookService] 이미지 파일만 업로드 가능합니다."));
+
+        // when
+        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
+            .file(testImage));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("FILE_INVALID_INPUT_VALUE"))
+            .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
     void isbn으로_도서_정보_요청_시_도서_정보를_반환한다() throws Exception {
 
         // given
@@ -367,7 +604,7 @@ class BookControllerTest {
             .publisher(publisher)
             .publishedDate(publishedDate)
             .isbn(isbn)
-            .thumbnailImage("/imageExample") // Base64로 인코딩된 문자열
+            .thumbnailImage("/imageExample")
             .build();
 
         given(provider.fetchInfoByIsbn(isbn)).willReturn(bookDto);
