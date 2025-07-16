@@ -1,16 +1,29 @@
 package com.sprint.deokhugam.domain.comment.controller;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
+import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.service.CommentService;
+import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -137,6 +150,139 @@ class CommentControllerTest {
 
         //then
         result.andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void 커서_기반_댓글_목록_조회에_성공하면_200응답을_반환한다() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        String direction = "DESC";
+        int limit = 2;
+        String nextCursor = Instant.now().toString();
+
+        List<CommentDto> comments = List.of(
+            new CommentDto(UUID.randomUUID(), reviewId, userId, "조조", "댓글1", Instant.now(), null),
+            new CommentDto(UUID.randomUUID(), reviewId, userId, "조조", "댓글2", Instant.now(), null)
+        );
+
+        CursorPageResponse<CommentDto> response = new CursorPageResponse<>(
+            comments,
+            nextCursor,
+            nextCursor,
+            comments.size(),
+            10L,
+            true
+        );
+
+        given(commentService.findAll(eq(reviewId), isNull(), eq(direction), eq(limit)))
+            .willReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/comments")
+                .param("reviewId", reviewId.toString())
+                .param("direction", direction)
+                .param("limit", String.valueOf(limit)));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.hasNext").value(true))
+            .andExpect(jsonPath("$.totalElements").value(10));
+    }
+
+    @Test
+    void 댓글_목록_조회시_reviewId가_없으면_400_반환() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/comments")
+            .param("direction", "DESC")
+            .param("limit", "10"));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andDo(print());
+        verify(commentService, never()).findAll(any(), any(), any(), anyInt());
+    }
+
+    @Test
+    void 댓글_목록_조회시_존재하지_않는_리뷰면_404_반환() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        given(commentService.findAll(any(), any(), any(), anyInt()))
+            .willThrow(new ReviewNotFoundException(reviewId));
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/comments")
+            .param("reviewId", reviewId.toString()));
+
+        // then
+        result.andExpect(status().isNotFound())
+            .andDo(print());
+    }
+
+    @Test
+    void 댓글_목록_조회시_잘못된_커서_형식이면_400_반환() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        String invalidCursor = "invalid-cursor-format";
+        given(commentService.findAll(any(), eq(invalidCursor), any(), anyInt()))
+            .willThrow(new InvalidCursorTypeException(invalidCursor, "잘못된 형식"));
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/comments")
+            .param("reviewId", reviewId.toString())
+            .param("cursor", invalidCursor));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andDo(print());
+    }
+
+    @Test
+    void 댓글_목록_조회시_잘못된_정렬_방향이면_400_반환() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        String invalidDirection = "INVALID";
+        given(commentService.findAll(any(), any(), eq(invalidDirection), anyInt()))
+            .willThrow(new IllegalArgumentException("잘못된 정렬 방향"));
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/comments")
+            .param("reviewId", reviewId.toString())
+            .param("direction", invalidDirection));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andDo(print());
+    }
+
+    @Test
+    void 댓글_목록_조회시_빈_결과를_반환한다() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        CursorPageResponse<CommentDto> emptyResponse = new CursorPageResponse<>(
+            Collections.emptyList(),
+            null,
+            null,
+            0,
+            0L,
+            false
+        );
+
+        given(commentService.findAll(any(), any(), any(), anyInt()))
+            .willReturn(emptyResponse);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/comments")
+            .param("reviewId", reviewId.toString()));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content", hasSize(0)))
+            .andExpect(jsonPath("$.totalElements").value(0))
+            .andExpect(jsonPath("$.hasNext").value(false))
+            .andDo(print());
     }
 
 
