@@ -26,12 +26,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class NaverBookInfoProvider implements BookInfoProvider {
 
     private final WebClient naverApiClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public NaverBookDto fetchInfoByIsbn(String isbn) {
         log.debug("[BookInfoProvider] 도서 정보 조회 요청- isbn: {}", isbn);
 
-        if (!isbn.matches("\\d{10}||\\d{13}")) {
+        if (!isbn.matches("\\d{10}|\\d{13}")) {
             throw new InvalidIsbnException(isbn);
         }
 
@@ -65,7 +66,6 @@ public class NaverBookInfoProvider implements BookInfoProvider {
                 .bodyToMono(String.class)
                 .block();  // 실제 HTTP 호출 발생
 
-            ObjectMapper objectMapper = new ObjectMapper();
             JsonNode root = objectMapper.readTree(response);
 
             // items 배열만 꺼내기
