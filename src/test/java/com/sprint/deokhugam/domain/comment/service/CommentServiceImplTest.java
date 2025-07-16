@@ -11,8 +11,10 @@ import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
+import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
 import com.sprint.deokhugam.domain.comment.exception.CommentNotFoundException;
+import com.sprint.deokhugam.domain.comment.exception.CommentUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.comment.mapper.CommentMapper;
 import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
@@ -58,16 +60,22 @@ public class CommentServiceImplTest {
     private CommentServiceImpl commentService;
     private CursorPageResponse<CommentDto> mockResponse;
 
+    /*테스트 초기값 설정 */
     private Instant createdAt;
     private Instant updatedAt;
     private User user1;
     private Book book1;
     private Review review1;
+    private Comment comment1;
+    private String content;
+    private CommentDto expectedDto;
+
 
     @BeforeEach
     void 초기_설정() {
         createdAt = Instant.now();
         updatedAt = Instant.now();
+        content = "댓글테스트";
 
         // ---------- [USER 1] ----------
         user1 = User.builder()
@@ -75,8 +83,7 @@ public class CommentServiceImplTest {
             .nickname("유저1")
             .password("encryptedPwd1")
             .build();
-        ReflectionTestUtils.setField(user1, "id",
-            UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
+        ReflectionTestUtils.setField(user1, "id", UUID.randomUUID());
 
         // ---------- [BOOK 1] ----------
         book1 = Book.builder()
@@ -91,8 +98,7 @@ public class CommentServiceImplTest {
             .rating(4.5)
             .isDeleted(false)
             .build();
-        ReflectionTestUtils.setField(book1, "id",
-            UUID.fromString("f6601c1d-c9b9-4ae1-a7aa-b4345921f4ca"));
+        ReflectionTestUtils.setField(book1, "id", UUID.randomUUID());
 
         // ---------- [REVIEW 1] ----------
         review1 = Review.builder()
@@ -104,10 +110,24 @@ public class CommentServiceImplTest {
             .user(user1)
             .book(book1)
             .build();
-        ReflectionTestUtils.setField(review1, "id",
-            UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d"));
+        ReflectionTestUtils.setField(review1, "id", UUID.randomUUID());
 
+        comment1 = Comment.builder()
+            .user(user1)
+            .review(review1)
+            .content(content)
+            .isDeleted(false)
+            .build();
+        ReflectionTestUtils.setField(comment1, "id", UUID.randomUUID());
 
+        expectedDto = CommentDto.builder()
+            .id(comment1.getId())
+            .content(content)
+            .reviewId(review1.getId())
+            .userId(user1.getId())
+            .createdAt(createdAt)
+            .updatedAt(updatedAt)
+            .build();
     }
 
     @Test
@@ -209,7 +229,56 @@ public class CommentServiceImplTest {
         //then
         assertThat(thrown).isInstanceOf(CommentNotFoundException.class);
         then(commentRepository).should().findById(commentId);
-        
+    }
+
+    @Test
+    void 댓글_수정_성공시_200응답_반환() throws Exception {
+        //given
+        CommentUpdateRequest validRequest = new CommentUpdateRequest(content);
+
+        given(commentRepository.findById(any(UUID.class))).willReturn(Optional.of(comment1));
+        given(commentMapper.toDto(comment1)).willReturn(expectedDto);
+
+        //when
+        CommentDto result = commentService.updateById(comment1.getId(), validRequest,
+            user1.getId());
+
+        //then
+        assertThat(result).isEqualTo(expectedDto);
+        then(commentRepository).should().findById(comment1.getId());
+        then(commentMapper).should().toDto(comment1);
+    }
+
+    @Test
+    void 댓글_수정시_존재하지않는_댓글이면_404에러_반환() throws Exception {
+        //given
+        CommentUpdateRequest validRequest = new CommentUpdateRequest(content);
+
+        given(commentRepository.findById(any(UUID.class))).willReturn(Optional.empty());
+
+        //when
+        Throwable thrown = catchThrowable(
+            () -> commentService.updateById(comment1.getId(), validRequest,
+                user1.getId()));
+
+        //then
+        assertThat(thrown).isInstanceOf(CommentNotFoundException.class);
+    }
+
+    @Test
+    void 댓글_수정시_유효하지않은_사용자면_404에러_반환() throws Exception {
+        //given
+        CommentUpdateRequest validRequest = new CommentUpdateRequest(content);
+
+        given(commentRepository.findById(any(UUID.class))).willReturn(Optional.of(comment1));
+
+        //when
+        Throwable thrown = catchThrowable(
+            () -> commentService.updateById(comment1.getId(), validRequest,
+                UUID.randomUUID()));
+
+        //then
+        assertThat(thrown).isInstanceOf(CommentUnauthorizedAccessException.class);
     }
 
 }
