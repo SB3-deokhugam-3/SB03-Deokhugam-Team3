@@ -125,6 +125,8 @@ public class BookServiceImpl implements BookService {
         return bookMapper.toDto(book, s3Storage);
     }
 
+    @Override
+    @Transactional
     public BookDto update(UUID bookId, BookUpdateRequest bookData, MultipartFile thumbnailImage) throws IOException {
         log.debug("[BookService] 책 정보 수정 요청 - id: {}", bookId);
 

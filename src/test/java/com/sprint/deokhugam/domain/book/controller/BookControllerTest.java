@@ -15,6 +15,7 @@ import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
+import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.service.BookServiceImpl;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
@@ -32,6 +33,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.web.multipart.MultipartFile;
 
 @WebMvcTest(controllers = BookController.class)
@@ -93,7 +95,8 @@ class BookControllerTest {
         UUID bookId = UUID.randomUUID();
         String thumbnailUrl = "testUrl";
 
-        BookCreateRequest request = createRequest(title, author, description, publisher, publishedDate, isbn);
+        BookCreateRequest request = createRequest(title, author, description, publisher,
+            publishedDate, isbn);
 
         MockMultipartFile bookData = new MockMultipartFile(
             "bookData", "", "application/json", objectMapper.writeValueAsBytes(request));
@@ -138,7 +141,6 @@ class BookControllerTest {
         // given
         BookCreateRequest request = createRequest(title, author, description, publisher,
             LocalDate.of(2099, 7, 12), isbn);
-
 
         MockMultipartFile bookData = new MockMultipartFile(
             "bookData",
@@ -384,6 +386,82 @@ class BookControllerTest {
             .andExpect(jsonPath("$.thumbnailImage").value("/imageExample"));
     }
 
+    @Test
+    void 도서를_수정하면_200을_반환한다() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        String thumbnailUrl = "testUrl";
+
+        BookUpdateRequest updateRequest = createUpdateRequest(title, author, description, publisher,
+            publishedDate);
+
+        MockMultipartFile bookData = new MockMultipartFile(
+            "bookData", "", "application/json", objectMapper.writeValueAsBytes(updateRequest));
+
+        MockMultipartFile thumbnailImage = new MockMultipartFile(
+            "thumbnailImage", "thumbnail.png", "image/png", "fake-image-content".getBytes());
+
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher,
+            publishedDate, isbn, thumbnailUrl, 0L, 0.0);
+
+        given(bookService.update(any(UUID.class), any(BookUpdateRequest.class), any(MultipartFile.class)))
+            .willReturn(expectedResponse);
+
+        // when
+        ResultActions result = mockMvc.perform(
+            multipart("/api/books/" + bookId)
+                .file(bookData)
+                .file(thumbnailImage)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .with(request -> {
+                    request.setMethod("PATCH");
+                    return request;
+                })
+        );
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(bookId.toString()))
+            .andExpect(jsonPath("$.title").value(title))
+            .andExpect(jsonPath("$.author").value(author))
+            .andExpect(jsonPath("$.description").value(description))
+            .andExpect(jsonPath("$.publisher").value(publisher))
+            .andExpect(jsonPath("$.publishedDate").value(publishedDate.toString()))
+            .andExpect(jsonPath("$.isbn").value(isbn))
+            .andExpect(jsonPath("$.thumbnailUrl").value(thumbnailUrl));
+    }
+
+    @Test
+    void 도서_정보_수정_요청_시_저자가_50자_초과이면_400_에러를_반환한다() throws Exception {
+
+        // given
+        UUID bookId = UUID.randomUUID();
+        String longAuthor = "a".repeat(51);
+
+        BookUpdateRequest updateRequest = createUpdateRequest(title, longAuthor, description, publisher,
+            publishedDate);
+
+        MockMultipartFile bookData = new MockMultipartFile(
+            "bookData",
+            "",
+            "application/json",
+            objectMapper.writeValueAsBytes(updateRequest));
+
+        // when
+        ResultActions result = mockMvc.perform(
+            multipart("/api/books/" + bookId)
+                .file(bookData)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .with(request -> {
+                    request.setMethod("PATCH");
+                    return request;
+                })
+        );
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
     private BookCreateRequest createRequest(String title, String author, String description,
         String publisher, LocalDate publishedDate, String isbn) {
         return BookCreateRequest.builder()
@@ -397,7 +475,8 @@ class BookControllerTest {
     }
 
     private BookDto createBookDto(UUID id, String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl, Long reviewCount,
+        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl,
+        Long reviewCount,
         Double rating) {
         return BookDto.builder()
             .id(id)
@@ -412,6 +491,18 @@ class BookControllerTest {
             .rating(rating)
             .createdAt(Instant.now())
             .updatedAt(Instant.now())
+            .build();
+    }
+
+    private BookUpdateRequest createUpdateRequest(String title, String author, String description,
+        String publisher, LocalDate publishedDate) {
+
+        return BookUpdateRequest.builder()
+            .title(title)
+            .author(author)
+            .description(description)
+            .publisher(publisher)
+            .publishedDate(publishedDate)
             .build();
     }
 }
