@@ -5,6 +5,7 @@ import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
+import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -97,6 +99,19 @@ public class BookController {
         log.info("[BookController] 도서 정보 조회 요청 - isbn: {}", isbn);
 
         NaverBookDto result = provider.fetchInfoByIsbn(isbn);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @PatchMapping("/{bookId}")
+    public ResponseEntity<BookDto> update(
+        @PathVariable UUID bookId,
+        @Valid @RequestPart("bookData") BookUpdateRequest bookData,
+        @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
+    ) throws IOException {
+        log.info("[BookController] 도서 정보 수정 요청 - id: {}", bookId);
+
+        BookDto result = bookService.update(bookId, bookData, thumbnailImage);
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }

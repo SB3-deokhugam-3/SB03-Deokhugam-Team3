@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.book.service;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
+import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
@@ -191,6 +192,39 @@ public class BookServiceImpl implements BookService {
         log.info("[BookService] 책 조회 성공: book: {}", book);
 
         return bookMapper.toDto(book, s3Storage);
+    }
+
+    @Override
+    @Transactional
+    public BookDto update(UUID bookId, BookUpdateRequest bookData, MultipartFile thumbnailImage) throws IOException {
+        log.debug("[BookService] 책 정보 수정 요청 - id: {}", bookId);
+
+        Book book = findBook(bookId);
+
+        book.updateTitle(bookData.title());
+        book.updateAuthor(bookData.author());
+        book.updateDescription(bookData.description());
+        book.updatePublisher(bookData.publisher());
+        book.updatePublishedDate(bookData.publishedDate());
+
+        // 기존 썸네일이 있는 경우 기존 썸네일 S3에서 삭제
+        if (book.getThumbnailUrl() != null) {
+            s3Storage.deleteImage(book.getThumbnailUrl());
+        }
+
+        if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
+            // Book Entity를 저장할 때는 S3의 실제 경로 저장
+            String thumbnailImageUrl = s3Storage.uploadImage(thumbnailImage);
+            book.updateThumbnailUrl(thumbnailImageUrl);
+        } else {
+            book.updateThumbnailUrl(null);
+        }
+
+        Book updatedBook = bookRepository.save(book);
+
+        log.info("[BookService] 도서 정보 수정 완료- book: {}" , updatedBook);
+
+        return bookMapper.toDto(updatedBook, s3Storage);
     }
 
     private Book findBook(UUID bookId) {

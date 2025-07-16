@@ -5,17 +5,20 @@ import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(name = "deokhugam.storage.type", havingValue = "s3")
 public class S3Storage {
@@ -25,6 +28,8 @@ public class S3Storage {
     private final S3Presigner s3Presigner;
 
     private final String bucket;
+
+    private final long MAX_SIZE = 5 * 1024 * 1024;
 
     public S3Storage(S3Client s3Client,
         S3Presigner s3Presigner,
@@ -46,8 +51,8 @@ public class S3Storage {
         }
 
         // 파일 크기 검증 (예: 5MB 제한)
-        if (image.getSize() > 5 * 1024 * 1024) {
-            throw new FileSizeExceededException(image.getSize(), 5 * 1024 * 1024);
+        if (image.getSize() > MAX_SIZE) {
+            throw new FileSizeExceededException(image.getSize(), MAX_SIZE);
         }
 
         // UUID 앞에서 12글자만 추출
@@ -63,6 +68,19 @@ public class S3Storage {
         s3Client.putObject(putRequest, RequestBody.fromBytes(image.getBytes()));
 
         return key;
+    }
+
+    public void deleteImage(String key) {
+        try {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
+
+            s3Client.deleteObject(deleteRequest);
+        } catch (Exception e) {
+            log.warn("[S3Storage] S3에서 이미지 삭제 중 오류 발생- key: {}", key, e);
+        }
     }
 
     public String generatePresignedUrl(String key) {
