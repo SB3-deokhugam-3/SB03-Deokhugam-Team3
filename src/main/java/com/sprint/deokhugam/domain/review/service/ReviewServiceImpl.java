@@ -167,8 +167,10 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDto update(UUID reviewId, UUID userId, ReviewUpdateRequest request) {
         Review review = findByReviewId(reviewId);
         validateAuthorizedUser(review, userId, ReviewFeature.UPDATE);
+        log.info("[review] 수정 요청 - reviewId: {}, userId: {}", reviewId, userId);
 
         review.update(request.content(), request.rating());
+        log.info("[review] 수정 완료 - reviewId: {}, userId: {}, newContent={}, newRating={}", reviewId, userId, request.content(), request.rating());
 
         return reviewMapper.toDto(review);
     }
