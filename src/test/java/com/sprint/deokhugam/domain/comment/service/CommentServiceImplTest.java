@@ -6,12 +6,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
+import com.sprint.deokhugam.domain.comment.exception.CommentNotFoundException;
 import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.mapper.CommentMapper;
 import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
@@ -127,7 +129,6 @@ public class CommentServiceImplTest {
             .createdAt(createdAt)
             .updatedAt(updatedAt)
             .build();
-
         given(reviewRepository.findById(any(UUID.class))).willReturn(Optional.ofNullable(review1));
         given(userRepository.findById(any(UUID.class))).willReturn(Optional.ofNullable(user1));
         given(commentRepository.save(any())).willReturn(comment);
@@ -173,6 +174,46 @@ public class CommentServiceImplTest {
 
         //then
         assertThat(thrown).isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    void 댓글_세부정보_요청시_댓글정보_반환() throws Exception {
+        //given
+        UUID commentId = UUID.randomUUID();
+        Comment comment = new Comment(mock(Review.class), mock(User.class), "test");
+        CommentDto expectedDto = CommentDto.builder()
+            .id(commentId)
+            .content("test")
+            .reviewId(UUID.randomUUID())
+            .userId(UUID.randomUUID())
+            .createdAt(createdAt)
+            .updatedAt(updatedAt)
+            .build();
+        given(commentRepository.findById(any())).willReturn(Optional.of(comment));
+        given(commentMapper.toDto(comment)).willReturn(expectedDto);
+
+        //when
+        CommentDto result = commentService.findById(commentId);
+
+        //then
+        assertThat(result.content()).isEqualTo(expectedDto.content());
+        then(commentRepository).should().findById(commentId);
+        then(commentMapper).should().toDto(comment);
+    }
+
+    @Test
+    void 존재하지않은_댓글_세부정보_요청시_CommentNotFoundException에러_반환() throws Exception {
+        //given
+        UUID commentId = UUID.randomUUID();
+        given(commentRepository.findById(any())).willReturn(Optional.empty());
+
+        //when
+        Throwable thrown = catchThrowable(() -> commentService.findById(commentId));
+
+        //then
+        assertThat(thrown).isInstanceOf(CommentNotFoundException.class);
+        then(commentRepository).should().findById(commentId);
+
     }
 
     @Test

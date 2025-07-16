@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.comment.service;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
+import com.sprint.deokhugam.domain.comment.exception.CommentNotFoundException;
 import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.mapper.CommentMapper;
 import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
@@ -13,7 +14,6 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -63,7 +63,18 @@ public class CommentServiceImpl implements CommentService {
         review.increaseCommentCount();
 
         return commentMapper.toDto(savedComment);
+    }
 
+    @Override
+    public CommentDto findById(UUID commentId) {
+        log.info("[comment] 댓글 상세 조회 요청 - commentId: {}", commentId);
+
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> {
+            log.warn("[comment] 댓글 상세 조회 요청 실패(존재하지않음) - commentId: {}", commentId);
+            return new CommentNotFoundException(commentId);
+        });
+
+        return commentMapper.toDto(comment);
     }
 
     @Override

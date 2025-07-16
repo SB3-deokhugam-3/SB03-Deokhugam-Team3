@@ -8,8 +8,8 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -153,6 +153,55 @@ class CommentControllerTest {
     }
 
     @Test
+    void 댓글_세부정보_요청시_200성공_반환() throws Exception {
+        //given
+        UUID commentId = UUID.randomUUID();
+        CommentDto expectedDto = CommentDto.builder()
+            .id(commentId)
+            .content("test")
+            .reviewId(UUID.randomUUID())
+            .userId(UUID.randomUUID())
+            .createdAt(createdAt)
+            .updatedAt(updatedAt)
+            .build();
+        given(commentService.findById(any())).willReturn(expectedDto);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            get("/api/comments/" + commentId)
+        );
+
+        //then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(commentId.toString()))
+            .andExpect(jsonPath("$.content").value("test"));
+    }
+
+    @Test
+    void commentId없이_댓글_세부정보_요청시_404_에러_반환() throws Exception {
+        //given
+        UUID commentId = UUID.randomUUID();
+        CommentDto expectedDto = CommentDto.builder()
+            .id(commentId)
+            .content("test")
+            .reviewId(UUID.randomUUID())
+            .userId(UUID.randomUUID())
+            .createdAt(createdAt)
+            .updatedAt(updatedAt)
+            .build();
+        given(commentService.findById(any())).willReturn(expectedDto);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            get("/api/comments/")
+        );
+
+        //then
+        result.andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("NO_RESOURCE_FOUND"));
+    }
+
+    @Test
     void 커서_기반_댓글_목록_조회에_성공하면_200응답을_반환한다() throws Exception {
         // given
         UUID reviewId = UUID.randomUUID();
@@ -284,6 +333,4 @@ class CommentControllerTest {
             .andExpect(jsonPath("$.hasNext").value(false))
             .andDo(print());
     }
-
-
 }
