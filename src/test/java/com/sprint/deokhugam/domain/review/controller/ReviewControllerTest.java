@@ -242,7 +242,8 @@ class ReviewControllerTest {
         );
 
         //then
-        result.andExpect(status().is5xxServerError());
+        result.andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("NO_RESOURCE_FOUND"));
     }
 
     @Test
