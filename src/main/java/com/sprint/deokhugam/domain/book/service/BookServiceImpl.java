@@ -6,7 +6,11 @@ import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
+import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
+import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
+import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
+import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
@@ -28,11 +32,16 @@ public class BookServiceImpl implements BookService {
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
     private final S3Storage s3Storage;
+    private final TesseractOcrExtractor tesseractOcrExtractor;
+
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final List<String> SUPPORTED_IMAGE_TYPES =
+        List.of("image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp");
 
     @Override
     @Transactional
     public BookDto create(BookCreateRequest bookData, MultipartFile thumbnailImage) throws IOException {
-        log.debug("[BookService]: 책 등록 요청 - bookData: {}", bookData);
+        log.debug("[BookService] 책 등록 요청 - bookData: {}", bookData);
 
         String isbn = bookData.isbn();
 
@@ -50,14 +59,14 @@ public class BookServiceImpl implements BookService {
 
         Book savedBook = bookRepository.save(book);
 
-        log.info("책 등록 완료: id={}, title={}", savedBook.getId(), savedBook.getTitle());
+        log.info("[BookService] 책 등록 완료: id={}, title={}", savedBook.getId(), savedBook.getTitle());
 
         return bookMapper.toDto(savedBook, s3Storage);
     }
 
     @Override
     public CursorPageResponse<BookDto> getBooks(BookSearchRequest request) {
-        log.info("도서 목록 조회 시작 - request: {}", request);
+        log.info("[BookService] 도서 목록 조회 시작 - request: {}", request);
 
         // 유효성 검증
         BookSearchRequest validatedRequest = request.validate();
@@ -109,9 +118,69 @@ public class BookServiceImpl implements BookService {
             hasNext
         );
 
-        log.info("도서 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(), response.hasNext());
+        log.info("[BookService] 도서 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(), response.hasNext());
 
         return response;
+    }
+
+    @Override
+    public String extractIsbnFromImage(MultipartFile imageFile) throws OcrException {
+        log.info("[BookService] 이미지에서 ISBN 추출 요청 - 파일명: {}, 크기: {} bytes",
+            imageFile.getOriginalFilename(), imageFile.getSize());
+
+        // 파일 유효성 검사
+        validateImageFile(imageFile);
+
+        try {
+            // OCR 서비스 사용 가능 여부 확인
+            if (!tesseractOcrExtractor.isAvailable()) {
+                throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.");
+            }
+
+            // OCR 처리
+            String extractedIsbn = tesseractOcrExtractor.extractIsbn(imageFile);
+
+            // OCR 결과 검증
+            if (extractedIsbn == null || extractedIsbn.trim().isEmpty()) {
+                throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.");
+            }
+
+            return extractedIsbn;
+        } catch (OcrException e) {
+            // 이미 OcrException인 경우 그대로 전파
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("[BookService] OCR 처리 중 런타임 예외 발생", e);
+            throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.", e);
+        } catch (Exception e) {
+            log.error("[BookService] OCR 처리 중 예상치 못한 예외 발생", e);
+            throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.", e);
+        }
+    }
+
+    /**
+     * 이미지 파일 유효성 검사
+     * */
+
+    private void validateImageFile(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("[BookService] 이미지 파일이 필요합니다.");
+        }
+
+        if (image.getSize() > MAX_FILE_SIZE) {
+            throw new FileSizeExceededException(image.getSize(), MAX_FILE_SIZE);
+        }
+
+        // 파일 형식 검사
+        String contentType = image.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new InvalidFileTypeException("[BookService] 이미지 파일만 업로드 가능합니다.");
+        }
+
+        // 지원되는 이미지 형식 검사
+        if (!SUPPORTED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException("[BookService] 지원되지 않는 이미지 형식입니다. ( 지원 형식 : JPEG, PNG, GIF, BMP, WEBP )");
+        }
     }
 
     public BookDto findById(UUID bookId) {
@@ -119,7 +188,7 @@ public class BookServiceImpl implements BookService {
 
         Book book = findBook(bookId);
 
-        log.info("책 조회 성공: book: {}", book);
+        log.info("[BookService] 책 조회 성공: book: {}", book);
 
         return bookMapper.toDto(book, s3Storage);
     }
@@ -127,7 +196,7 @@ public class BookServiceImpl implements BookService {
     private Book findBook(UUID bookId) {
         return bookRepository.findById(bookId)
             .orElseThrow(() -> {
-                log.warn("[BookService]: 도서 조회 실패: id: {}", bookId);
+                log.warn("[BookService] 도서 조회 실패: id: {}", bookId);
                 return new BookNotFoundException(bookId);
             });
     }

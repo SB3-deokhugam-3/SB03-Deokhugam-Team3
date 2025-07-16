@@ -5,6 +5,7 @@ import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
+import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
@@ -44,7 +45,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
-    /*
+    /**
      * 도서 목록 조회 ( 키워드 검색 + 커서 페이지네이션 )
      * @param keyword 검색 키워드 ( 제목, 저자, ISBN에서 부분 일치 )
      * @param orderBy 정렬 기준 ( 제목, 출판일, 평점, 리뷰수 )
@@ -52,7 +53,8 @@ public class BookController {
      * @param cursor 커서 값 ( 이전 페이지 마지막 요소의 정렬 기준 값 )
      * @param after 이전 페이지 마지막 요소의 생성 시간
      * @param limit 페이지 크기
-     * @return 도서 목록 응답 */
+     * @return 도서 목록 응답
+     * */
 
     @GetMapping
     public ResponseEntity<CursorPageResponse<BookDto>> getBooks(
@@ -63,8 +65,7 @@ public class BookController {
         @RequestParam(required = false) Long after,
         @RequestParam(defaultValue = "50") Integer limit
     ) {
-        log.info(
-            "도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
+        log.info("[BookController] 도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
             keyword, orderBy, direction, cursor, after, limit);
 
         // Request DTO 생성
@@ -98,5 +99,27 @@ public class BookController {
         NaverBookDto result = provider.fetchInfoByIsbn(isbn);
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    /**
+     * 이미지 기반 ISBN 인식
+     * 도서 이미지를 통해 ISBN을 인식합니다.
+     *
+     * @param image 도서 이미지
+     * @return 인식된 ISBN 문자열
+     * @throws OcrException OCR 처리 중 오류 발생 시
+     * */
+    @PostMapping("/isbn/ocr")
+    public ResponseEntity<String> extractIsbnFromImage(
+        @RequestPart(value = "image") MultipartFile image
+    ) throws OcrException {
+        log.info("[BookController] ISBN 추출 요청 - 파일명 : {}, 크기 : {} bytes", image.getOriginalFilename(), image.getSize());
+
+        // OCR 서비스 호출
+        String extractedIsbn = bookService.extractIsbnFromImage(image);
+
+        log.info("ISBN 추출 완료 - ISBN : {}", extractedIsbn);
+
+        return ResponseEntity.status(HttpStatus.OK).body(extractedIsbn);
     }
 }

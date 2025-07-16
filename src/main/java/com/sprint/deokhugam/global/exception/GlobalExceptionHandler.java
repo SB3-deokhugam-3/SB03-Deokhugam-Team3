@@ -5,12 +5,14 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -137,6 +139,20 @@ public class GlobalExceptionHandler {
             ErrorCode.INTERNAL_SERVER_ERROR, details);
 
         return toErrorResponse(internalException);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(MissingServletRequestPartException ex) {
+        log.warn("[MISSING_REQUEST_PART] 필수 요청 파트 누락: {}", ex.getMessage());
+
+        DomainException domainException = new DomainException(
+            ErrorCode.INVALID_INPUT_VALUE,
+            Map.of("message", "필수 이미지 파일이 요청에 없습니다.")
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse.of(domainException));
     }
 
     private ResponseEntity<ErrorResponse> toErrorResponse(DomainException ex) {
