@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.List;
@@ -41,7 +42,13 @@ public class NaverBookInfoProvider implements BookInfoProvider {
         log.info("[BookInfoProvider] 도서 정보 조회 성공: item: {}", item);
 
         String author = item.author().replace("^", ",");
-        LocalDate publishedDate = LocalDate.parse(item.pubDate(), DateTimeFormatter.ofPattern("yyyyMMdd"));
+        LocalDate publishedDate;
+        try {
+            publishedDate = LocalDate.parse(item.pubDate(), DateTimeFormatter.ofPattern("yyyyMMdd"));
+        } catch (DateTimeParseException e) {
+            log.warn("[BookInfoProvider] pubDate 파싱 실패: {}", item.pubDate(), e);
+            publishedDate = null;
+        }
         String thumbnailImage = imageToBase64(item.image());
 
         return NaverBookDto.builder()
@@ -91,12 +98,25 @@ public class NaverBookInfoProvider implements BookInfoProvider {
     }
 
     protected String imageToBase64(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return "";
+        }
+
         try {
             URL url = new URL(imageUrl);
             BufferedImage thumbnailImage = ImageIO.read(url);
+            if (thumbnailImage == null) {
+                log.warn("[BookInfoProvider] 이미지를 읽을 수 없음: {}", imageUrl);
+                return "";
+            }
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ImageIO.write(thumbnailImage, "jpg", bos);
+            // URL에서 확장자 추출 또는 기본값 사용
+            String format = imageUrl.substring(imageUrl.lastIndexOf('.') + 1).toLowerCase();
+            if (!format.matches("jpg|jpeg|png|gif")) {
+                format = "jpg";
+            }
+            ImageIO.write(thumbnailImage, format, bos);
             Encoder encoder = Base64.getEncoder();
 
             return encoder.encodeToString(bos.toByteArray());
