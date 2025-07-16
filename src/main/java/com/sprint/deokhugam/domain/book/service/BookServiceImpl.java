@@ -207,17 +207,23 @@ public class BookServiceImpl implements BookService {
         book.updatePublisher(bookData.publisher());
         book.updatePublishedDate(bookData.publishedDate());
 
-        // 기존 썸네일이 있는 경우 기존 썸네일 S3에서 삭제
-        if (book.getThumbnailUrl() != null) {
-            s3Storage.deleteImage(book.getThumbnailUrl());
-        }
-
-        if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
-            // Book Entity를 저장할 때는 S3의 실제 경로 저장
-            String thumbnailImageUrl = s3Storage.uploadImage(thumbnailImage);
-            book.updateThumbnailUrl(thumbnailImageUrl);
-        } else {
-            book.updateThumbnailUrl(null);
+        if (thumbnailImage != null) {
+            if (thumbnailImage.isEmpty()) {
+                // thumbnailImage 파트가 빈 파일 -> 이미지 삭제 요청으로 해석
+                if (book.getThumbnailUrl() != null) {
+                    s3Storage.deleteImage(book.getThumbnailUrl());
+                    book.updateThumbnailUrl(null);
+                    log.info("[BookService] 썸네일 삭제 완료 - id: {}", bookId);
+                }
+            } else {
+                // thumbnailImage에 새 파일이 들어있음 -> 기존 삭제 후 새 업로드
+                if (book.getThumbnailUrl() != null) {
+                    s3Storage.deleteImage(book.getThumbnailUrl());
+                }
+                String thumbnailImageUrl = s3Storage.uploadImage(thumbnailImage);
+                book.updateThumbnailUrl(thumbnailImageUrl);
+                log.info("[BookService] 썸네일 새로 업로드 완료 - id: {}", bookId);
+            }
         }
 
         Book updatedBook = bookRepository.save(book);
