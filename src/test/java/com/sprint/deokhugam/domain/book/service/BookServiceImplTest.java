@@ -485,6 +485,49 @@ class BookServiceImplTest {
     }
 
     @Test
+    void 썸네일이_있는_도서의_썸네일을_삭제하면_정상적으로_수정된다() throws IOException {
+
+        UUID bookId = UUID.randomUUID();
+
+        Book existBook = createBookEntity(title, author, description, publisher, publishedDate,
+            isbn, "image/test.jpg", 0.0, 0L);
+        BookUpdateRequest updateRequest = createUpdateRequest("new title", "new author",
+            "new description", "new publisher", LocalDate.of(2023, 3, 3));
+
+        MultipartFile emptyFile = new MockMultipartFile(
+            "coverImage",
+            "newCover.png",
+            "image/png",
+            new byte[0]
+        );
+
+        Book updatedBook = createBookEntity("new title", "new author", "new description",
+            "new publisher", LocalDate.of(2023, 3, 3), isbn, null,
+            0.0, 0L);
+
+        BookDto expectedResponse = createBookDto(bookId, "new title", "new author", "new description",
+            "new publisher", LocalDate.of(2023, 3, 3), isbn, null, 0L, 0.0,
+            Instant.now(), Instant.now());
+
+        ReflectionTestUtils.setField(existBook, "id", bookId);
+        ReflectionTestUtils.setField(updatedBook, "id", bookId);
+
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(existBook));
+        given(bookRepository.save(any(Book.class))).willReturn(updatedBook);
+        given(bookMapper.toDto(eq(updatedBook), any(S3Storage.class))).willReturn(expectedResponse);
+
+        // when
+        BookDto result = bookService.update(bookId, updateRequest, emptyFile);
+
+        // then
+        assertNotNull(result);
+        assertEquals(expectedResponse, result);
+        verify(storage).deleteImage("image/test.jpg");
+        verify(bookRepository).save(any(Book.class));
+        verify(bookMapper).toDto(updatedBook, storage);
+    }
+
+    @Test
     void 존재하지_않는_도서를_수정_요청하면_수정에_실패한다() {
 
         // given
