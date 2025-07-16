@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.user.controller;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
+import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -10,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -72,5 +75,50 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(loginUser);
+    }
+
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserDto> update(
+            @PathVariable UUID userId,
+            @Valid @RequestBody UserUpdateRequest userUpdateRequest
+    ) {
+
+        log.info("[UserController] 사용자 닉네임 수정: userId: {}, nickname: {}", userId, userUpdateRequest.nickname());
+
+        UserDto updateUser = userService.updateUserNickName(userUpdateRequest, userId);
+
+        log.info("[UserController] 사용자 닉네임 수정 성공: userId: {}, nickname: {}", userId, userUpdateRequest.nickname());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(updateUser);
+    }
+
+    @DeleteMapping("/{userId}/hard")
+    public ResponseEntity<UserDto> hardDelete(
+            @PathVariable UUID userId
+    ) {
+        log.info("[UserController] 물리 삭제 요청: userId: {}", userId);
+
+        userService.hardDeleteUser(userId);
+
+        log.info("[UserController] 물리 삭제 성공: userId: {}", userId);
+
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<UserDto> deleted(
+            @PathVariable UUID userId
+    ) {
+        log.info("[UserController] 논리 삭제 요청: userId: {}", userId);
+
+        UserDto deletedUser = userService.deleteUser(userId);
+
+        log.info("[UserController] 논리 삭제 성공: userId: {}", userId);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(deletedUser);
     }
 }

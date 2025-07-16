@@ -11,18 +11,23 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
+import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
+import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.exception.ForbiddenException;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import com.sprint.deokhugam.global.exception.NotFoundException;
 import com.sprint.deokhugam.global.exception.UnauthorizedException;
@@ -103,7 +108,7 @@ public class ReviewServiceImplTest {
         // ---------- [REVIEW 1] ----------
         Review review1 = Review.builder()
             .content("리뷰1")
-            .rating(0.0)
+            .rating(0)
             .likeCount(10L)
             .commentCount(12L)
             .isDeleted(true)
@@ -147,7 +152,7 @@ public class ReviewServiceImplTest {
         // ---------- [REVIEW 2] ----------
         Review review2 = Review.builder()
             .content("리뷰2")
-            .rating(0.0)
+            .rating(0)
             .likeCount(382L)
             .commentCount(2L)
             .isDeleted(false)
@@ -191,7 +196,7 @@ public class ReviewServiceImplTest {
         // ---------- [REVIEW 3] ----------
         Review review3 = Review.builder()
             .content("리뷰3")
-            .rating(0.0)
+            .rating(0)
             .likeCount(77L)
             .commentCount(6L)
             .isDeleted(false)
@@ -266,8 +271,6 @@ public class ReviewServiceImplTest {
 
     UUID bookId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
-    String content = "이 책 따봉임";
-    double rating = 4.2;
     Instant now = Instant.now();
 
     @Test
@@ -305,7 +308,7 @@ public class ReviewServiceImplTest {
 
         // then
         assertThat(thrown)
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(BookNotFoundException.class);
         then(bookRepository).should().findById(bookId);
         then(userRepository).shouldHaveNoInteractions();
         then(reviewRepository).shouldHaveNoInteractions();
@@ -325,7 +328,7 @@ public class ReviewServiceImplTest {
 
         // then
         assertThat(thrown)
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(UserNotFoundException.class);
         then(bookRepository).should().findById(bookId);
         then(userRepository).should().findById(userId);
         then(reviewRepository).shouldHaveNoInteractions();
@@ -496,7 +499,7 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_UnauthorizedException_에러를_반환한다() throws Exception {
+    void 삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_ReviewUnauthorizedAccessException_에러를_반환한다() throws Exception {
         //given
         UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
         UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-111111111111");
@@ -507,7 +510,7 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.delete(reviewId, userId));
 
         //then
-        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+        assertThat(thrown).isInstanceOf(ReviewUnauthorizedAccessException.class);
 
     }
 
@@ -544,7 +547,7 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 하드_삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_UnauthorizedException_에러를_반환한다() throws Exception {
+    void 하드_삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_ReviewUnauthorizedAccessException_에러를_반환한다() throws Exception {
         //given
         UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
         UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-111111111111");
@@ -555,16 +558,44 @@ public class ReviewServiceImplTest {
         Throwable thrown = catchThrowable(() -> reviewService.hardDelete(reviewId, userId));
 
         //then
-        assertThat(thrown).isInstanceOf(UnauthorizedException.class);
+        assertThat(thrown).isInstanceOf(ReviewUnauthorizedAccessException.class);
 
+    }
+
+    @Test
+    void 리뷰가_존재하면_정상_수정된다() {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Book mockBook = mock(Book.class);
+        User mockUser = mock(User.class);
+        String newContent = "업데이트된 리뷰";
+        Integer newRating = 3;
+        ReviewUpdateRequest updateRequest = updateRequest();
+        Review basedReview = createReview(mockBook, mockUser);
+        ReviewDto updatedDto = updateDto(reviewId);
+        given(mockUser.getId()).willReturn(userId);
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(basedReview));
+        given(reviewMapper.toDto(basedReview)).willReturn(updatedDto);
+
+        // when
+        ReviewDto result = reviewService.update(reviewId, userId, updateRequest);
+
+        //then
+        assertThat(result.content()).isEqualTo(newContent);
+        assertThat(result.rating()).isEqualTo(newRating);
+        then(reviewRepository).should().findById(reviewId);
+        then(reviewMapper).should().toDto(basedReview);
+        assertThat(basedReview.getContent()).isEqualTo(newContent);
+        assertThat(basedReview.getRating()).isEqualTo(newRating);
     }
 
     private ReviewCreateRequest createRequest() {
-        return new ReviewCreateRequest(bookId, userId, content, rating);
+        return new ReviewCreateRequest(bookId, userId, "이 책 따봉임", 4);
     }
 
     private Review createReview(Book book, User user) {
-        return new Review(rating, content, book, user);
+        return new Review(4, "이 책 따봉임", book, user);
     }
 
     private ReviewDto createDto(UUID reviewId) {
@@ -575,14 +606,36 @@ public class ReviewServiceImplTest {
             .bookThumbnailUrl("http://image.url")
             .userId(userId)
             .userNickname("테스터")
-            .content(content)
-            .rating(rating)
+            .content("이 책 따봉임")
+            .rating(4)
             .likeCount(0L)
             .commentCount(0L)
             .likedByMe(false)
             .createdAt(now)
             .updatedAt(now)
             .build();
+    }
+
+    private ReviewDto updateDto(UUID reviewId) {
+        return ReviewDto.builder()
+            .id(reviewId)
+            .bookId(bookId)
+            .bookTitle("테스트 책")
+            .bookThumbnailUrl("http://image.url")
+            .userId(userId)
+            .userNickname("테스터")
+            .content("업데이트된 리뷰")
+            .rating(3)
+            .likeCount(0L)
+            .commentCount(0L)
+            .likedByMe(false)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+    }
+
+    private ReviewUpdateRequest updateRequest() {
+        return new ReviewUpdateRequest("업데이트된 리뷰", 3);
     }
 
 }

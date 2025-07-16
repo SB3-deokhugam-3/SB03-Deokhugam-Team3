@@ -129,7 +129,7 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
         try {
             BooleanBuilder whereCondition = new BooleanBuilder();
             String direction = params.getDirection();
-            Double cursor = Double.valueOf(params.getCursor().toString());
+            Integer cursor = Integer.valueOf(params.getCursor().toString());
             Instant after = params.getAfter();
 
             if (direction.equals(ORDER_DIRECTION_DESC)) {

@@ -29,7 +29,7 @@ import org.hibernate.annotations.SQLRestriction;
 public class Review extends BaseUpdatableEntity {
 
     @Column(name = "rating", nullable = false)
-    private Double rating = 0.0;
+    private Integer rating = 0;
 
     @Column(name = "content", nullable = false)
     private String content = "";
@@ -51,14 +51,14 @@ public class Review extends BaseUpdatableEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public Review(Double rating, String content, Book book, User user) {
+    public Review(Integer rating, String content, Book book, User user) {
         this.rating = rating;
         this.content = content;
         this.book = book;
         this.user = user;
     }
 
-    public void update(String newContent, Double newRating) {
+    public void update(String newContent, Integer newRating) {
         if (newContent != null && !newContent.trim().isEmpty()) {
             this.content = newContent;
         }

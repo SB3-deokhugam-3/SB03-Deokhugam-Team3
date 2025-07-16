@@ -43,7 +43,7 @@ CREATE TABLE reviews
     updated_at    TIMESTAMP,
     book_id       UUID             NOT NULL,
     user_id       UUID             NOT NULL,
-    rating        DOUBLE PRECISION NOT NULL CHECK (rating BETWEEN 0 AND 5),
+    rating        INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
     content       TEXT             NOT NULL,
     like_count    BIGINT           NOT NULL DEFAULT 0,
     comment_count BIGINT           NOT NULL DEFAULT 0,
