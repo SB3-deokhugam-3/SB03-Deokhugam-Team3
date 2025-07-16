@@ -22,21 +22,23 @@ public class S3Config {
     private String region;
 
     @Bean
-    public S3Client amazonS3Client() {
-        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
+    public AwsBasicCredentials awsBasicCredentials() {
+        return AwsBasicCredentials.create(accessKey, secretKey);
+    }
 
+    @Bean
+    public S3Client amazonS3Client(AwsBasicCredentials awsBasicCredentials) {
         return S3Client.builder()
             .region(Region.of(region))
-            .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+            .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
             .build();
     }
 
     @Bean
-    public S3Presigner s3Presigner() {
-        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
+    public S3Presigner s3Presigner(AwsBasicCredentials awsBasicCredentials) {
         return S3Presigner.builder()
             .region(Region.of(region))
-            .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+            .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
             .build();
     }
 }
