@@ -23,6 +23,13 @@ deokhugam:
       bucket: dummy-bucket
       presigned-url-expiration: 600
 
+#  Naver Api - 테스트용 더미
+books:
+  api:
+    naver:
+      client-id: dummy-client-id
+      client-secret: dummy-client-secret
+
 # 테스트 프로파일 설정
 ---
 spring:

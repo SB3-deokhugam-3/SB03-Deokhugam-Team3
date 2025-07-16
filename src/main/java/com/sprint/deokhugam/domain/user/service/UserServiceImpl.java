@@ -90,6 +90,30 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Transactional
+    @Override
+    public UserDto deleteUser(UUID userID) {
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+
+        user.deleted();
+
+        return userMapper.toDto(user);
+    }
+
+    @Transactional
+    @Override
+    public void hardDeleteUser(UUID userID) {
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+
+        if (!user.getIsDeleted()) {
+            throw new InvalidUserRequestException("userId", "논리 삭제되지 않은 사용자는 물리 삭제할 수 없습니다.");
+        }
+
+        userRepository.delete(user);
+    }
+
     private void validateUserCreateRequest(UserCreateRequest userCreateRequest) {
         if (userRepository.existsByEmail(userCreateRequest.email())) {
             throw new DuplicateEmailException(userCreateRequest.email(), "이미 존재하는 이메일입니다.");
