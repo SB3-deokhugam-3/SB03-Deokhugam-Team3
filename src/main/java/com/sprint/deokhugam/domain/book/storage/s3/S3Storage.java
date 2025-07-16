@@ -5,6 +5,7 @@ import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(name = "deokhugam.storage.type", havingValue = "s3")
 public class S3Storage {
@@ -69,12 +71,16 @@ public class S3Storage {
     }
 
     public void deleteImage(String key) {
-        DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-            .bucket(bucket)
-            .key(key)
-            .build();
+        try {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
 
-        s3Client.deleteObject(deleteRequest);
+            s3Client.deleteObject(deleteRequest);
+        } catch (Exception e) {
+            log.warn("[S3Storage] S3에서 이미지 삭제 중 오류 발생- key: {}", key, e);
+        }
     }
 
     public String generatePresignedUrl(String key) {
