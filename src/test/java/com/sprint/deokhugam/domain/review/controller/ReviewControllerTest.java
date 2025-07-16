@@ -189,10 +189,11 @@ class ReviewControllerTest {
         // given
         UUID reviewId = UUID.randomUUID();
         ReviewDto expectedDto = createDto(reviewId);
-        given(reviewService.findById(reviewId)).willReturn(expectedDto);
+        given(reviewService.findById(reviewId, userId)).willReturn(expectedDto);
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/reviews/{reviewId}", reviewId));
+        ResultActions result = mockMvc.perform(get("/api/reviews/{reviewId}", reviewId)
+            .header("Deokhugam-Request-User-ID", userId));
 
         // then
         result.andExpect(status().isOk())
@@ -205,12 +206,14 @@ class ReviewControllerTest {
     @Test
     void 존재하지_않는_리뷰ID로_조회시_404를_반환한다() throws Exception {
         // given
-        UUID notFoundId = UUID.randomUUID();
-        given(reviewService.findById(notFoundId)).willThrow(
-            new ReviewNotFoundException(notFoundId));
+        UUID notFoundReviewId = UUID.randomUUID();  // 존재하지 않는 리뷰ID
+        UUID requestUserId = UUID.randomUUID();     // 요청하는 사용자ID
+        given(reviewService.findById(notFoundReviewId, requestUserId)).willThrow(
+            new ReviewNotFoundException(notFoundReviewId));
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/reviews/{reviewId}", notFoundId));
+        ResultActions result = mockMvc.perform(get("/api/reviews/{reviewId}", notFoundReviewId)
+            .header("Deokhugam-Request-User-ID", requestUserId));
 
         // then
         result.andExpect(status().isNotFound())
