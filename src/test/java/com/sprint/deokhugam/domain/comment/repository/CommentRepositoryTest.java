@@ -83,7 +83,7 @@ class CommentRepositoryTest {
     @Test
     void findByReviewId_정상_조회() {
         // given
-        Instant baseTime = Instant.now();
+        Instant baseTime = Instant.parse("2024-01-01T12:00:00Z");
         Comment comment1 = createComment("댓1", baseTime.minusSeconds(300));
         Comment comment2 = createComment("댓2", baseTime.minusSeconds(180));
         Comment comment3 = createComment("댓3", baseTime.minusSeconds(60));
