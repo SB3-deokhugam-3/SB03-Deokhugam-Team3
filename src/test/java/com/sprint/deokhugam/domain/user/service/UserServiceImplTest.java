@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,11 +46,12 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        user = new User("testUser@test.com", "testUser", "test1234!");
+        user = new User("testUser@test.com", "testUser", "test1234!", false);
         userDto = UserDto.builder()
                 .id(UUID.randomUUID())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
+                .isDeleted(false)
                 .build();
         userId = user.getId();
     }
@@ -210,4 +212,48 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.updateUserNickName(null, userId))
                 .isInstanceOf(InvalidUserRequestException.class);
     }
+
+    @Test
+    void 논리삭제_상태인_사용자를_물리삭제하면_성공한다() {
+        // given
+        user.deleted(); // 논리 삭제 상태로 변경
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // when
+        userService.hardDeleteUser(userId);
+
+        // then
+
+        verify(userRepository).findById(userId);
+        verify(userRepository).delete(user);
+    }
+
+    @Test
+    void 논리삭제되지_않은_사용자_물리삭제_시_예외가_발생한다() {
+        // given
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> userService.hardDeleteUser(userId))
+                .isInstanceOf(InvalidUserRequestException.class);
+
+        verify(userRepository).findById(userId);
+        verify(userRepository, never()).delete(user); //userRepository.delete 가 실행하지 않았음을 검증
+    }
+
+
+    @Test
+    void 논리삭제_물리삭제중_사용자_없을_경우_예외가_발생한다
+            () {
+        // given
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        // then
+        assertThatThrownBy(() -> userService.deleteUser(userId))
+                .isInstanceOf(UserNotFoundException.class);
+
+        assertThatThrownBy(() -> userService.hardDeleteUser(userId))
+                .isInstanceOf(UserNotFoundException.class);
+    }
+
 }

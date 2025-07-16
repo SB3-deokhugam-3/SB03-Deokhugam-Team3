@@ -2,7 +2,10 @@ package com.sprint.deokhugam.domain.user.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,6 +17,7 @@ import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
+import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.service.UserService;
 import java.util.List;
@@ -122,7 +126,7 @@ class UserControllerTest {
     void 사용자_조회시_200을_반환한다() throws Exception {
         // Given
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(userId, "testUser", "testUser@test.com");
+        UserDto userDto = new UserDto(userId, "testUser", "testUser@test.com", false);
         when(userService.findUser(userId)).thenReturn(userDto);
 
         // When
@@ -178,7 +182,6 @@ class UserControllerTest {
                 jsonPath("$.nickname").value("testUser")
         );
     }
-
 
     @Test
     void 사용자_닉네임_수정_요청시_200을_반환한다() throws Exception {
@@ -238,5 +241,87 @@ class UserControllerTest {
             // then
             result.andExpect(status().isBadRequest());
         }
+    }
+
+    @Test
+    void 논리삭제_요청시_200과_유저정보_반환() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        UserDto deletedUser = UserDto.builder()
+                .id(userId)
+                .email("deleted@example.com")
+                .nickname("deletedUser")
+                .isDeleted(true)
+                .build();
+
+        when(userService.deleteUser(userId)).thenReturn(deletedUser);
+
+        // when & then
+
+        ResultActions result = mockMvc.perform(delete("/api/users/{userId}", userId)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId.toString()))
+                .andExpect(jsonPath("$.isDeleted").value(true));
+    }
+
+    @Test
+    void 물리삭제_요청시_204응답_반환() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        doNothing().when(userService).hardDeleteUser(userId);
+
+        // when & then
+        ResultActions result = mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        result.andExpect(status().isNoContent());
+    }
+
+    @Test
+    void 논리삭제시_존재하지_않는_유저라면_404반환() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        when(userService.deleteUser(userId))
+                .thenThrow(new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+
+        // when & then
+        ResultActions resultActions =
+                mockMvc.perform(delete("/api/users/{userId}", userId)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        resultActions.andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+    }
+
+    @Test
+    void 물리삭제시_논리삭제되지_않은_유저라면_400반환() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        doThrow(new InvalidUserRequestException("userId", "논리 삭제되지 않은 사용자는 물리 삭제할 수 없습니다."))
+                .when(userService).hardDeleteUser(userId);
+
+        // when & then
+        ResultActions result = mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        result.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("USER_INVALID_INPUT_VALUE"));
+    }
+
+    @Test
+    void 물리삭제시_존재하지_않는_유저라면_404반환() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        doThrow(new UserNotFoundException("userId", "존재하지 않은 사용자입니다."))
+                .when(userService).hardDeleteUser(userId);
+
+        // when & then
+        ResultActions result = mockMvc.perform(delete("/api/users/{userId}/hard", userId)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        result.andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
     }
 }
