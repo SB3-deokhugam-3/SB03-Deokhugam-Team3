@@ -1,7 +1,6 @@
 package com.sprint.deokhugam.domain.book.ocr;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.sprint.deokhugam.domain.book.exception.OcrException;
@@ -15,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,7 +21,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TesseractOcrExtractor 테스트")
 class TesseractOcrExtractorTest {
 
     private TesseractOcrExtractor tesseractOcrExtractor;
@@ -33,13 +30,12 @@ class TesseractOcrExtractorTest {
         try {
             tesseractOcrExtractor = new TesseractOcrExtractor();
         } catch (Exception e) {
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Tesseract 초기화 실패: " + e.getMessage());
+            org.junit.jupiter.api.Assumptions.assumeFalse(true, "Tesseract 초기화 실패: " + e.getMessage());
         }
     }
 
     @Test
-    @DisplayName("Tesseract OCR 구현체 가용성 테스트")
-    void testIsAvailable() {
+    void Tesseract_OCR_구현체_가용성_테스트() {
         // given
         // setUp에서 tesseractOcrExtractor 초기화됨
 
@@ -51,8 +47,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("Tesseract OCR 구현체 우선순위 테스트")
-    void testGetPriority() {
+    void Tesseract_OCR_구현체_우선순위_테스트() {
         // given
         // setUp에서 tesseractOcrExtractor 초기화됨
 
@@ -64,8 +59,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("실제 ISBN 이미지에서 ISBN 추출 성공 테스트")
-    void testExtractIsbnFromValidImage() throws IOException, OcrException {
+    void 실제_ISBN_이미지에서_ISBN_추출_성공_테스트() throws IOException, OcrException {
         // given
         MultipartFile testImageFile = createTestImageFile("isbn.jpg");
 
@@ -81,8 +75,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("test1.jpg 이미지에서 ISBN 추출 테스트")
-    void testExtractIsbnFromTest1Image() throws IOException, OcrException {
+    void test1_jpg_이미지에서_ISBN_추출_테스트() throws IOException, OcrException {
         // given
         MultipartFile testImageFile = createTestImageFile("test1.jpg");
 
@@ -97,8 +90,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("test2.jpg 이미지에서 ISBN 추출 테스트")
-    void testExtractIsbnFromTest2Image() throws IOException, OcrException {
+    void test2_jpg_이미지에서_ISBN_추출_테스트() throws IOException, OcrException {
         // given
         MultipartFile testImageFile = createTestImageFile("test2.jpg");
 
@@ -113,8 +105,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("test3.jpg 이미지에서 ISBN 추출 테스트")
-    void testExtractIsbnFromTest3Image() throws IOException, OcrException {
+    void test3_jpg_이미지에서_ISBN_추출_테스트() throws IOException, OcrException {
         // given
         MultipartFile testImageFile = createTestImageFile("test3.jpg");
 
@@ -129,8 +120,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("null 이미지 파일 예외 테스트")
-    void testExtractIsbnFromNullFile() {
+    void null_이미지_파일_예외_테스트() {
         // given
         MultipartFile nullFile = null;
 
@@ -144,8 +134,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("빈 이미지 파일 예외 테스트")
-    void testExtractIsbnFromEmptyFile() {
+    void 빈_이미지_파일_예외_테스트() {
         // given
         MultipartFile emptyFile = new MockMultipartFile("empty", "", "image/jpeg", new byte[0]);
 
@@ -159,8 +148,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("지원하지 않는 파일 타입 예외 테스트")
-    void testExtractIsbnFromUnsupportedFileType() {
+    void 지원하지_않는_파일_타입_예외_테스트() {
         // given
         MultipartFile textFile = new MockMultipartFile("test", "test.txt", "text/plain", "test content".getBytes());
 
@@ -174,10 +162,9 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("파일 크기 제한 테스트")
-    void testExtractIsbnFromLargeFile() {
+    void 파일_크기_제한_테스트() {
         // given
-        byte[] largeData = new byte[11 * 1024 * 1024]; // 11MB
+        byte[] largeData = new byte[6 * 1024 * 1024]; // 11MB
         MultipartFile largeFile = new MockMultipartFile("large", "large.jpg", "image/jpeg", largeData);
 
         // when
@@ -190,8 +177,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("잘못된 이미지 파일 예외 테스트")
-    void testExtractIsbnFromCorruptedImage() {
+    void 잘못된_이미지_파일_예외_테스트() {
         // given
         MultipartFile corruptedFile = new MockMultipartFile("corrupted", "corrupted.jpg", "image/jpeg", "invalid image data".getBytes());
 
@@ -201,12 +187,11 @@ class TesseractOcrExtractorTest {
         // then
         assertThat(thrown)
             .isInstanceOf(OcrException.class)
-            .hasMessageContaining("OCR 잘못된 입력 값입니다.");
+            .hasMessageContaining("OCR 서버 내부 오류가 발생했습니다.");
     }
 
     @Test
-    @DisplayName("ISBN이 없는 이미지 테스트")
-    void testExtractIsbnFromImageWithoutIsbn() throws IOException, OcrException {
+    void ISBN이_없는_이미지_테스트() throws IOException, OcrException {
         // given
         MultipartFile imageWithoutIsbn = createTestImageFile("신짱구.png");
 
@@ -218,8 +203,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("ISBN-13 패턴 매칭 테스트")
-    void testIsbn13PatternMatching() throws IOException, OcrException {
+    void ISBN_13_패턴_매칭_테스트() throws IOException, OcrException {
         // given
         MultipartFile testImageWithIsbn13 = createTestImageWithText("ISBN: 9780134685991");
 
@@ -234,8 +218,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("ISBN-10 패턴 매칭 테스트")
-    void testIsbn10PatternMatching() throws IOException, OcrException {
+    void ISBN_10_패턴_매칭_테스트() throws IOException, OcrException {
         // given
         MultipartFile testImageWithIsbn10 = createTestImageWithText("ISBN: 0134685997");
 
@@ -250,8 +233,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("다양한 ISBN 형식 처리 테스트")
-    void testVariousIsbnFormats() throws IOException, OcrException {
+    void 다양한_ISBN_형식_처리_테스트() throws IOException, OcrException {
         // given
         String[] isbnTexts = {
             "ISBN-13: 978-0-134-68599-1",
@@ -277,8 +259,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("ContentType null 처리 테스트")
-    void testNullContentType() {
+    void ContentType_null_처리_테스트() {
         // given
         MultipartFile fileWithNullContentType = new MockMultipartFile("test", "test.jpg", null, "test content".getBytes());
 
@@ -292,8 +273,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("빈 텍스트 결과 처리 테스트")
-    void testEmptyTextResult() throws IOException, OcrException {
+    void 빈_텍스트_결과_처리_테스트() throws IOException, OcrException {
         // given
         MultipartFile blankImage = createBlankImage();
 
@@ -305,8 +285,7 @@ class TesseractOcrExtractorTest {
     }
 
     @Test
-    @DisplayName("숫자 패턴 매칭 테스트")
-    void testNumericPatternMatching() throws IOException, OcrException {
+    void 숫자_패턴_매칭_테스트() throws IOException, OcrException {
         // given
         MultipartFile testImageWithNumbers = createTestImageWithText("Book Code: 1234567890123 Other: 9876543210");
 

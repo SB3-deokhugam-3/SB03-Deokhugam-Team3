@@ -11,7 +11,6 @@ import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -116,47 +115,11 @@ public class BookController {
     ) throws OcrException {
         log.info("[BookController] ISBN 추출 요청 - 파일명 : {}, 크기 : {} bytes", image.getOriginalFilename(), image.getSize());
 
-        try {
+        // OCR 서비스 호출
+        String extractedIsbn = bookService.extractIsbnFromImage(image);
 
-            // 파일 유효성 검사
-            validateImageFile(image);
+        log.info("ISBN 추출 완료 - ISBN : {}", extractedIsbn);
 
-            // OCR 서비스 호출
-            String extractedIsbn = bookService.extractIsbnFromImage(image);
-
-            log.info("ISBN 추출 완료 - ISBN : {}", extractedIsbn);
-
-            return ResponseEntity.status(HttpStatus.OK).body(extractedIsbn);
-        } catch (Exception e) {
-            log.error("[BookController] ISBN 추출 중 오류 발생",e);
-            throw OcrException.clientError("이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 이미지 파일 유효성 검사
-     * */
-    private void validateImageFile(MultipartFile image) {
-        if (image == null || image.isEmpty()) {
-            throw new IllegalArgumentException("[BookController] 이미지 파일이 필요합니다.");
-        }
-
-        // 파일 크기 검사 ( 10MB 제한 )
-        long maxSize = 10 * 1024 * 1024;
-        if (image.getSize() > maxSize) {
-            throw new IllegalArgumentException("[BookController] 파일 크기는 10MB를 초과할 수 없습니다.");
-        }
-
-        // 파일 형식 검사
-        String contentType = image.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("[BookController] 이미지 파일만 업로드 가능합니다.");
-        }
-
-        // 지원되는 이미 형식 검사
-        List<String> supportedTypes = List.of("image/jpeg","image/jpg","image/png","image/gif","image/bmp","image/webp");
-        if (!supportedTypes.contains(contentType.toLowerCase())) {
-            throw new IllegalArgumentException("[BookController] 지원되지 않는 이미지 형식입니다. ( 지원 형식 : JPEG, PNG, GIF, BMP, WEBP )");
-        }
+        return ResponseEntity.status(HttpStatus.OK).body(extractedIsbn);
     }
 }

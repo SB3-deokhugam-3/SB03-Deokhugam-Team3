@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -18,6 +19,7 @@ import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
+import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookServiceImpl;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
@@ -358,7 +360,6 @@ public class BookControllerTest {
     }
 
     @Test
-    @DisplayName("OCR API 호출 성공 - ISBN 추출 성공")
     void OCR_API_호출_성공_ISBN_추출_성공() throws Exception {
         // given
         String expectedIsbn = "9780134685991";
@@ -383,21 +384,16 @@ public class BookControllerTest {
     }
 
     @Test
-    @DisplayName("OCR API 호출 - 이미지 파일 없음")
     void OCR_API_호출_이미지_파일_없음() throws Exception {
-        // given
-        // 이미지 파일 없이 요청
-
         // when
         ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr"));
 
         // then
         result.andDo(print())
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("OCR API 호출 - 빈 이미지 파일")
     void OCR_API_호출_빈_이미지_파일() throws Exception {
         // given
         MockMultipartFile emptyImage = new MockMultipartFile(
@@ -407,78 +403,93 @@ public class BookControllerTest {
             new byte[0]
         );
 
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new IllegalArgumentException("빈 이미지 파일은 처리할 수 없습니다."));
+
+        // when
+        ResultActions result = mockMvc.perform(
+            multipart("/api/books/isbn/ocr")
+                .file(emptyImage)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+        );
+
+        // then
+        result.andExpect(status().isBadRequest());
+
+        verify(bookService).extractIsbnFromImage(any(MultipartFile.class));
+    }
+
+
+    @Test
+    void OCR_API_호출_지원하지_않는_파일_형식() throws Exception {
+        // given
+        MockMultipartFile emptyImage = new MockMultipartFile(
+            "image", "empty.jpg", "image/jpeg", new byte[0]);
+
+        when(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .thenThrow(new IllegalArgumentException("빈 이미지 파일은 처리할 수 없습니다."));
+
         // when
         ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
             .file(emptyImage));
 
         // then
-        result.andDo(print())
-            .andExpect(status().isBadRequest());
+        result.andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("OCR API 호출 - 지원하지 않는 파일 형식")
-    void OCR_API_호출_지원하지_않는_파일_형식() throws Exception {
-        // given
-        MockMultipartFile textFile = new MockMultipartFile(
-            "image",
-            "test.txt",
-            "text/plain",
-            "test content".getBytes()
-        );
-
-        // when
-        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
-            .file(textFile));
-
-        // then
-        result.andDo(print())
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("OCR API 호출 - 파일 크기 제한 초과")
     void OCR_API_호출_파일_크기_제한_초과() throws Exception {
         // given
-        byte[] largeContent = new byte[11 * 1024 * 1024]; // 11MB
+        byte[] largeImageData = new byte[6 * 1024 * 1024]; // 6MB 데이터
         MockMultipartFile largeImage = new MockMultipartFile(
             "image",
             "large.jpg",
             "image/jpeg",
-            largeContent
+            largeImageData
         );
 
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new IllegalArgumentException("파일 크기가 5MB를 초과합니다."));
+
         // when
-        ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
-            .file(largeImage));
+        ResultActions result = mockMvc.perform(
+            multipart("/api/books/isbn/ocr")
+                .file(largeImage)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+        );
 
         // then
-        result.andDo(print())
-            .andExpect(status().isBadRequest());
+        result.andExpect(status().isBadRequest());
+
+        verify(bookService).extractIsbnFromImage(any(MultipartFile.class));
     }
 
     @Test
-    @DisplayName("OCR API 호출 - 지원하지 않는 이미지 형식")
     void OCR_API_호출_지원하지_않는_이미지_형식() throws Exception {
         // given
         MockMultipartFile unsupportedImage = new MockMultipartFile(
             "image",
             "test.tiff",
-            "image/tiff",
+            "image/tiff", // 지원하지 않는 형식
             "test content".getBytes()
         );
+
+        // Mock 서비스가 InvalidFileTypeException을 던지도록 설정
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new InvalidFileTypeException("지원하지 않는 파일 형식입니다. (지원 형식: jpg, jpeg, png)"));
 
         // when
         ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
             .file(unsupportedImage));
 
         // then
-        result.andDo(print())
-            .andExpect(status().isBadRequest());
+        result.andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("FILE_INVALID_INPUT_VALUE"))
+            .andExpect(jsonPath("$.message").value("FILE 잘못된 입력 값입니다."))
+            .andExpect(jsonPath("$.details.contentType").value("지원하지 않는 파일 형식입니다. (지원 형식: jpg, jpeg, png)"));
     }
 
     @Test
-    @DisplayName("OCR API 호출 - 서비스에서 OcrException 발생")
     void OCR_API_호출_서비스에서_OcrException_발생() throws Exception {
         // given
         MockMultipartFile testImage = new MockMultipartFile(
@@ -489,7 +500,7 @@ public class BookControllerTest {
         );
 
         given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
-            .willThrow(OcrException.serverError("OCR 처리 중 예상치 못한 오류가 발생했습니다."));
+            .willThrow(OcrException.serverError("OCR 서버 내부 오류가 발생했습니다."));
 
         // when
         ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
@@ -497,11 +508,12 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.code").value("OCR_INTERNAL_SERVER_ERROR"))
+            .andExpect(jsonPath("$.message").value("OCR 서버 내부 오류가 발생했습니다."));
     }
 
     @Test
-    @DisplayName("OCR API 호출 - 서비스에서 RuntimeException 발생")
     void OCR_API_호출_서비스에서_RuntimeException_발생() throws Exception {
         // given
         MockMultipartFile testImage = new MockMultipartFile(
@@ -520,11 +532,12 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
+            .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
-    @DisplayName("OCR API 호출 - 다양한 유효한 이미지 형식")
     void OCR_API_호출_다양한_유효한_이미지_형식() throws Exception {
         // given
         String expectedIsbn = "9780134685991";
@@ -554,15 +567,18 @@ public class BookControllerTest {
     }
 
     @Test
-    @DisplayName("OCR API 호출 - null ContentType 처리")
     void OCR_API_호출_null_ContentType_처리() throws Exception {
         // given
         MockMultipartFile testImage = new MockMultipartFile(
             "image",
             "test.jpg",
-            null, // null contentType
+            null,
             "test content".getBytes()
         );
+
+        // Mock 서비스가 InvalidFileTypeException을 던지도록 설정
+        given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
+            .willThrow(new InvalidFileTypeException("[BookService] 이미지 파일만 업로드 가능합니다."));
 
         // when
         ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
@@ -570,9 +586,10 @@ public class BookControllerTest {
 
         // then
         result.andDo(print())
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("FILE_INVALID_INPUT_VALUE"))
+            .andExpect(jsonPath("$.message").exists());
     }
-
 
     @Test
     void isbn으로_도서_정보_요청_시_도서_정보를_반환한다() throws Exception {
@@ -585,7 +602,7 @@ public class BookControllerTest {
             .publisher(publisher)
             .publishedDate(publishedDate)
             .isbn(isbn)
-            .thumbnailImage("/imageExample") // Base64로 인코딩된 문자열
+            .thumbnailImage("/imageExample")
             .build();
 
         given(provider.fetchInfoByIsbn(isbn)).willReturn(bookDto);

@@ -6,9 +6,10 @@ import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
+import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
+import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
-import com.sprint.deokhugam.domain.book.ocr.OcrExtractor;
 import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
@@ -32,6 +33,10 @@ public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
     private final S3Storage s3Storage;
     private final TesseractOcrExtractor tesseractOcrExtractor;
+
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final List<String> SUPPORTED_IMAGE_TYPES =
+        List.of("image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp");
 
     @Override
     @Transactional
@@ -123,29 +128,58 @@ public class BookServiceImpl implements BookService {
         log.info("[BookService] 이미지에서 ISBN 추출 요청 - 파일명: {}, 크기: {} bytes",
             imageFile.getOriginalFilename(), imageFile.getSize());
 
-        // Tesseract OCR 사용 가능 여부 확인
-        if (!tesseractOcrExtractor.isAvailable()) {
-            log.error("[BookService] Tesseract OCR를 사용할 수 없습니다.");
-            throw OcrException.serverError("OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
-        }
+        // 파일 유효성 검사
+        validateImageFile(imageFile);
 
         try {
-            log.info("[BookService] Tesseract OCR를 사용하여 ISBN 추출 시작");
-
-            // Tesseract OCR 실행
-            String isbn = tesseractOcrExtractor.extractIsbn(imageFile);
-
-            if (isbn == null || isbn.trim().isEmpty()) {
-                log.warn("[BookService] Tesseract OCR에서 ISBN을 추출할 수 없습니다.");
-                throw OcrException.serverError("OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
+            // OCR 서비스 사용 가능 여부 확인
+            if (!tesseractOcrExtractor.isAvailable()) {
+                throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.");
             }
 
-            log.info("[BookService] ISBN 추출 성공: {}", isbn);
-            return isbn;
+            // OCR 처리
+            String extractedIsbn = tesseractOcrExtractor.extractIsbn(imageFile);
 
+            // OCR 결과 검증
+            if (extractedIsbn == null || extractedIsbn.trim().isEmpty()) {
+                throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.");
+            }
+
+            return extractedIsbn;
+        } catch (OcrException e) {
+            // 이미 OcrException인 경우 그대로 전파
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("[BookService] OCR 처리 중 런타임 예외 발생", e);
+            throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.", e);
         } catch (Exception e) {
-            log.error("[BookService] Tesseract OCR 처리 실패", e);
-            throw OcrException.serverError("OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
+            log.error("[BookService] OCR 처리 중 예상치 못한 예외 발생", e);
+            throw OcrException.serverError("OCR 서버 내부 오류가 발생했습니다.", e);
+        }
+    }
+
+    /**
+     * 이미지 파일 유효성 검사
+     * */
+
+    private void validateImageFile(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("[BookService] 이미지 파일이 필요합니다.");
+        }
+
+        if (image.getSize() > MAX_FILE_SIZE) {
+            throw new FileSizeExceededException(image.getSize(), MAX_FILE_SIZE);
+        }
+
+        // 파일 형식 검사
+        String contentType = image.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new InvalidFileTypeException("[BookService] 이미지 파일만 업로드 가능합니다.");
+        }
+
+        // 지원되는 이미지 형식 검사
+        if (!SUPPORTED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException("[BookService] 지원되지 않는 이미지 형식입니다. ( 지원 형식 : JPEG, PNG, GIF, BMP, WEBP )");
         }
     }
 

@@ -3,6 +3,8 @@ package com.sprint.deokhugam.domain.book.ocr;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
@@ -37,18 +39,19 @@ public class TesseractOcrExtractor implements OcrExtractor {
             log.info("[OCR] TESSDATA_PREFIX 환경 변수: {}", tessDataPath);
 
             if (tessDataPath != null && !tessDataPath.isEmpty()) {
-                // 경로 정규화 (슬래시 통일)
-                tessDataPath = tessDataPath.replace("/", "\\");
+                // 경로 정규화는 OS에 맞게 처리
+                tessDataPath = Paths.get(tessDataPath).normalize().toString();
                 tesseract.setDatapath(tessDataPath);
                 log.info("[OCR] Tesseract 데이터 경로 설정: {}", tessDataPath);
             } else {
                 // 기본 경로들을 순서대로 시도
                 String[] defaultPaths = {
-                    "C:\\Program Files\\Tesseract-OCR\\tessdata",
-                    "C:\\Program Files (x86)\\Tesseract-OCR\\tessdata",
-                    "/usr/share/tesseract-ocr/5/tessdata",
+                    "/opt/homebrew/share/tessdata",        // Apple Silicon Mac 추가
+                    "/opt/local/share/tessdata",           // MacPorts 추가
+                    "/usr/local/share/tessdata",           // Intel Mac
+                    "/usr/share/tesseract-ocr/5/tessdata", // Linux
                     "/usr/share/tesseract-ocr/4.00/tessdata",
-                    "/usr/local/share/tessdata",
+                    "C:\\Program Files\\Tesseract-OCR\\tessdata", // Windows
                     "./tessdata"
                 };
 
@@ -87,33 +90,23 @@ public class TesseractOcrExtractor implements OcrExtractor {
 
     @Override
     public String extractIsbn(MultipartFile imageFile) throws OcrException {
+        // null 체크 및 파일 유효성 검사를 먼저 수행
+        validateImageFile(imageFile);
+
         try {
-            log.info("[OCR] Tesseract를 사용하여 이미지에서 텍스트 추출 시작");
-
-            // 이미지 파일 유효성 검증
-            validateImageFile(imageFile);
-
             BufferedImage image = ImageIO.read(imageFile.getInputStream());
             if (image == null) {
                 throw OcrException.clientError("이미지를 읽을 수 없습니다.");
             }
 
             // 이미지 전처리
-            BufferedImage preprocessedImage = preprocessImage(image);
+            BufferedImage processedImage = preprocessImage(image);
 
-            // Tesseract OCR 실행
-            String extractedText = tesseract.doOCR(preprocessedImage);
-            log.info("[OCR] Tesseract에서 추출된 텍스트: {}", extractedText);
+            // OCR 실행
+            String rawText = tesseract.doOCR(processedImage);
 
-            if (extractedText == null || extractedText.trim().isEmpty()) {
-                log.warn("[OCR] 텍스트를 추출할 수 없습니다.");
-                return null;
-            }
-
-            // ISBN 패턴 매칭 및 추출
-            String isbn = extractIsbnFromText(extractedText);
-            log.info("[OCR] 추출된 ISBN: {}", isbn);
-            return isbn;
+            // ISBN 추출
+            return extractIsbnFromText(rawText);
 
         } catch (TesseractException e) {
             log.error("[OCR] OCR 처리 실패", e);
@@ -121,6 +114,12 @@ public class TesseractOcrExtractor implements OcrExtractor {
         } catch (IOException e) {
             log.error("[OCR] 이미지 파일 읽기 실패", e);
             throw OcrException.clientError("이미지 파일을 읽을 수 없습니다.", e);
+        } catch (RuntimeException e) {
+            log.error("[OCR] 런타임 예외 발생", e);
+            throw OcrException.serverError("OCR 처리 중 예상치 못한 오류가 발생했습니다.", e);
+        } catch (Exception e) {
+            log.error("[OCR] 일반 예외 발생", e);
+            throw OcrException.serverError("OCR 처리 중 시스템 오류가 발생했습니다.", e);
         }
     }
 
@@ -130,14 +129,20 @@ public class TesseractOcrExtractor implements OcrExtractor {
         }
 
         // 파일 크기 검증 (10MB 제한)
-        if (imageFile.getSize() > 10 * 1024 * 1024) {
-            throw OcrException.clientError("이미지 파일 크기가 너무 큽니다. (최대 10MB)");
+        if (imageFile.getSize() > 5 * 1024 * 1024) {
+            throw OcrException.clientError("이미지 파일 크기가 너무 큽니다. (최대 5MB)");
         }
 
         // 파일 타입 검증
         String contentType = imageFile.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw OcrException.clientError("지원하지 않는 파일 형식입니다.");
+        }
+
+        // 지원되는 이미지 형식 검사
+        List<String> supportedTypes = List.of("image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp");
+        if (!supportedTypes.contains(contentType.toLowerCase())) {
+            throw OcrException.clientError("지원되지 않는 이미지 형식입니다. (지원 형식: JPEG, PNG, GIF, BMP, WEBP)");
         }
     }
 
