@@ -1,25 +1,25 @@
 package com.sprint.deokhugam.domain.review.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
-import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
-import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
+import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
-import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
 import java.util.List;
@@ -92,20 +92,16 @@ class ReviewControllerTest {
         );
     }
 
-
     UUID bookId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     String content = "굿 입니당~";
-    double rating = 4.2;
+    Integer rating = 4;
     Instant now = Instant.now();
 
     @Test
-    void 리뷰_생성_요청시_201응답을_반환한다() throws Exception {
+    void 리뷰_등록에_성공하면_201응답을_반환한다() throws Exception {
         // given
         UUID reviewId = UUID.randomUUID();
-        Book book = mock(Book.class);
-        User user = mock(User.class);
-        Review savedReview = createReview(book, user);
         ReviewDto expectedDto = createDto(reviewId);
         given(reviewService.create(any())).willReturn(expectedDto);
 
@@ -120,7 +116,7 @@ class ReviewControllerTest {
             .andExpect(jsonPath("$.bookId").value(bookId.toString()))
             .andExpect(jsonPath("$.userId").value(userId.toString()))
             .andExpect(jsonPath("$.content").value("굿 입니당~"))
-            .andExpect(jsonPath("$.rating").value(4.2))
+            .andExpect(jsonPath("$.rating").value(4))
             .andExpect(jsonPath("$.bookTitle").value("테스트 책"))
             .andExpect(jsonPath("$.bookThumbnailUrl").value("http://image.url"))
             .andExpect(jsonPath("$.userNickname").value("리뷰어"))
@@ -137,7 +133,7 @@ class ReviewControllerTest {
             UUID.randomUUID(),
             UUID.randomUUID(),
             "", // 빈 내용
-            3.0
+            3
         );
 
         // when
@@ -257,7 +253,7 @@ class ReviewControllerTest {
         );
 
         //then
-        result.andExpect(status().is4xxClientError())
+        result.andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("MISSING_REQUEST_HEADER"));
 
     }
@@ -303,13 +299,91 @@ class ReviewControllerTest {
 
     }
 
+    @Test
+    void 리뷰_수정에_성공하면_200응답을_반환한다() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        ReviewDto updatedDto = updateDto(reviewId);
+        given(reviewService.update(eq(reviewId), eq(userId), any(ReviewUpdateRequest.class)))
+            .willReturn(updatedDto);
+
+        // when
+        ResultActions result = mockMvc.perform(patch("/api/reviews/{reviewId}", reviewId)
+            .header("Deokhugam-Request-User-ID", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateRequest())));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(reviewId.toString()))
+            .andExpect(jsonPath("$.bookTitle").value("테스트 책"))
+            .andExpect(jsonPath("$.userNickname").value("리뷰어"))
+            .andExpect(jsonPath("$.content").value("수정된 내용"))
+            .andExpect(jsonPath("$.rating").value(1))
+            .andDo(print());
+    }
+
+    @Test
+    void 리뷰_수정시_존재하지_않는_리뷰일_경우_404_응답을_반환한다() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        given(reviewService.update(eq(reviewId), eq(userId), any()))
+            .willThrow(new ReviewNotFoundException(reviewId));
+
+        // when
+        ResultActions result = mockMvc.perform(patch("/api/reviews/{reviewId}", reviewId)
+            .header("Deokhugam-Request-User-ID", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateRequest())));
+
+        // then
+        result.andExpect(status().isNotFound())
+            .andDo(print());
+    }
+
+    @Test
+    void 리뷰_수정_권한이_없으면_403_응답을_반환한다() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        given(reviewService.update(eq(reviewId), eq(userId), any()))
+            .willThrow(new ReviewUnauthorizedAccessException(reviewId, userId));
+
+        // when
+        ResultActions result = mockMvc.perform(patch("/api/reviews/{reviewId}", reviewId)
+            .header("Deokhugam-Request-User-ID", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(updateRequest())));
+
+        // then
+        result.andExpect(status().isForbidden())
+            .andDo(print());
+    }
+
+    @Test
+    void 리뷰_수정시_유효하지_않은_입력값이면_400_응답을_반환한다() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        ReviewUpdateRequest invalidRequest = new ReviewUpdateRequest("", 6);
+
+        // when
+        ResultActions result = mockMvc.perform(patch("/api/reviews/{reviewId}", reviewId)
+            .header("Deokhugam-Request-User-ID", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(invalidRequest)));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andDo(print());
+    }
 
     private ReviewCreateRequest createRequest() {
         return new ReviewCreateRequest(bookId, userId, content, rating);
-    }
-
-    private Review createReview(Book book, User user) {
-        return new Review(rating, content, book, user);
     }
 
     private ReviewDto createDto(UUID reviewId) {
@@ -330,4 +404,25 @@ class ReviewControllerTest {
             .build();
     }
 
+    private ReviewUpdateRequest updateRequest() {
+        return new ReviewUpdateRequest("수정된 내용", 1);
+    }
+
+    private ReviewDto updateDto(UUID reviewId) {
+        return ReviewDto.builder()
+            .id(reviewId)
+            .bookId(bookId)
+            .bookTitle("테스트 책")
+            .bookThumbnailUrl("http://image.url")
+            .userId(userId)
+            .userNickname("리뷰어")
+            .content("수정된 내용")
+            .rating(1)
+            .likeCount(0L)
+            .commentCount(0L)
+            .likedByMe(false)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+    }
 }

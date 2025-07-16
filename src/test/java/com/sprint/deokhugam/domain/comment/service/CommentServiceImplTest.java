@@ -95,7 +95,7 @@ public class CommentServiceImplTest {
         // ---------- [REVIEW 1] ----------
         review1 = Review.builder()
             .content("리뷰1")
-            .rating(0.0)
+            .rating(1)
             .likeCount(10L)
             .commentCount(12L)
             .isDeleted(true)

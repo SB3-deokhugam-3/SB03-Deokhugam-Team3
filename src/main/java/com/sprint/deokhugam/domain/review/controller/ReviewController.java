@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.review.controller;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -91,4 +93,16 @@ public class ReviewController {
 
     }
 
+    @PatchMapping("/{reviewId}")
+    public ResponseEntity<ReviewDto> updateReview(
+        @PathVariable UUID reviewId,
+        @RequestHeader("Deokhugam-Request-User-ID") UUID userId,
+        @Valid @RequestBody ReviewUpdateRequest request
+    ) {
+        ReviewDto reviewDto = reviewService.update(reviewId, userId, request);
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(reviewDto);
+    }
 }
