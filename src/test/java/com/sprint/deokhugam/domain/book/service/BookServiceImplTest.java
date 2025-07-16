@@ -431,6 +431,53 @@ class BookServiceImplTest {
     }
 
     @Test
+    void 썸네일이_없는_도서의_썸네일을_수정하면_삭제없이_업로드만_한다() throws IOException {
+
+        // given
+        UUID bookId = UUID.randomUUID();
+
+        Book existBook = createBookEntity(title, author, description, publisher, publishedDate,
+            isbn, null, 0.0, 0L);
+        BookUpdateRequest updateRequest = createUpdateRequest("new title", "new author",
+            "new description", "new publisher", LocalDate.of(2023, 3, 3));
+
+        MultipartFile newThumbnail = new MockMultipartFile(
+            "coverImage",
+            "newCover.png",
+            "image/png",
+            "dummy image data".getBytes()
+        );
+
+        Book updatedBook = createBookEntity("new title", "new author", "new description",
+            "new publisher", LocalDate.of(2023, 3, 3), isbn, "newCover.com",
+            0.0, 0L);
+
+        String presignedUrl = "https://cdn.example.com/cover.png";
+
+        BookDto expectedResponse = createBookDto(bookId, "new title", "new author", "new description",
+            "new publisher", LocalDate.of(2023, 3, 3), isbn, presignedUrl, 0L, 0.0,
+            Instant.now(), Instant.now());
+
+        ReflectionTestUtils.setField(existBook, "id", bookId);
+        ReflectionTestUtils.setField(updatedBook, "id", bookId);
+
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(existBook));
+        given(storage.uploadImage(newThumbnail)).willReturn("newCover.com");
+        given(bookRepository.save(any(Book.class))).willReturn(updatedBook);
+        given(bookMapper.toDto(eq(updatedBook), any(S3Storage.class))).willReturn(expectedResponse);
+
+        // when
+        BookDto result = bookService.update(bookId, updateRequest, newThumbnail);
+
+        // then
+        assertNotNull(result);
+        assertEquals(expectedResponse, result);
+        verify(storage).uploadImage(newThumbnail);
+        verify(bookRepository).save(any(Book.class));
+        verify(bookMapper).toDto(updatedBook, storage);
+    }
+
+    @Test
     void 존재하지_않는_도서를_수정_요청하면_수정에_실패한다() {
 
         // given
