@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
+@Validated
 @RequestMapping("/api/reviews")
 public class ReviewController {
 
@@ -58,9 +60,12 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
-    public ResponseEntity<ReviewDto> getReview(@PathVariable UUID reviewId) {
+    public ResponseEntity<ReviewDto> getReview(
+        @PathVariable UUID reviewId,
+        @RequestHeader("Deokhugam-Request-User-ID") @NotNull UUID requestUserId
+    ) {
         log.info("[ReviewController] 리뷰 상세 정보 요청 - id: {}", reviewId);
-        ReviewDto reviewDto = reviewService.findById(reviewId);
+        ReviewDto reviewDto = reviewService.findById(reviewId, requestUserId);
 
         return ResponseEntity
             .status(HttpStatus.OK)
@@ -93,7 +98,7 @@ public class ReviewController {
     @PatchMapping("/{reviewId}")
     public ResponseEntity<ReviewDto> updateReview(
         @PathVariable UUID reviewId,
-        @RequestHeader("Deokhugam-Request-User-ID") UUID userId,
+        @RequestHeader("Deokhugam-Request-User-ID") @NotNull UUID userId,
         @Valid @RequestBody ReviewUpdateRequest request
     ) {
         ReviewDto reviewDto = reviewService.update(reviewId, userId, request);

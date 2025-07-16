@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -38,46 +39,59 @@ public class GlobalExceptionHandler {
             .body(ErrorResponse.of(ex));
     }
 
-    /**
-     * @Valid 유효성 검사 실패 처리 (400)
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-        MethodArgumentNotValidException ex) {
-        log.warn("[VALIDATION_FAILED] 유효성 검사 실패: {}", ex.getMessage());
-
+    @ExceptionHandler({
+        MethodArgumentNotValidException.class,
+        IllegalArgumentException.class,
+        MissingRequestHeaderException.class,
+        MissingServletRequestParameterException.class
+    })
+    public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex) {
         Map<String, Object> details = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            if (error instanceof FieldError fieldError) {
-                details.put(fieldError.getField(), fieldError.getDefaultMessage());
-            } else {
-                details.put(error.getObjectName(), error.getDefaultMessage());
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        String logMessage;
+
+        if (ex instanceof MethodArgumentNotValidException validationEx) {
+            logMessage = "[VALIDATION_FAILED] 유효성 검사 실패: " + validationEx.getMessage();
+
+            validationEx.getBindingResult().getAllErrors().forEach(error -> {
+                if (error instanceof FieldError fieldError) {
+                    details.put(fieldError.getField(), fieldError.getDefaultMessage());
+                } else {
+                    details.put(error.getObjectName(), error.getDefaultMessage());
+                }
+            });
+            errorCode = ErrorCode.INVALID_INPUT_VALUE;
+
+        } else if (ex instanceof MissingRequestHeaderException headerEx) {
+            logMessage = "[MISSING_REQUEST_HEADER] 필수 헤더 누락: " + headerEx.getHeaderName();
+
+            if (debugEnabled) {
+                details.put("missingHeader", headerEx.getHeaderName());
             }
-        });
+            errorCode = ErrorCode.MISSING_REQUEST_HEADER;
 
-        DomainException validationException = new DomainException(
-            ErrorCode.INVALID_INPUT_VALUE, details);
+        } else if (ex instanceof MissingServletRequestParameterException paramEx) {
+            logMessage = "[MISSING_REQUEST_PARAMETER] 필수 파라미터 누락: " + paramEx.getParameterName();
 
-        return toErrorResponse(validationException);
-    }
+            if (debugEnabled) {
+                details.put("missingParameter", paramEx.getParameterName());
+                details.put("parameterType", paramEx.getParameterType());
+            }
+            errorCode = ErrorCode.MISSING_REQUEST_PARAMETER;
 
-    /**
-     * IllegalArgumentException 처리 (400)
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-        IllegalArgumentException ex) {
-        log.warn("[ILLEGAL_ARGUMENT] code={}, message={}", ErrorCode.INVALID_INPUT_VALUE.name(),
-            ex.getMessage());
+        } else {
+            logMessage = "[ILLEGAL_ARGUMENT] 잘못된 요청: " + ex.getMessage();
 
-        Map<String, Object> details = debugEnabled
-            ? Map.of("originalMessage", ex.getMessage())
-            : Map.of();
+            if (debugEnabled) {
+                details.put("originalMessage", ex.getMessage());
+            }
+            errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        }
 
-        DomainException argumentException = new DomainException(ErrorCode.INVALID_INPUT_VALUE,
-            details);
+        log.warn(logMessage);
 
-        return toErrorResponse(argumentException);
+        DomainException badRequestException = new DomainException(errorCode, details);
+        return toErrorResponse(badRequestException);
     }
 
     /**
@@ -100,28 +114,6 @@ public class GlobalExceptionHandler {
         return toErrorResponse(argumentException);
 
     }
-
-    /**
-     * MissingRequestHeaderException 처리 (400) - 필수 헤더가 요청값에 들어있지 않을때
-     */
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<ErrorResponse> handleMissingRequestHeaderException(
-        MissingRequestHeaderException ex) {
-        log.warn("[MISSING_REQUEST_HEADER] 필수 헤더 누락 code={}, message={}",
-            ErrorCode.MISSING_REQUEST_HEADER.getCode(),
-            ErrorCode.MISSING_REQUEST_HEADER.getMessage());
-
-        Map<String, Object> details = debugEnabled
-            ? Map.of("originalMessage", ex.getMessage())
-            : Map.of();
-
-        DomainException argumentException = new DomainException(ErrorCode.MISSING_REQUEST_HEADER,
-            details);
-
-        return toErrorResponse(argumentException);
-
-    }
-
 
     /**
      * 예상치 못한 서버 오류 처리 (500)

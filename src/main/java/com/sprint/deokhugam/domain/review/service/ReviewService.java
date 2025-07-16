@@ -11,7 +11,7 @@ public interface ReviewService {
 
     ReviewDto create(ReviewCreateRequest request);
 
-    ReviewDto findById(UUID reviewId);
+    ReviewDto findById(UUID reviewId, UUID requestUserId);
 
     CursorPageResponse<ReviewDto> findAll(ReviewGetRequest reviewGetRequest, UUID requestUserId);
 

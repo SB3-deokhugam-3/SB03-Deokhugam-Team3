@@ -23,14 +23,13 @@ import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
+import com.sprint.deokhugam.domain.reviewlike.repository.ReviewLikeRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import com.sprint.deokhugam.global.exception.ForbiddenException;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import com.sprint.deokhugam.global.exception.NotFoundException;
-import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -62,6 +61,9 @@ public class ReviewServiceImplTest {
 
     @Mock
     private ReviewMapper reviewMapper;
+
+    @Mock
+    private ReviewLikeRepository reviewLikeRepository;
 
     @InjectMocks
     private ReviewServiceImpl reviewService;
@@ -366,14 +368,17 @@ public class ReviewServiceImplTest {
         ReviewDto expectedDto = createDto(reviewId);
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(savedReview));
         given(reviewMapper.toDto(savedReview)).willReturn(expectedDto);
+        given(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, user.getId()))
+            .willReturn(false);
 
         // when
-        ReviewDto result = reviewService.findById(reviewId);
+        ReviewDto result = reviewService.findById(reviewId, user.getId());
 
         // then
-        assertThat(result).isEqualTo(expectedDto);
+        assertThat(result).isEqualTo(expectedDto.toBuilder().likedByMe(false).build());
         then(reviewRepository).should().findById(reviewId);
         then(reviewMapper).should().toDto(savedReview);
+
     }
 
     @Test
@@ -383,7 +388,7 @@ public class ReviewServiceImplTest {
         given(reviewRepository.findById(reviewId)).willReturn(Optional.empty());
 
         // when
-        Throwable thrown = catchThrowable(() -> reviewService.findById(reviewId));
+        Throwable thrown = catchThrowable(() -> reviewService.findById(reviewId, UUID.randomUUID()));
 
         // then
         assertThat(thrown)
