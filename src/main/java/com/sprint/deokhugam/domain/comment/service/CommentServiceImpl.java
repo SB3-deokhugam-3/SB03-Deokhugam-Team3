@@ -2,8 +2,10 @@ package com.sprint.deokhugam.domain.comment.service;
 
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
+import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
 import com.sprint.deokhugam.domain.comment.exception.CommentNotFoundException;
+import com.sprint.deokhugam.domain.comment.exception.CommentUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.mapper.CommentMapper;
 import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
@@ -17,7 +19,6 @@ import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,24 @@ public class CommentServiceImpl implements CommentService {
             log.warn("[comment] 댓글 상세 조회 요청 실패(존재하지않음) - commentId: {}", commentId);
             return new CommentNotFoundException(commentId);
         });
+
+        return commentMapper.toDto(comment);
+    }
+
+    @Transactional
+    @Override
+    public CommentDto updateById(UUID commentId, CommentUpdateRequest request, UUID requestUserId) {
+        log.info("[comment] 댓글 업데이트 요청 - commentId: {}", commentId);
+        String content = request.content();
+
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> {
+            log.warn("[comment] 댓글 조회 요청 실패(존재하지않음) - commentId: {}", commentId);
+            return new CommentNotFoundException(commentId);
+        });
+
+        validateAuthorizedUser(comment, requestUserId);
+
+        comment.update(content);
 
         return commentMapper.toDto(comment);
     }
@@ -139,5 +158,14 @@ public class CommentServiceImpl implements CommentService {
         );
 
         return commentResponse;
+    }
+
+    private void validateAuthorizedUser(Comment comment, UUID userId) {
+        if (!comment.getUser().getId().equals(userId)) {
+            log.warn("[comment] {} - 해당 유저는 권한이 없음: commentId={}, userId={}", comment.getId(),
+                userId,
+                userId);
+            throw new CommentUnauthorizedAccessException(comment.getId(), userId);
+        }
     }
 }
