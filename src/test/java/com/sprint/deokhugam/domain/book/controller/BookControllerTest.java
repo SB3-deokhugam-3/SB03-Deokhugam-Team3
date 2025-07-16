@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.deokhugam.domain.api.NaverBookInfoProvider;
+import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
@@ -47,6 +49,9 @@ public class BookControllerTest {
 
     @MockitoBean
     private BookServiceImpl bookService;
+
+    @MockitoBean
+    private NaverBookInfoProvider provider;
 
     private CursorPageResponse<BookDto> mockResponse;
     private List<BookDto> mockBooks;
@@ -484,7 +489,7 @@ public class BookControllerTest {
         );
 
         given(bookService.extractIsbnFromImage(any(MultipartFile.class)))
-            .willThrow(new OcrException("OCR 처리 오류"));
+            .willThrow(OcrException.serverError("OCR 처리 중 예상치 못한 오류가 발생했습니다."));
 
         // when
         ResultActions result = mockMvc.perform(multipart("/api/books/isbn/ocr")
@@ -568,6 +573,36 @@ public class BookControllerTest {
             .andExpect(status().isInternalServerError());
     }
 
+
+    @Test
+    void isbn으로_도서_정보_요청_시_도서_정보를_반환한다() throws Exception {
+
+        // given
+        NaverBookDto bookDto = NaverBookDto.builder()
+            .title(title)
+            .author(author)
+            .description(description)
+            .publisher(publisher)
+            .publishedDate(publishedDate)
+            .isbn(isbn)
+            .thumbnailImage("/imageExample") // Base64로 인코딩된 문자열
+            .build();
+
+        given(provider.fetchInfoByIsbn(isbn)).willReturn(bookDto);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/books/info?isbn=" + isbn));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.title").value(title))
+            .andExpect(jsonPath("$.author").value(author))
+            .andExpect(jsonPath("$.description").value(description))
+            .andExpect(jsonPath("$.publisher").value(publisher))
+            .andExpect(jsonPath("$.publishedDate").value(publishedDate.toString()))
+            .andExpect(jsonPath("$.isbn").value(isbn))
+            .andExpect(jsonPath("$.thumbnailImage").value("/imageExample"));
+    }
 
     private BookCreateRequest createRequest(String title, String author, String description,
         String publisher, LocalDate publishedDate, String isbn) {

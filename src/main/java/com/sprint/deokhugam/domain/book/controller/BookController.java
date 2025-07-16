@@ -1,5 +1,7 @@
 package com.sprint.deokhugam.domain.book.controller;
 
+import com.sprint.deokhugam.domain.api.BookInfoProvider;
+import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
@@ -32,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class BookController {
 
     private final BookService bookService;
+    private final BookInfoProvider provider;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BookDto> create(
@@ -90,6 +93,15 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @GetMapping("/info")
+    public ResponseEntity<NaverBookDto> getBookInfoByIsbn(@RequestParam String isbn) {
+        log.info("[BookController] 도서 정보 조회 요청 - isbn: {}", isbn);
+
+        NaverBookDto result = provider.fetchInfoByIsbn(isbn);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
     /**
      * 이미지 기반 ISBN 인식
      * 도서 이미지를 통해 ISBN을 인식합니다.
@@ -117,7 +129,7 @@ public class BookController {
             return ResponseEntity.status(HttpStatus.OK).body(extractedIsbn);
         } catch (Exception e) {
             log.error("[BookController] ISBN 추출 중 오류 발생",e);
-            throw new OcrException("[BookController] 이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
+            throw OcrException.clientError("이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 

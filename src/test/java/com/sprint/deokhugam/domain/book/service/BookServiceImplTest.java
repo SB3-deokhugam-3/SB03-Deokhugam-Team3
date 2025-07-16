@@ -458,7 +458,7 @@ class BookServiceImplTest {
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
         given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class)))
-            .willThrow(new OcrException("OCR 처리 오류"));
+            .willThrow(OcrException.serverError("OCR 처리 중 예상치 못한 오류가 발생했습니다."));
 
         // when
         Throwable thrown = catchThrowable(() -> bookService.extractIsbnFromImage(testImage));

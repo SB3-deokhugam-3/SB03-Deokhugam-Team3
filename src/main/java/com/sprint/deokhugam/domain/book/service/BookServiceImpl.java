@@ -45,7 +45,7 @@ public class BookServiceImpl implements BookService {
         }
 
         Book book = bookMapper.toEntity(bookData);
-
+        
         if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
             // Book Entity를 저장할 때는 S3의 실제 경로 저장
             String thumbnailImageUrl = s3Storage.uploadImage(thumbnailImage);
@@ -126,7 +126,7 @@ public class BookServiceImpl implements BookService {
         // Tesseract OCR 사용 가능 여부 확인
         if (!tesseractOcrExtractor.isAvailable()) {
             log.error("[BookService] Tesseract OCR를 사용할 수 없습니다.");
-            throw new OcrException("[BookService] OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
+            throw OcrException.serverError("OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
         }
 
         try {
@@ -137,7 +137,7 @@ public class BookServiceImpl implements BookService {
 
             if (isbn == null || isbn.trim().isEmpty()) {
                 log.warn("[BookService] Tesseract OCR에서 ISBN을 추출할 수 없습니다.");
-                throw new OcrException("[BookService] 이미지에서 ISBN을 찾을 수 없습니다.");
+                throw OcrException.serverError("OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
             }
 
             log.info("[BookService] ISBN 추출 성공: {}", isbn);
@@ -145,7 +145,7 @@ public class BookServiceImpl implements BookService {
 
         } catch (Exception e) {
             log.error("[BookService] Tesseract OCR 처리 실패", e);
-            throw new OcrException("[BookService] 이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
+            throw OcrException.serverError("OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
         }
     }
 
