@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.comment.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -10,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
+import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
 import com.sprint.deokhugam.domain.comment.service.CommentService;
 import java.time.Instant;
 import java.util.UUID;
@@ -36,25 +38,25 @@ class CommentControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    /*테스트 초기값 설정 */
     private Instant createdAt;
     private Instant updatedAt;
+    private UUID commentId;
+    private UUID userId;
+    private UUID reviewId;
+    private String content;
+    private CommentDto expectedDto;
 
     @BeforeEach
     void 초기_설정() {
         createdAt = Instant.now();
         updatedAt = Instant.now();
-    }
+        userId = UUID.randomUUID();
+        reviewId = UUID.randomUUID();
+        commentId = UUID.randomUUID();
+        content = "댓글테스트";
 
-    @Test
-    void 댓글_생성_요청시_201응답_반환() throws Exception {
-        //given
-        UUID userId = UUID.randomUUID();
-        UUID reviewId = UUID.randomUUID();
-        UUID commentId = UUID.randomUUID();
-        String content = "댓글생성테스트";
-        CommentCreateRequest createRequest = new CommentCreateRequest(reviewId, userId,
-            content);
-        CommentDto expectedDto = CommentDto.builder()
+        expectedDto = CommentDto.builder()
             .id(commentId)
             .content(content)
             .reviewId(reviewId)
@@ -62,13 +64,20 @@ class CommentControllerTest {
             .createdAt(createdAt)
             .updatedAt(updatedAt)
             .build();
+    }
+
+    @Test
+    void 댓글_생성_요청시_201응답_반환() throws Exception {
+        //given
+        CommentCreateRequest validRequest = new CommentCreateRequest(reviewId, userId,
+            content);
         given(commentService.create(any())).willReturn(expectedDto);
 
         //when
         ResultActions result = mockMvc.perform(
             post("/api/comments")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest))
+                .content(objectMapper.writeValueAsString(validRequest))
         );
 
         //then
@@ -83,17 +92,14 @@ class CommentControllerTest {
     @Test
     void 댓글_생성_요청시_content_가_빈문자면_400에러_반환() throws Exception {
         //given
-        UUID userId = UUID.randomUUID();
-        UUID reviewId = UUID.randomUUID();
-        String content = "";
-        CommentCreateRequest createRequest = new CommentCreateRequest(reviewId, userId,
-            content);
+        CommentCreateRequest inValidRequest = new CommentCreateRequest(reviewId, userId,
+            "");
 
         //when
         ResultActions result = mockMvc.perform(
             post("/api/comments")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest))
+                .content(objectMapper.writeValueAsString(inValidRequest))
         );
 
         //then
@@ -103,10 +109,7 @@ class CommentControllerTest {
     @Test
     void 댓글_생성_요청시_reviewId가_없다면_400에러_반환() throws Exception {
         //given
-        UUID userId = UUID.randomUUID();
-        UUID reviewId = null;
-        String content = "댓글생성테스트";
-        CommentCreateRequest createRequest = new CommentCreateRequest(reviewId, userId,
+        CommentCreateRequest createRequest = new CommentCreateRequest(null, userId,
             content);
 
         //when
@@ -123,10 +126,7 @@ class CommentControllerTest {
     @Test
     void 댓글_생성_요청시_userId가_없다면_400에러_반환() throws Exception {
         //given
-        UUID userId = null;
-        UUID reviewId = UUID.randomUUID();
-        String content = "댓글생성테스트";
-        CommentCreateRequest createRequest = new CommentCreateRequest(reviewId, userId,
+        CommentCreateRequest createRequest = new CommentCreateRequest(reviewId, null,
             content);
 
         //when
@@ -143,15 +143,6 @@ class CommentControllerTest {
     @Test
     void 댓글_세부정보_요청시_200성공_반환() throws Exception {
         //given
-        UUID commentId = UUID.randomUUID();
-        CommentDto expectedDto = CommentDto.builder()
-            .id(commentId)
-            .content("test")
-            .reviewId(UUID.randomUUID())
-            .userId(UUID.randomUUID())
-            .createdAt(createdAt)
-            .updatedAt(updatedAt)
-            .build();
         given(commentService.findById(any())).willReturn(expectedDto);
 
         //when
@@ -162,21 +153,12 @@ class CommentControllerTest {
         //then
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(commentId.toString()))
-            .andExpect(jsonPath("$.content").value("test"));
+            .andExpect(jsonPath("$.content").value(content));
     }
 
     @Test
     void commentId없이_댓글_세부정보_요청시_404_에러_반환() throws Exception {
         //given
-        UUID commentId = UUID.randomUUID();
-        CommentDto expectedDto = CommentDto.builder()
-            .id(commentId)
-            .content("test")
-            .reviewId(UUID.randomUUID())
-            .userId(UUID.randomUUID())
-            .createdAt(createdAt)
-            .updatedAt(updatedAt)
-            .build();
         given(commentService.findById(any())).willReturn(expectedDto);
 
         //when
@@ -186,6 +168,79 @@ class CommentControllerTest {
 
         //then
         result.andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("NO_RESOURCE_FOUND"));
+    }
+
+    @Test
+    void 댓글_수정_요청시_200성공_반환() throws Exception {
+        //given
+        given(commentService.updateById(any(), any(), any())).willReturn(expectedDto);
+        CommentUpdateRequest validRequest = new CommentUpdateRequest(content);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            patch("/api/comments/" + commentId)
+                .header("Deokhugam-Request-User-ID", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validRequest))
+        );
+
+        //then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(commentId.toString()))
+            .andExpect(jsonPath("$.content").value(content));
+    }
+
+    @Test
+    void 헤더에_DeokhugamRequestUserID가_없을때_댓글_수정_요청시_에러_반환() throws Exception {
+        //given
+        CommentUpdateRequest validRequest = new CommentUpdateRequest(content);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            patch("/api/comments/" + commentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validRequest))
+        );
+
+        //then
+        result.andExpect(status().is4xxClientError())
+            .andExpect(jsonPath("$.code").value("MISSING_REQUEST_HEADER"));
+    }
+
+    @Test
+    void 수정하려는_텍스트가_빈값일때_댓글_수정_요청시_에러_반환() throws Exception {
+        //given
+        CommentUpdateRequest inValidRequest = new CommentUpdateRequest("");
+
+        //when
+        ResultActions result = mockMvc.perform(
+            patch("/api/comments/" + commentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inValidRequest))
+        );
+
+        //then
+        result.andExpect(status().is4xxClientError())
+            .andExpect(jsonPath("$.code").value("INVALID_INPUT_VALUE"));
+    }
+
+    @Test
+    void 수정하려는_commentId가_없을때_댓글_수정_요청시_에러_반환() throws Exception {
+        //given
+        given(commentService.updateById(any(), any(), any())).willReturn(expectedDto);
+        CommentUpdateRequest validRequest = new CommentUpdateRequest(content);
+
+        //when
+        ResultActions result = mockMvc.perform(
+            patch("/api/comments/")
+                .header("Deokhugam-Request-User-ID", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validRequest))
+        );
+
+        //then
+        result.andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.code").value("NO_RESOURCE_FOUND"));
     }
 }
