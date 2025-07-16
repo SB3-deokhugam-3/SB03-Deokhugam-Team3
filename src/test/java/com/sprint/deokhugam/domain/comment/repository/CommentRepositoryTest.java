@@ -72,7 +72,6 @@ class CommentRepositoryTest {
             .likeCount(0L)
             .commentCount(0L)
             .isDeleted(false)
-            .likeCount(0L)
             .build();
         em.persistAndFlush(review1);
 
