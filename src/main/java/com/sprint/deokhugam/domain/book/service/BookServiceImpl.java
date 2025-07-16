@@ -153,6 +153,8 @@ public class BookServiceImpl implements BookService {
 
         Book updatedBook = bookRepository.save(book);
 
+        log.info("[BookService] 도서 정보 수정 완료- book: {}" , updatedBook);
+
         return bookMapper.toDto(updatedBook, s3Storage);
     }
 
