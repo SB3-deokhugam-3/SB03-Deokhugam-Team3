@@ -9,6 +9,7 @@ import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.ocr.OcrExtractor;
+import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
@@ -30,7 +31,7 @@ public class BookServiceImpl implements BookService {
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
     private final S3Storage s3Storage;
-    private final List<OcrExtractor> ocrExtractors;
+    private final TesseractOcrExtractor tesseractOcrExtractor;
 
     @Override
     @Transactional
@@ -119,93 +120,33 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public String extractIsbnFromImage(MultipartFile imageFile) throws OcrException {
-        log.info("[BookService] 이미지에서 ISBN 추출 요청 - 파일명 : {}, 크기: {} bytes", imageFile.getOriginalFilename(), imageFile.getSize());
+        log.info("[BookService] 이미지에서 ISBN 추출 요청 - 파일명: {}, 크기: {} bytes",
+            imageFile.getOriginalFilename(), imageFile.getSize());
 
-        // 사용 가능한 OCR 구현체 찾기 ( 우선순위 순 )
-        OcrExtractor selectedExtractor = selectAvailableOcrExtractor();
-
-        if (selectedExtractor == null) {
-            log.error("[BookService] 사용 가능한 OCR 구현체가 없습니다. 구현체 목록: {}",
-                ocrExtractors.stream().map(e -> e.getClass().getSimpleName()).toList());
-            throw new OcrException("[BookService] OCR 서비스를 사용할 수 없습니다. 설정을 확인해주세요.");
-
+        // Tesseract OCR 사용 가능 여부 확인
+        if (!tesseractOcrExtractor.isAvailable()) {
+            log.error("[BookService] Tesseract OCR를 사용할 수 없습니다.");
+            throw new OcrException("[BookService] OCR 서비스를 사용할 수 없습니다. Tesseract 설정을 확인해주세요.");
         }
-
-        String extractorName = selectedExtractor.getClass().getSimpleName();
-        log.info("[BookService] 선택된 OCR 구현체 : {} ( 우선순위 : {} )", extractorName, selectedExtractor.getPriority());
 
         try {
-            // OCR 실행
-            String isbn = selectedExtractor.extractIsbn(imageFile);
+            log.info("[BookService] Tesseract OCR를 사용하여 ISBN 추출 시작");
+
+            // Tesseract OCR 실행
+            String isbn = tesseractOcrExtractor.extractIsbn(imageFile);
 
             if (isbn == null || isbn.trim().isEmpty()) {
-                log.warn("[BookService] {}에서 ISBN을 추출할 수 없습니다.", extractorName);
-
-                // 다른 OCR 구현체로 재시도
-                return retryWithOtherExtractors(imageFile, selectedExtractor);
+                log.warn("[BookService] Tesseract OCR에서 ISBN을 추출할 수 없습니다.");
+                throw new OcrException("[BookService] 이미지에서 ISBN을 찾을 수 없습니다.");
             }
 
-            log.info("[BookService] ISBN 추출 성공 : {} ( 사용된 OCR : {} )", isbn, extractorName);
+            log.info("[BookService] ISBN 추출 성공: {}", isbn);
             return isbn;
+
         } catch (Exception e) {
-            log.error("[BookService] {}에서 OCR 처리 실패", extractorName, e);
-
-            // 다른 OCR 구현체로 재시도
-            return retryWithOtherExtractors(imageFile, selectedExtractor);
+            log.error("[BookService] Tesseract OCR 처리 실패", e);
+            throw new OcrException("[BookService] 이미지에서 ISBN을 추출하는 중 오류가 발생했습니다: " + e.getMessage());
         }
-    }
-
-    /**
-     * 사용 가능한 OCR 구현체를 우선순위 순으로 선택
-     *  */
-    private OcrExtractor selectAvailableOcrExtractor() {
-        return ocrExtractors.stream()
-            .filter(OcrExtractor::isAvailable)
-            .min((e1, e2) -> Integer.compare(e1.getPriority(), e2.getPriority()))
-            .orElse(null);
-    }
-
-    /**
-     *  실패한 OCR 구현체를 제외하고 다른 구현체로 재시도
-     * */
-    private String retryWithOtherExtractors(MultipartFile imageFile, OcrExtractor failedExtractor) throws OcrException {
-
-        log.info("[BookService] 다른 OCR 구현체로 재시도 시작");
-
-        List<OcrExtractor> availableExtractors = ocrExtractors.stream()
-            .filter(OcrExtractor::isAvailable)
-            .filter(extractor -> !extractor.equals(failedExtractor))
-            .sorted((e1,e2) -> Integer.compare(e1.getPriority(), e2.getPriority()))
-            .toList();
-
-        if (availableExtractors.isEmpty()) {
-            log.error("[BookService] 재시도할 수 있는 OCR 구현체가 없습니다.");
-            throw new OcrException("[BookService] 모든 OCR 구현체에서 ISBN 추출에 실패했습니다.");
-        }
-
-        for (OcrExtractor extractor : availableExtractors) {
-            String extractorName = extractor.getClass().getSimpleName();
-            log.info("[BookService] OCR 재시도 : {} ( 우선순위 : {} )", extractorName, extractor.getPriority());
-
-            try {
-                String isbn = extractor.extractIsbn(imageFile);
-
-                if (isbn != null && !isbn.trim().isEmpty()) {
-                    log.info("[BookService] 재시도 성공 : {} ( 사용된 OCR : {} )", isbn, extractorName);
-                    return isbn;
-                }
-
-                log.warn("[BookService] {}에서 ISBN을 추출할 수 없습니다.", extractorName);
-
-            } catch (Exception e) {
-                log.error("[BookService] {}에서 OCR 처리 실패", extractorName, e);
-                // 다음 구현체로 계속 진행
-            }
-        }
-
-        // 모든 구현체에서 실패
-        log.error("[BookService] 모든 OCR 구현체에서 ISBN 추출에 실패했습니다.");
-        throw new OcrException("[BookService] 이미지에서 ISBN을 찾을 수 없습니다.");
     }
 
     public BookDto findById(UUID bookId) {

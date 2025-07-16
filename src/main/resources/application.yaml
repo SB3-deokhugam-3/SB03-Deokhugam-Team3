@@ -10,8 +10,6 @@ spring:
 
 # OCR 구현체 설정
 ocr:
-  vision:
-    enabled: false # Google Cloud Vision API 사용 여부
   tesseract:
     enabled: true # Tesseract
 
