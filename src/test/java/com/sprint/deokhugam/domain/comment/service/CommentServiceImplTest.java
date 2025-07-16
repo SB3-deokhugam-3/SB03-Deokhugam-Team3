@@ -7,7 +7,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
-import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
@@ -22,7 +21,6 @@ import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
-import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -50,14 +48,10 @@ public class CommentServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
-    private BookRepository bookRepository;
-
-    @Mock
     private CommentMapper commentMapper;
 
     @InjectMocks
     private CommentServiceImpl commentService;
-    private CursorPageResponse<CommentDto> mockResponse;
 
     /*테스트 초기값 설정 */
     private Instant createdAt;
