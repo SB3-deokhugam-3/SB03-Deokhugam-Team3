@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
+import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
@@ -394,7 +395,7 @@ class BookServiceImplTest {
     }
 
     @Test
-    void 썸네일이_없는_도서를_수정하면_수정된_책_정보를_반환한다() {
+    void 썸네일이_없는_도서를_수정하면_수정된_책_정보를_반환한다() throws IOException {
 
         // given
         UUID bookId = UUID.randomUUID();
@@ -425,7 +426,6 @@ class BookServiceImplTest {
         // then
         assertNotNull(result);
         assertEquals(expectedResponse, result);
-        verify(storage).uploadImage(newThumbnail);
         verify(bookRepository).save(any(Book.class));
         verify(bookMapper).toDto(updatedBook, storage);
     }
