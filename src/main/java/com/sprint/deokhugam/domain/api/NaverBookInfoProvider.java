@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
 import com.sprint.deokhugam.domain.api.dto.NaverBookItem;
 import com.sprint.deokhugam.domain.book.exception.BookInfoNotFoundException;
+import com.sprint.deokhugam.domain.book.exception.InvalidIsbnException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.net.URL;
@@ -29,6 +30,10 @@ public class NaverBookInfoProvider implements BookInfoProvider {
     @Override
     public NaverBookDto fetchInfoByIsbn(String isbn) {
         log.debug("[BookInfoProvider] 도서 정보 조회 요청- isbn: {}", isbn);
+
+        if (!isbn.matches("\\d{10}||\\d{13}")) {
+            throw new InvalidIsbnException(isbn);
+        }
 
         NaverBookItem item = parseItemsFromApi(isbn);
 
@@ -85,7 +90,7 @@ public class NaverBookInfoProvider implements BookInfoProvider {
         }
     }
 
-    private String imageToBase64(String imageUrl) {
+    protected String imageToBase64(String imageUrl) {
         try {
             URL url = new URL(imageUrl);
             BufferedImage thumbnailImage = ImageIO.read(url);
