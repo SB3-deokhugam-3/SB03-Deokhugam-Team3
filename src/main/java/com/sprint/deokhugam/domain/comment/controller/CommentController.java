@@ -52,7 +52,7 @@ public class CommentController {
 
     @GetMapping
     ResponseEntity<CursorPageResponse<CommentDto>> getCommentsByReviewId(
-        @RequestParam @NotNull UUID reviewId,
+        @RequestParam UUID reviewId,
         @RequestParam(required = false, defaultValue = "DESC") String direction,
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false, defaultValue = "50") int limit

@@ -97,8 +97,15 @@ public class CommentServiceImpl implements CommentService {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(0, limit, Sort.by(sortDirection, "createdAt"));
 
-        Slice<Comment> slice = commentRepository.findByReviewIdAndCreatedAtLessThan(reviewId,
-            Optional.ofNullable(createdAt).orElse(Instant.now()), pageable);
+        // Repository 호출 - cursor에 따라 다른 메서드 사용
+        Slice<Comment> slice;
+        if (createdAt == null) {
+            // 첫 페이지 조회 (cursor가 null인 경우)
+            slice = commentRepository.findByReviewId(reviewId, pageable);
+        } else {
+            // 다음 페이지 조회 (cursor가 있는 경우)
+            slice = commentRepository.findByReviewIdAndCreatedAtLessThan(reviewId, createdAt, pageable);
+        }
 
         List<CommentDto> commentDtos = slice.getContent().stream()
             .map(commentMapper::toDto)
