@@ -41,8 +41,7 @@ class NaverBookInfoProviderTest {
 
     @Mock
     private WebClient.ResponseSpec responseSpec;
-
-    @SuppressWarnings("unchecked")
+    
     @Test
     void isbn으로_도서_정보를_불러올_수_있다() {
 
