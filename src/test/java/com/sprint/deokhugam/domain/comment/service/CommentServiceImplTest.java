@@ -231,6 +231,37 @@ public class CommentServiceImplTest {
     }
 
     @Test
+    void 존재하는_리뷰ID의_댓글_목록을_커서기반으로_조회할_수_있다_커서가_널일경우() {
+        // given
+        UUID reviewId = review1.getId();
+        Instant now = Instant.now();
+        int limit = 2;
+        Instant createdAt1 = now.minusSeconds(30);
+        Instant createdAt2 = now.minusSeconds(20);
+        Comment comment1 = create(review1, user1, "댓1");
+        Comment comment2 = create(review1, user1, "댓2");
+        CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
+        CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
+        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2), false);
+
+        given(reviewRepository.existsById(reviewId)).willReturn(true);
+        given(commentRepository.findByReviewId(eq(reviewId), any()))
+            .willReturn(slice);
+        given(commentMapper.toDto(comment1)).willReturn(dto1);
+        given(commentMapper.toDto(comment2)).willReturn(dto2);
+        given(commentRepository.countByReviewId(reviewId)).willReturn(10L);
+
+        // when
+        CursorPageResponse<CommentDto> result =
+            commentService.findAll(reviewId, null, "DESC", limit);
+
+        // then
+        assertThat(result.content()).containsExactly(dto1, dto2);
+        assertThat(result.totalElements()).isEqualTo(10L);
+        assertThat(result.hasNext()).isFalse();
+    }
+
+    @Test
     void 존재하는_리뷰ID의_댓글_목록을_커서기반으로_조회할_수_있다() {
         // given
         UUID reviewId = review1.getId();

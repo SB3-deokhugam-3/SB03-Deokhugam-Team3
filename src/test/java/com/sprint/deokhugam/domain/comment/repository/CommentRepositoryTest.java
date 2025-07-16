@@ -81,7 +81,7 @@ class CommentRepositoryTest {
     }
 
     @Test
-    void findByReviewIdAndCreatedAtLessThan_정상_조회() {
+    void findByReviewId_정상_조회() {
         // given
         Instant baseTime = Instant.now();
         Comment comment1 = createComment("댓1", baseTime.minusSeconds(300));
@@ -93,9 +93,9 @@ class CommentRepositoryTest {
         em.flush();
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        // when
-        Slice<Comment> result = commentRepository.findByReviewIdAndCreatedAtLessThan(
-            review1.getId(), Instant.now(), pageable);
+        // when - 첫 페이지 조회
+        Slice<Comment> result = commentRepository.findByReviewId(
+            review1.getId(), pageable);
 
         // then
         assertThat(result.getContent()).hasSize(3);
@@ -107,15 +107,17 @@ class CommentRepositoryTest {
     @Test
     void findByReviewIdAndCreatedAtLessThan_커서_이후_조회() {
         // given
-        Instant baseTime = Instant.now();
+        Instant baseTime = Instant.parse("2024-01-01T12:00:00Z");
         Comment comment1 = createComment("댓1", baseTime.minusSeconds(300)); // 5분 전
         Comment comment2 = createComment("댓2", baseTime.minusSeconds(180)); // 3분 전  
         Comment comment3 = createComment("댓3", baseTime.minusSeconds(60));  // 1분 전
         commentRepository.save(comment1);
-        commentRepository.save(comment2);
+        Comment savedComment2 = commentRepository.save(comment2);
         commentRepository.save(comment3);
         em.flush();
-        Instant cursorTime = comment2.getCreatedAt();
+        em.clear();
+        UUID comment2Id = savedComment2.getId();
+        Instant cursorTime = commentRepository.findById(comment2Id).get().getCreatedAt();
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         // when
@@ -123,9 +125,8 @@ class CommentRepositoryTest {
             review1.getId(), cursorTime, pageable);
 
         // then
-        assertThat(result.getContent()).hasSize(2); // 커서 이후 시점의 댓글만 조회
-        assertThat(result.getContent().get(0).getContent()).isEqualTo("댓2");
-        assertThat(result.getContent().get(1).getContent()).isEqualTo("댓1");
+        assertThat(result.getContent()).hasSize(1); // 커서 이후 시점의(더 앞선 시간) 댓글만 조회
+        assertThat(result.getContent().get(0).getContent()).isEqualTo("댓1");
     }
 
     @Test
