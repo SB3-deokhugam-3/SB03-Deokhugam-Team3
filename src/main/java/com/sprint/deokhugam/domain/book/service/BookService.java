@@ -22,7 +22,7 @@ public interface BookService {
 
     void delete(UUID bookId);
 
-//    void hardDelete(UUID bookId);
+    void hardDelete(UUID bookId);
 
     /**
      * 이미지에서 ISBN을 추출

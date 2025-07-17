@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.book.service;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,6 +22,7 @@ import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
+import com.sprint.deokhugam.domain.book.exception.BookNotSoftDeletedException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
@@ -726,6 +728,64 @@ class BookServiceImplTest {
         assertTrue(book.isDeleted());
         verify(bookRepository).findById(bookId);
         verify(bookRepository, never()).delete(book); // 물리 삭제가 호출되지 않았는지도 검증
+    }
+
+    @Test
+    void 도서_물리_삭제_성공() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        Book book = createBookEntity(
+            title, author, description, publisher, publishedDate, isbn,
+            "https://example.com/thumbnail.jpg", 4.5, 10L
+        );
+        book.delete(); // 소프트 삭제 상태로 설정
+
+        given(bookRepository.findByIdIncludingDeleted(bookId)).willReturn(Optional.of(book));
+
+        // when
+        assertDoesNotThrow(() -> bookService.hardDelete(bookId));
+
+        // then
+        verify(bookRepository).findByIdIncludingDeleted(bookId);
+        verify(bookRepository).hardDeleteBook(bookId);
+    }
+
+    @Test
+    void 도서_물리_삭제_도서가_존재하지_않는_경우() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        given(bookRepository.findByIdIncludingDeleted(bookId)).willReturn(Optional.empty());
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.hardDelete(bookId));
+
+        // then
+        assertThat(thrown).isInstanceOf(BookNotFoundException.class)
+            .hasMessage("BOOK 찾을 수 없습니다");
+        verify(bookRepository).findByIdIncludingDeleted(bookId);
+        verify(bookRepository, never()).hardDeleteBook(any(UUID.class));
+    }
+
+    @Test
+    void 도서_물리_삭제_소프트_삭제되지_않은_도서() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        Book book = createBookEntity(
+            title, author, description, publisher, publishedDate, isbn,
+            "https://example.com/thumbnail.jpg", 4.5, 10L
+        );
+        // isDeleted = false 상태 (소프트 삭제되지 않음)
+
+        given(bookRepository.findByIdIncludingDeleted(bookId)).willReturn(Optional.of(book));
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.hardDelete(bookId));
+
+        // then
+        assertThat(thrown).isInstanceOf(BookNotSoftDeletedException.class)
+            .hasMessage("소프트 삭제되지 않은 도서입니다");
+        verify(bookRepository).findByIdIncludingDeleted(bookId);
+        verify(bookRepository, never()).hardDeleteBook(any(UUID.class));
     }
 
     private List<Book> createTestBooks() {

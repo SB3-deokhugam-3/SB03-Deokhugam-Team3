@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -120,7 +121,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("기본 JPA 메서드 - findAll")
     void 기본_JPA_메서드_findAll() {
         // when
         List<Book> result = bookRepository.findAll();
@@ -133,7 +133,6 @@ class BookRepositoryTest {
     /** 정렬 기준별 분기 테스트 **/
 
     @Test
-    @DisplayName("정렬 기준: title - ASC")
     void 정렬_기준_title_ASC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "ASC", null, null, 10);
@@ -149,7 +148,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: title - DESC")
     void 정렬_기준_title_DESC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", null, null, 10);
@@ -165,7 +163,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: publishedDate - ASC")
     void 정렬_기준_publishedDate_ASC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "ASC", null, null, 10);
@@ -181,7 +178,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: publishedDate - DESC")
     void 정렬_기준_publishedDate_DESC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "DESC", null, null, 10);
@@ -197,7 +193,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: rating - ASC")
     void 정렬_기준_rating_ASC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "rating", "ASC", null, null, 10);
@@ -213,7 +208,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: rating - DESC")
     void 정렬_기준_rating_DESC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "rating", "DESC", null, null, 10);
@@ -229,7 +223,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: reviewCount - ASC")
     void 정렬_기준_reviewCount_ASC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "ASC", null, null, 10);
@@ -245,7 +238,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: reviewCount - DESC")
     void 정렬_기준_reviewCount_DESC() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "DESC", null, null, 10);
@@ -261,7 +253,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("정렬 기준: default (잘못된 값) - title로 기본 정렬")
     void 정렬_기준_default_잘못된_값() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "invalidField", "DESC", null, null, 10);
@@ -280,7 +271,6 @@ class BookRepositoryTest {
     /** 키워드 검색 분기 테스트 **/
 
     @Test
-    @DisplayName("키워드 검색 - 제목으로 검색")
     void 키워드_검색_제목으로_검색() {
         // given
         String keyword = "요일";
@@ -295,7 +285,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("키워드 검색 - 저자로 검색")
     void 키워드_검색_저자로_검색() {
         // given
         String keyword = "김현기";
@@ -310,7 +299,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("키워드 검색 - ISBN으로 검색")
     void 키워드_검색_ISBN으로_검색() {
         // given
         String keyword = "9788987654321";
@@ -325,7 +313,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("키워드 검색 - 키워드 없음 (null)")
     void 키워드_검색_키워드_없음_null() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", null, null, 10);
@@ -338,7 +325,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("키워드 검색 - 키워드 없음 (빈 문자열)")
     void 키워드_검색_키워드_없음_빈_문자열() {
         // given
         BookSearchRequest request = BookSearchRequest.of("", "title", "DESC", null, null, 10);
@@ -351,7 +337,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("키워드 검색 - 일치하는 결과 없음")
     void 키워드_검색_일치하는_결과_없음() {
         // given
         String keyword = "존재하지않는키워드";
@@ -367,7 +352,6 @@ class BookRepositoryTest {
     /** 커서 기반 페이지네이션 분기 테스트 **/
 
     @Test
-    @DisplayName("커서 조건 - title 기준 커서")
     void 커서_조건_title_기준_커서() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
@@ -383,7 +367,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("커서 조건 - publishedDate 기준 커서")
     void 커서_조건_publishedDate_기준_커서() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
@@ -399,7 +382,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("커서 조건 - rating 기준 커서")
     void 커서_조건_rating_기준_커서() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
@@ -415,7 +397,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("커서 조건 - reviewCount 기준 커서")
     void 커서_조건_reviewCount_기준_커서() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
@@ -431,7 +412,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("커서 조건 - 커서 값 없음")
     void 커서_조건_커서_값_없음() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", null, null, 10);
@@ -444,7 +424,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("커서 조건 - default 분기 (잘못된 orderBy)")
     void 커서_조건_default_분기() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
@@ -461,7 +440,6 @@ class BookRepositoryTest {
     /** 삭제된 도서 필터링 테스트 **/
 
     @Test
-    @DisplayName("삭제된 도서 필터링 - 삭제된 도서는 조회되지 않음")
     void 삭제된_도서_필터링() {
         // given
         BookSearchRequest request = BookSearchRequest.of("삭제된", "title", "DESC", null, null, 10);
@@ -475,7 +453,6 @@ class BookRepositoryTest {
 
     /** 총 개수 조회 테스트 **/
     @Test
-    @DisplayName("총 개수 조회 - 키워드 있음")
     void 총_개수_조회_키워드_있음() {
         // given
         String keyword = "요일";
@@ -488,7 +465,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("총 개수 조회 - 키워드 없음")
     void 총_개수_조회_키워드_없음() {
         // given
         String keyword = null;
@@ -503,7 +479,6 @@ class BookRepositoryTest {
     /**  기존 유효성 검증 테스트 **/
 
     @Test
-    @DisplayName("정렬기준 및 방향 유효성 검증 - 잘못된 값 입력")
     void 정렬기준_및_방향_유효성검증_잘못된_값_입력() {
         // given : 잘못된 정렬 기준 및 방향
         String invalidOrderBy = "invalidField";
@@ -520,7 +495,6 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("페이지 크기 유효성 검증 - 유효하지 않은 값")
     void 페이지_크기_유효성_검증_유효하지_않은_값() {
         // given : 잘못된 페이지 크기
         int invalidPageSize = 101;
@@ -534,4 +508,86 @@ class BookRepositoryTest {
         // then: 발생한 예외 메시지가 올바른지 확인
         assertThat(exception.getMessage()).isEqualTo("페이지 크기는 1 이상 100 이하여야 합니다.");
     }
+
+    @Test
+    void 도서_물리_삭제_소프트_삭제된_도서만_물리_삭제_가능() {
+        // given
+        Book softDeletedBook = Book.builder()
+            .title("물리 삭제 테스트 도서")
+            .author("테스트 저자")
+            .description("물리 삭제 테스트용 도서")
+            .publisher("테스트 출판사")
+            .publishedDate(LocalDate.of(2024, 1, 1))
+            .isbn("9999999999999")
+            .rating(3.5)
+            .reviewCount(5L)
+            .isDeleted(true) // 소프트 삭제된 상태
+            .build();
+
+        Book savedBook = bookRepository.save(softDeletedBook);
+        UUID bookId = savedBook.getId();
+
+        // when
+        bookRepository.hardDeleteBook(bookId);
+
+        // then
+        Optional<Book> deletedBook = bookRepository.findByIdIncludingDeleted(bookId);
+        assertThat(deletedBook).isEmpty();
+    }
+
+    @Test
+    void 도서_물리_삭제_존재하지_않는_도서_ID() {
+        // given
+        UUID nonExistentBookId = UUID.randomUUID();
+
+        // when
+        Exception exception = null;
+        try {
+            bookRepository.hardDeleteBook(nonExistentBookId);
+        } catch (Exception e) {
+            exception = e;
+        }
+
+        // then
+        assertThat(exception).isNull();
+    }
+
+    @Test
+    void 소프트_삭제된_도서_포함_조회_findByIdIncludingDeleted() {
+        // given
+        List<Book> allBooks = bookRepository.findAll();
+        Book softDeletedBook = allBooks.stream()
+            .filter(book -> book.getTitle().equals("삭제된 도서"))
+            .findFirst()
+            .orElseThrow();
+
+        UUID deletedBookId = softDeletedBook.getId();
+
+        // when
+        Optional<Book> result = bookRepository.findByIdIncludingDeleted(deletedBookId);
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().getTitle()).isEqualTo("삭제된 도서");
+        assertThat(result.get().isDeleted()).isTrue();
+    }
+
+    @Test
+    void 일반_조회에서는_소프트_삭제된_도서_제외_findById() {
+        // given
+        List<Book> allBooks = bookRepository.findAll();
+        Book softDeletedBook = allBooks.stream()
+            .filter(book -> book.getTitle().equals("삭제된 도서"))
+            .findFirst()
+            .orElseThrow();
+
+        UUID deletedBookId = softDeletedBook.getId();
+
+        // when
+        Optional<Book> result = bookRepository.findById(deletedBookId);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
 }

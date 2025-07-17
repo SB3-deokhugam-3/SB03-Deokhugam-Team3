@@ -10,16 +10,20 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.entity.QBook;
+import com.sprint.deokhugam.domain.comment.entity.QComment;
+import com.sprint.deokhugam.domain.review.entity.QReview;
+import com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+
 
 @Repository
 @RequiredArgsConstructor
@@ -27,7 +31,13 @@ import org.springframework.util.StringUtils;
 public class BookRepositoryImpl implements BookRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
+
     private static final QBook book = QBook.book;
+    private static final QReview review = QReview.review;
+    private static final QComment comment = QComment.comment;
+    private static final QReviewLike reviewLike = QReviewLike.reviewLike;
+
 
     @Override
     public List<Book> findBooksWithKeyword(BookSearchRequest request) {
@@ -79,14 +89,37 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
         return count != null ? count : 0L;
     }
 
-    public Optional<Book> findByIdIncludingDeleted(UUID bookId) {
-        QBook book = QBook.book;
+    @Override
+    public void hardDeleteBook(UUID bookId) {
+        log.info("[BookRepository] 도서 물리 삭제 실행 - bookId: {}", bookId);
 
-        Book result = queryFactory.selectFrom(book)
-            .where(book.id.eq(bookId))
-            .fetchOne();
+        // 1. 리뷰 좋아요 삭제
+        long deletedReviewLikes = queryFactory
+            .delete(reviewLike)
+            .where(reviewLike.review.book.id.eq(bookId))
+            .execute();
+        log.info("[BookRepository] 리뷰 좋아요 삭제 완료 - count: {}", deletedReviewLikes);
 
-        return Optional.ofNullable(result);
+        // 2. 댓글 삭제
+        long deletedComments = queryFactory
+            .delete(comment)
+            .where(comment.review.book.id.eq(bookId))
+            .execute();
+        log.info("[BookRepository] 댓글 삭제 완료 - count: {}", deletedComments);
+
+        // 3. 리뷰 삭제
+        long deletedReviews = queryFactory
+            .delete(review)
+            .where(review.book.id.eq(bookId))
+            .execute();
+        log.info("[BookRepository] 리뷰 삭제 완료 - count: {}", deletedReviews);
+
+        // 4. 도서 삭제 (네이티브 쿼리 사용)
+        int deletedBooks = entityManager
+            .createNativeQuery("DELETE FROM books WHERE id = :bookId")
+            .setParameter("bookId", bookId)
+            .executeUpdate();
+        log.info("[BookRepository] 도서 삭제 완료 - count: {}", deletedBooks);
     }
 
     /**

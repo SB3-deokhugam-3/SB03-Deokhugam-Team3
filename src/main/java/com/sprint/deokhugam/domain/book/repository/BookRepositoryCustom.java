@@ -22,5 +22,5 @@ public interface BookRepositoryCustom {
      */
     long countBooksWithKeyword(String keyword);
 
-    Optional<Book> findByIdIncludingDeleted(UUID bookId);
+    void hardDeleteBook(UUID bookId);
 }
