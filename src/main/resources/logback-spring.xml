@@ -23,10 +23,10 @@
   <!-- appender : log 메시지가 출력될 대상-->
   <!-- Console 출력 설정 -->
   <property name="CONSOLE_PATTERN"
-    value="%d{yyyy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight([%-5level]) %logger{36}  [%X{request-id:-startup} | %X{http-method} | %X{request-uri}] %msg %n"/>
+    value="%d{yyyy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight([%-5level]) %logger{36}  [%X{request-id:-startup} | %X{http-method} | %X{request-uri} | %X{ip}] %msg %n"/>
   <!--파일 출력 설정 -->
   <property name="ROLLING_PATTERN"
-    value="%d{yyyy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight([%-5level]) %logger{36}  [%X{request-id:-startup} | %X{http-method} | %X{request-uri}] %msg %n"/>
+    value="%d{yyyy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight([%-5level]) %logger{36}  [%X{request-id:-startup} | %X{http-method} | %X{request-uri} | %X{ip}] %msg %n"/>
 
   <!--전역 logger-->
   <root level="DEBUG">
