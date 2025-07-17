@@ -1,4 +1,4 @@
-package com.sprint.deokhugam.global.inteceptor;
+package com.sprint.deokhugam.global.interceptor;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;

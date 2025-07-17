@@ -1,4 +1,4 @@
-package com.sprint.deokhugam.global.inteceptor;
+package com.sprint.deokhugam.global.interceptor;
 
 import com.sprint.deokhugam.domain.user.exception.MissingUserIdHeaderException;
 import com.sprint.deokhugam.global.exception.UnauthorizedException;
