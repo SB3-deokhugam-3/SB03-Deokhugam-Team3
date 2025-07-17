@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,6 +13,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
@@ -45,6 +47,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("BookServiceImpl테스트")
 class BookServiceImplTest {
 
     @InjectMocks
@@ -192,7 +195,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("첫 페이지 조회 - 키워드 검색 없이")
     void 키워드_없이_첫_페이지_조회() {
         //given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC",null,null,10);
@@ -217,7 +219,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("첫 페이지 조회 - 키워드 검색 포함")
     void 키워드_포함_첫_페이지_조회() {
         // given
         BookSearchRequest request = BookSearchRequest.of("Hot", "title", "DESC", null, null, 5);
@@ -241,7 +242,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("커서 기반 페이지네이션 - 다음 페이지 존재")
     void 커서_기반_페이지네이션_다음_페이지_존재() {
         // given
         Instant after = Instant.now().minusSeconds(3600);
@@ -267,7 +267,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("다양한 정렬 기준 테스트 - 평점순")
     void 평점순_정렬_테스트() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "rating", "DESC", null, null, 5);
@@ -287,7 +286,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효하지 않은 정렬 기준 - 예외 발생")
     void 유효하지_않은_정렬_기준_예외_발생() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "invalid", "DESC", null, null, 5);
@@ -299,7 +297,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효하지 않은 페이지 크기 - 예외 발생")
     void 유효하지_않은_페이지_크기_예외_발생() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", null, null, 101);
@@ -547,7 +544,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 서비스 사용 가능 - ISBN 추출 성공")
     void OCR_서비스_사용_가능_ISBN_추출_성공() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -566,7 +562,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 서비스 사용 불가능 - 예외 발생")
     void OCR_서비스_사용_불가능_예외_발생() {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -585,7 +580,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR에서 null 반환 - 예외 발생")
     void OCR에서_null_반환_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -605,7 +599,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR에서 빈 문자열 반환 - 예외 발생")
     void OCR에서_빈_문자열_반환_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -625,7 +618,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR에서 공백만 있는 문자열 반환 - 예외 발생")
     void OCR에서_공백만_있는_문자열_반환_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -645,7 +637,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 처리 중 예외 발생")
     void OCR_처리_중_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -666,7 +657,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 처리 중 RuntimeException 발생")
     void OCR_처리_중_RuntimeException_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -687,7 +677,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효한 ISBN-13 추출 성공")
     void 유효한_ISBN13_추출_성공() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -706,7 +695,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효한 ISBN-10 추출 성공")
     void 유효한_ISBN10_추출_성공() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -724,6 +712,21 @@ class BookServiceImplTest {
         assertThat(result).matches("\\d{10}");
     }
 
+    @Test
+    void 도서를_논리_삭제하면_isDeleted_필드가_true로_변경된다() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        Book book = createBookEntity(title, author, description, publisher, publishedDate, isbn, null, 0.0, 0L);
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+
+        // when
+        bookService.delete(bookId);
+
+        // then
+        assertTrue(book.isDeleted());
+        verify(bookRepository).findById(bookId);
+        verify(bookRepository, never()).delete(book); // 물리 삭제가 호출되지 않았는지도 검증
+    }
 
     private List<Book> createTestBooks() {
         Instant now = Instant.now();

@@ -14,6 +14,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -75,6 +77,16 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
             .fetchOne();
 
         return count != null ? count : 0L;
+    }
+
+    public Optional<Book> findByIdIncludingDeleted(UUID bookId) {
+        QBook book = QBook.book;
+
+        Book result = queryFactory.selectFrom(book)
+            .where(book.id.eq(bookId))
+            .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 
     /**

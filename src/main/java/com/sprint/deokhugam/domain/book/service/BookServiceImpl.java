@@ -14,6 +14,9 @@ import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
+import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
+import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.io.IOException;
 import java.util.List;
@@ -34,6 +37,7 @@ public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
     private final S3Storage s3Storage;
     private final TesseractOcrExtractor tesseractOcrExtractor;
+    private final ReviewRepository reviewRepository;
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final List<String> SUPPORTED_IMAGE_TYPES =
@@ -232,6 +236,48 @@ public class BookServiceImpl implements BookService {
 
         return bookMapper.toDto(updatedBook, s3Storage);
     }
+
+    @Override
+    @Transactional
+    public void delete(UUID bookId) {
+        log.info("[BookService] 도서 논리 삭제 요청 - id: {}", bookId);
+
+        Book book = bookRepository.findById(bookId)
+            .orElseThrow(() -> new BookNotFoundException(bookId));
+
+        book.delete();
+
+        bookRepository.save(book);
+
+        log.info("[BookService] 도서 논리 삭제 완료 - id: {}", bookId);
+    }
+
+//    @Override
+//    @Transactional
+//    public void hardDelete(UUID bookId) {
+//        log.info("[BookService] 물리 삭제 요청 - id: {}", bookId);
+//
+//        // 책 조회
+//        Book book = bookRepository.findByIdIncludingDeleted(bookId)
+//            .orElseThrow(() -> new BookNotFoundException(bookId));
+//
+//        // 리뷰 조회 및 삭제
+//        List<Review> reviews = reviewRepository.findByBookId(bookId);
+//        for (Review review : reviews) {
+//            // 댓글 삭제
+//            commentRepository.deleteByReviewId(review.getId());
+//        }
+//
+//        // 리뷰 삭제
+//        reviewRepository.deleteByBookId(bookId);
+//
+//        // 책 삭제
+//        bookRepository.delete(book);
+//
+//        log.info("[BookService] 물리 삭제 완료 - id: {}", bookId);
+//
+//    }
+//
 
     private Book findBook(UUID bookId) {
         return bookRepository.findById(bookId)

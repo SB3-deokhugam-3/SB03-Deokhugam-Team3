@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -128,13 +129,34 @@ public class BookController {
     public ResponseEntity<String> extractIsbnFromImage(
         @RequestPart(value = "image") MultipartFile image
     ) throws OcrException {
-        log.info("[BookController] ISBN 추출 요청 - 파일명 : {}, 크기 : {} bytes", image.getOriginalFilename(), image.getSize());
+        log.info("[BookController] ISBN 추출 요청 - 파일명 : {}, 크기 : {} bytes"
+            , image.getOriginalFilename(), image.getSize());
 
         // OCR 서비스 호출
         String extractedIsbn = bookService.extractIsbnFromImage(image);
 
         log.info("ISBN 추출 완료 - ISBN : {}", extractedIsbn);
 
-        return ResponseEntity.status(HttpStatus.OK).body(extractedIsbn);
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(extractedIsbn);
     }
+
+    @DeleteMapping("/{bookId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID bookId) {
+        log.info("[BookController] 도서 논리 삭제 요청 - id: {}", bookId);
+
+        bookService.delete(bookId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+//    @DeleteMapping("/{bookId}/hard")
+//    public ResponseEntity<Void> hardDeleteBook(@PathVariable UUID bookId) {
+//        log.info("[BookController] 도서 물리 삭제 요청 - id: {}", bookId);
+//
+//        bookService.hardDelete(bookId);
+//
+//        return ResponseEntity.noContent().build();
+//    }
 }

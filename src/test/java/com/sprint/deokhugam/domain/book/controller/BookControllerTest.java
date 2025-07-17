@@ -4,8 +4,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -20,6 +23,7 @@ import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookServiceImpl;
@@ -35,11 +39,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.multipart.MultipartFile;
 
+@ActiveProfiles("test")
 @WebMvcTest(controllers = BookController.class)
 @DisplayName("BookController 테스트")
 class BookControllerTest {
@@ -67,6 +73,7 @@ class BookControllerTest {
 
     @BeforeEach
     void setUp() {
+
         title = "test book";
         author = "test author";
         description = "test description";
@@ -230,7 +237,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 기본 파라미터")
     void 도서_목록을_기본값으로_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -250,7 +256,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 키워드 검색")
     void 도서_목록을_키워드로_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -270,7 +275,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 정렬 조건 설정")
     void 도서_목록을_정렬해서_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -290,7 +294,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 페이지 크기 설정")
     void 도서_목록을_페이지_크기를_정해서_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -307,7 +310,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 빈 결과")
     void 도서_목록_조회시_빈_결과를_반환한다() throws Exception {
         // given
         CursorPageResponse<BookDto> emptyResponse = new CursorPageResponse<>(
@@ -697,6 +699,37 @@ class BookControllerTest {
         // then
         result.andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("존재하는 도서 ID로 삭제 요청하면 204 상태코드를 반환한다")
+    void 존재하는_도서_ID로_삭제_요청하면_204_상태코드를_반환한다() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        doNothing().when(bookService).delete(bookId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}", bookId));
+
+        // then
+        result.andExpect(status().isNoContent());
+        verify(bookService).delete(bookId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 도서 ID로 삭제 요청하면 404 상태코드를 반환한다")
+    void 존재하지_않는_도서_ID로_삭제_요청하면_404_상태코드를_반환한다() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        doThrow(new BookNotFoundException(bookId)).when(bookService).delete(bookId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}", bookId));
+
+        // then
+        result.andExpect(status().isNotFound());
+        verify(bookService).delete(bookId);
+    }
+
 
     private BookCreateRequest createRequest(String title, String author, String description,
         String publisher, LocalDate publishedDate, String isbn) {

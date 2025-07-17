@@ -85,4 +85,7 @@ public class Book extends BaseUpdatableEntity  {
         }
     }
 
+    public void delete() {
+        this.isDeleted = true;
+    }
 }

@@ -3,6 +3,8 @@ package com.sprint.deokhugam.domain.book.repository;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface BookRepositoryCustom {
     /**
@@ -20,4 +22,5 @@ public interface BookRepositoryCustom {
      */
     long countBooksWithKeyword(String keyword);
 
+    Optional<Book> findByIdIncludingDeleted(UUID bookId);
 }
