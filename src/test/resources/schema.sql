@@ -57,9 +57,7 @@ CREATE TABLE reviews
     CONSTRAINT fk_reviews_user
         FOREIGN KEY (user_id)
             REFERENCES users (id)
-            ON DELETE CASCADE,
-
-    CONSTRAINT review_unique UNIQUE (book_id, user_id)
+            ON DELETE CASCADE
 );
 
 CREATE TABLE comments
@@ -215,3 +213,8 @@ CREATE INDEX idx_comments ON comments (review_id, created_at DESC);
 
 -- review likes index 생성
 CREATE INDEX idx_review_likes ON review_likes (user_id);
+
+-- 지워지지 않은 review에 대한 unique index 생성
+CREATE UNIQUE INDEX review_active_unique
+    ON reviews(user_id, book_id)
+    WHERE is_deleted = false;

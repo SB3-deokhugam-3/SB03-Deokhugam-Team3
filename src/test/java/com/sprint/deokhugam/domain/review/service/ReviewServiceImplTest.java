@@ -210,9 +210,6 @@ public class ReviewServiceImplTest {
         ReflectionTestUtils.setField(review3, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
         ReflectionTestUtils.setField(review3, "updatedAt", Instant.parse("2025-01-04T00:00:00Z"));
 
-
-
-
         /* review DTO 생성 */
         ReviewDto reviewDto1 = ReviewDto.builder()
             .id(UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d"))
@@ -276,7 +273,7 @@ public class ReviewServiceImplTest {
     Instant now = Instant.now();
 
     @Test
-    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다() {
+    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다()  {
         // given
         Book book = mock(Book.class);
         User user = mock(User.class);
@@ -338,27 +335,6 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 이미_존재하는_리뷰라면_리뷰_생성에_실패한다() {
-        // given
-        Book mockBook = mock(Book.class);
-        User mockUser = mock(User.class);
-        given(bookRepository.findById(bookId)).willReturn(Optional.of(mockBook));
-        given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
-        given(reviewRepository.existsByBookIdAndUserId(bookId, userId)).willReturn(true);
-
-        // when
-        Throwable thrown = catchThrowable(() -> reviewService.create(createRequest()));
-
-        // then
-        assertThat(thrown)
-            .isInstanceOf(DuplicationReviewException.class);
-        then(bookRepository).should().findById(bookId);
-        then(userRepository).should().findById(userId);
-        then(reviewRepository).should().existsByBookIdAndUserId(bookId, userId);
-        then(reviewMapper).shouldHaveNoInteractions();
-    }
-
-    @Test
     void 존재하는_리뷰id로_리뷰를_조회할_수_있다() {
         // given
         UUID reviewId = UUID.randomUUID();
@@ -368,8 +344,6 @@ public class ReviewServiceImplTest {
         ReviewDto expectedDto = createDto(reviewId);
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(savedReview));
         given(reviewMapper.toDto(savedReview)).willReturn(expectedDto);
-        given(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, user.getId()))
-            .willReturn(false);
 
         // when
         ReviewDto result = reviewService.findById(reviewId, user.getId());

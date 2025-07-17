@@ -24,6 +24,7 @@ import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -106,6 +107,8 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDto create(ReviewCreateRequest request) {
         UUID bookId = request.bookId();
         UUID userId = request.userId();
+        String content = request.content();
+        Integer rating = request.rating();
         log.info("[review] 생성 요청 - bookId: {}, userId: {}", bookId, userId);
 
         Book book = findByBookId(bookId);
@@ -113,12 +116,10 @@ public class ReviewServiceImpl implements ReviewService {
 
         validateDuplicateReview(bookId, userId);
 
-        String content = request.content();
-        Integer rating = request.rating();
-
         Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);
         book.increaseReviewCount();
+
         log.info("[review] 생성 완료 - reviewId: {}, bookId: {}, userId: {}, rating: {}, content: {}",
             savedReview.getId(), bookId, userId, rating, content);
 
@@ -193,13 +194,6 @@ public class ReviewServiceImpl implements ReviewService {
             });
     }
 
-    private void validateDuplicateReview(UUID bookId, UUID userId) {
-        if (reviewRepository.existsByBookIdAndUserId(bookId, userId)) {
-            log.warn("[review] 생성 실패 - 해당 review가 이미 존재함 bookId: {}, userId: {}", bookId, userId);
-            throw new DuplicationReviewException(bookId, userId);
-        }
-    }
-
     private void validateAuthorizedUser(Review review, UUID userId, ReviewFeature feature) {
         if (!review.getUser().getId().equals(userId)) {
             log.warn("[review] {} - 해당 유저는 권한이 없음: reviewId={}, userId={}", feature.getMessage(),
@@ -215,6 +209,13 @@ public class ReviewServiceImpl implements ReviewService {
                 log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
                 throw new ReviewNotFoundException(reviewId);
             });
+    }
+
+    private void validateDuplicateReview(UUID bookId, UUID userId) {
+        if (reviewRepository.existsByBookIdAndUserId(bookId, userId)) {
+            log.warn("[review] 생성 실패 - 해당 review가 이미 존재함 bookId: {}, userId: {}", bookId, userId);
+            throw new DuplicationReviewException(bookId, userId);
+        }
     }
 
 }
