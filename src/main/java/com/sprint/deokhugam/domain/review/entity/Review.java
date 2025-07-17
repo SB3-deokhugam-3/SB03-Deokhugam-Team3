@@ -10,11 +10,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
@@ -65,6 +67,14 @@ public class Review extends BaseUpdatableEntity {
         if (newRating != null && newRating >= 0.0 && newRating <= 5.0) {
             this.rating = newRating;
         }
+    }
+
+    public void restore(String content, int rating) {
+        this.content = content;
+        this.rating = rating;
+        this.isDeleted = false;
+        this.likeCount = 0L;
+        this.commentCount = 0L;
     }
 
     public void increaseLikeCount() {

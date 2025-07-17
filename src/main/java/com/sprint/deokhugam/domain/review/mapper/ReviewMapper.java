@@ -15,5 +15,4 @@ public interface ReviewMapper {
     @Mapping(target = "userNickname", source = "user.nickname")
     @Mapping(target = "likedByMe", ignore = true)
     ReviewDto toDto(Review review);
-
 }
