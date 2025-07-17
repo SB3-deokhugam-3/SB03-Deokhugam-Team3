@@ -22,5 +22,5 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
     Long countByReviewId(UUID reviewId);
 
     @Query(value = "SELECT * FROM comments WHERE id = :id", nativeQuery = true)
-    Optional<Comment> findByIdIncludingDeleted(@Param("id") UUID reviewId);
+    Optional<Comment> findByIdIncludingDeleted(@Param("id") UUID commentId);
 }
