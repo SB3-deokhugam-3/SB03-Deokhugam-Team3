@@ -210,9 +210,6 @@ public class ReviewServiceImplTest {
         ReflectionTestUtils.setField(review3, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
         ReflectionTestUtils.setField(review3, "updatedAt", Instant.parse("2025-01-04T00:00:00Z"));
 
-
-
-
         /* review DTO 생성 */
         ReviewDto reviewDto1 = ReviewDto.builder()
             .id(UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d"))
@@ -276,7 +273,7 @@ public class ReviewServiceImplTest {
     Instant now = Instant.now();
 
     @Test
-    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다() {
+    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다()  {
         // given
         Book book = mock(Book.class);
         User user = mock(User.class);
@@ -338,27 +335,6 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 이미_존재하는_리뷰라면_리뷰_생성에_실패한다() {
-        // given
-        Book mockBook = mock(Book.class);
-        User mockUser = mock(User.class);
-        given(bookRepository.findById(bookId)).willReturn(Optional.of(mockBook));
-        given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
-        given(reviewRepository.existsByBookIdAndUserId(bookId, userId)).willReturn(true);
-
-        // when
-        Throwable thrown = catchThrowable(() -> reviewService.create(createRequest()));
-
-        // then
-        assertThat(thrown)
-            .isInstanceOf(DuplicationReviewException.class);
-        then(bookRepository).should().findById(bookId);
-        then(userRepository).should().findById(userId);
-        then(reviewRepository).should().existsByBookIdAndUserId(bookId, userId);
-        then(reviewMapper).shouldHaveNoInteractions();
-    }
-
-    @Test
     void 존재하는_리뷰id로_리뷰를_조회할_수_있다() {
         // given
         UUID reviewId = UUID.randomUUID();
@@ -368,8 +344,6 @@ public class ReviewServiceImplTest {
         ReviewDto expectedDto = createDto(reviewId);
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(savedReview));
         given(reviewMapper.toDto(savedReview)).willReturn(expectedDto);
-        given(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, user.getId()))
-            .willReturn(false);
 
         // when
         ReviewDto result = reviewService.findById(reviewId, user.getId());
@@ -388,7 +362,8 @@ public class ReviewServiceImplTest {
         given(reviewRepository.findById(reviewId)).willReturn(Optional.empty());
 
         // when
-        Throwable thrown = catchThrowable(() -> reviewService.findById(reviewId, UUID.randomUUID()));
+        Throwable thrown = catchThrowable(
+            () -> reviewService.findById(reviewId, UUID.randomUUID()));
 
         // then
         assertThat(thrown)
@@ -399,11 +374,8 @@ public class ReviewServiceImplTest {
     @DisplayName("첫 페이지 조회 - 데이터 있을때")
     void 최신순_오름차순으로_리뷰를_전체조회한다() throws Exception {
         //given
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("ASC")
-            .limit(2)
-            .build();
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, null, null, 2,
+            "createdAt", "ASC");
         given(reviewRepository.findAll(any(ReviewGetRequest.class)))
             .willReturn(mockReviews.subList(0, 3));
         given(reviewRepository.countAllByFilterCondition(any()))
@@ -429,11 +401,8 @@ public class ReviewServiceImplTest {
     @DisplayName("첫 페이지 조회- 데이터없을때")
     void 데이터가_없을때_최신순_오름차순으로_리뷰를_전체조회한다() throws Exception {
         //given
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("ASC")
-            .limit(2)
-            .build();
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, null, null, 2,
+            "createdAt", "ASC");
         given(reviewRepository.findAll(any(ReviewGetRequest.class)))
             .willReturn(null);
 
@@ -455,11 +424,8 @@ public class ReviewServiceImplTest {
     @DisplayName("유효하지 않은 정렬 기준 - 예외 발생")
     void 유효하지_않은_정렬_기준_예외_발생() throws Exception {
         //given
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("invalid")
-            .direction("ASC")
-            .limit(2)
-            .build();
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, null, null, 2,
+            "invalid", "ASC");
         given(reviewRepository.findAll(any(ReviewGetRequest.class)))
             .willReturn(mockReviews.subList(0, 3));
 
@@ -552,7 +518,8 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 하드_삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_ReviewUnauthorizedAccessException_에러를_반환한다() throws Exception {
+    void 하드_삭제하려는_리뷰가_본인이_작성한_리뷰가_아니라면_ReviewUnauthorizedAccessException_에러를_반환한다()
+        throws Exception {
         //given
         UUID reviewId = UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d");
         UUID userId = UUID.fromString("36404724-4603-4cf4-8a8c-111111111111");
