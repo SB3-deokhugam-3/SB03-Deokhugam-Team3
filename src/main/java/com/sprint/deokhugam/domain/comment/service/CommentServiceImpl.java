@@ -195,9 +195,7 @@ public class CommentServiceImpl implements CommentService {
 
     private void validateAuthorizedUser(Comment comment, UUID userId) {
         if (!comment.getUser().getId().equals(userId)) {
-            log.warn("[comment] {} - 해당 유저는 권한이 없음: commentId={}, userId={}", comment.getId(),
-                userId,
-                userId);
+            log.warn("[comment] 권한 검증 실패 - 해당 유저는 권한이 없음: commentId={}, userId={}", comment.getId(), userId);
             throw new CommentUnauthorizedAccessException(comment.getId(), userId);
         }
     }
