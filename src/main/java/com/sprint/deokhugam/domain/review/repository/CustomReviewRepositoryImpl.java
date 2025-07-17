@@ -60,22 +60,11 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
         String orderBy = params.orderBy();
 
         BooleanBuilder whereCondition = new BooleanBuilder();
-        BooleanBuilder cursorCondition = new BooleanBuilder();
-
-        whereCondition.and(filterByIdAndKeyword(review, params));
-
-        //Q. after만 오는 경우는 의미없음
-        boolean isCursorExisted = params.cursor() != null;
-        if (isCursorExisted) {
-            cursorCondition =
-                orderBy.equals(ORDER_BY_CREATED_AT) ? filterByCreatedAt(review, params)
-                    : filterByRating(review, params);
-        }
 
         return queryFactory
             .select(review.count())
             .from(review)
-            .where(whereCondition, cursorCondition)
+            .where(whereCondition)
             .fetchOne();
 
     }
