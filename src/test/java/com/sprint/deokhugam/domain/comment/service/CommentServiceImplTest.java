@@ -485,6 +485,7 @@ public class CommentServiceImplTest {
     private static Comment createSoftDeleted(Review review, User user, String content) {
         Comment comment = new Comment(review, user, content);
         comment.softDelete();
+        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
         return comment;
     }
 

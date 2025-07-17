@@ -25,11 +25,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
-@ActiveProfiles("test")
+@ActiveProfiles("dev")
+@TestPropertySource(properties = "spring.sql.init.mode=never")
 @DisplayName("CommentRepository 단위 테스트")
 class CommentRepositoryTest {
 
