@@ -59,12 +59,8 @@ public class Review extends BaseUpdatableEntity {
     }
 
     public void update(String newContent, Integer newRating) {
-        if (newContent != null && !newContent.trim().isEmpty()) {
-            this.content = newContent;
-        }
-        if (newRating != null && newRating >= 0.0 && newRating <= 5.0) {
-            this.rating = newRating;
-        }
+        this.content = newContent;
+        this.rating = newRating;
     }
 
     public void increaseLikeCount() {
