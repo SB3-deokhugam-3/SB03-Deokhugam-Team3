@@ -48,14 +48,13 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public CursorPageResponse<ReviewDto> findAll(ReviewGetRequest params, UUID requestUserId) {
         // 마지막 요소를 한개 더 가져온 후 다음 페이지 있는지 확인
-        ReviewGetRequest paramsWithExtraLimit = params.toBuilder().limit(params.getLimit() + 1)
-            .build();
+        ReviewGetRequest paramsWithExtraLimit = params.withLimit(params.limit() + 1);
         List<Review> reviewsWithNextCheck = reviewRepository.findAll(paramsWithExtraLimit);
 
         // 데이터 없으면 바로 return
         if (reviewsWithNextCheck == null || reviewsWithNextCheck.isEmpty()) {
             return new CursorPageResponse<>(new ArrayList<>(),
-                null, null, params.getLimit(),
+                null, null, params.limit(),
                 0L, false);
         }
 
@@ -63,20 +62,20 @@ public class ReviewServiceImpl implements ReviewService {
 
         // hasNext 값 구하기 + limit값만큼만 데이터 전달
         boolean hasNext = false;
-        if (reviewsWithNextCheck.size() > params.getLimit()) {
-            reviews = reviewsWithNextCheck.subList(0, params.getLimit());
+        if (reviewsWithNextCheck.size() > params.limit()) {
+            reviews = reviewsWithNextCheck.subList(0, params.limit());
             hasNext = true;
         }
 
         Review lastReview = reviews.get(reviews.size() - 1);
-        String nextCursor = calculateNextCursor(lastReview, params.getOrderBy());
+        String nextCursor = calculateNextCursor(lastReview, params.orderBy());
         String nextAfter = lastReview.getCreatedAt().toString();
         Long totalElements = reviewRepository.countAllByFilterCondition(params);
 
         List<ReviewDto> reviewDtoList = toDtoWithLikedByMe(reviews, requestUserId);
 
         return new CursorPageResponse<>(reviewDtoList,
-            nextCursor, nextAfter, params.getLimit(),
+            nextCursor, nextAfter, params.limit(),
             totalElements, hasNext);
 
     }
@@ -96,7 +95,8 @@ public class ReviewServiceImpl implements ReviewService {
 
         return reviews.stream().map((review -> {
             ReviewDto reviewDto = reviewMapper.toDto(review);
-            boolean likedByMe = reviewLikeRepository.existsByReviewIdAndUserId(review.getId(), requestUserId);
+            boolean likedByMe = reviewLikeRepository.existsByReviewIdAndUserId(review.getId(),
+                requestUserId);
             return reviewDto.toBuilder().likedByMe(likedByMe).build();
         })).toList();
     }
@@ -152,8 +152,8 @@ public class ReviewServiceImpl implements ReviewService {
     public void hardDelete(UUID reviewId, UUID userId) {
         Review review = reviewRepository.findDeletedById(reviewId)
             .orElseThrow(() -> {
-            log.warn("[review] 하드 삭제 실패 - 논리 삭제되지 않은 리뷰: {}", reviewId);
-            throw new ReviewNotSoftDeletedException(reviewId);
+                log.warn("[review] 하드 삭제 실패 - 논리 삭제되지 않은 리뷰: {}", reviewId);
+                throw new ReviewNotSoftDeletedException(reviewId);
             });
 
         validateAuthorizedUser(review, userId, ReviewFeature.HARD_DELETE);
@@ -170,7 +170,8 @@ public class ReviewServiceImpl implements ReviewService {
         log.info("[review] 수정 요청 - reviewId: {}, userId: {}", reviewId, userId);
 
         review.update(request.content(), request.rating());
-        log.info("[review] 수정 완료 - reviewId: {}, userId: {}, newContent={}, newRating={}", reviewId, userId, request.content(), request.rating());
+        log.info("[review] 수정 완료 - reviewId: {}, userId: {}, newContent={}, newRating={}", reviewId,
+            userId, request.content(), request.rating());
 
         return reviewMapper.toDto(review);
     }
@@ -201,7 +202,8 @@ public class ReviewServiceImpl implements ReviewService {
 
     private void validateAuthorizedUser(Review review, UUID userId, ReviewFeature feature) {
         if (!review.getUser().getId().equals(userId)) {
-            log.warn("[review] {} - 해당 유저는 권한이 없음: reviewId={}, userId={}", feature.getMessage(), review.getId(),
+            log.warn("[review] {} - 해당 유저는 권한이 없음: reviewId={}, userId={}", feature.getMessage(),
+                review.getId(),
                 userId);
             throw new ReviewUnauthorizedAccessException(review.getId(), userId);
         }
