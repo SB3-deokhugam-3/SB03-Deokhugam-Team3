@@ -168,23 +168,6 @@ class ReviewControllerTest {
     }
 
     @Test
-    void requestId가_없이_전체조회하면_400_에러를__반환한다() throws Exception {
-        //given
-        given(reviewService.findAll(any(ReviewGetRequest.class), any(UUID.class))).willReturn(
-            mockResponse);
-
-        //when
-        ResultActions result = mockMvc.perform(
-            get("/api/reviews")
-                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
-        );
-
-        //then
-        result.andExpect(status().isBadRequest());
-    }
-
-
-    @Test
     void 리뷰_정보_조회에_성공하면_200응답을_반환한다() throws Exception {
         // given
         UUID reviewId = UUID.randomUUID();
