@@ -102,10 +102,6 @@ public class ReviewServiceImpl implements ReviewService {
         })).toList();
     }
 
-    /**
-     * bookId와 userId의 쌍이 이미 존재하고, isDeleted = true라면
-     * update로 db 상에서만 존재하던 리뷰를 복구 처리 한다(false)
-     */
     @Transactional
     @Override
     public ReviewDto create(ReviewCreateRequest request) {
@@ -113,55 +109,19 @@ public class ReviewServiceImpl implements ReviewService {
         UUID userId = request.userId();
         String content = request.content();
         Integer rating = request.rating();
-
         log.info("[review] 생성 요청 - bookId: {}, userId: {}", bookId, userId);
+
         Book book = findByBookId(bookId);
         User user = findByUserId(userId);
 
-        Optional<Review> existingReview = reviewRepository
-            .findByBookIdAndUserIdIncludingDeleted(bookId, userId);
+        validateDuplicateReview(bookId, userId);
 
-        if (existingReview.isPresent()) {
-            Review review = existingReview.get();
-            if (review.getIsDeleted()) {
-                // 복구 처리
-                return restoreReview(review, book, content, rating);
-            } else {
-                // 이미 활성 리뷰 존재
-                log.warn("[review] 생성 실패 - 해당 review가 이미 존재함 bookId: {}, userId: {}", bookId, userId);
-                throw new DuplicationReviewException(bookId, userId);
-            }
-        }
-
-        return createNewReview(request, book, user);
-    }
-
-    /**
-     * 소프트 삭제된 리뷰를 복구하여 반환
-     */
-    private ReviewDto restoreReview(Review review, Book book, String content, Integer rating) {
-        review.restore(content, rating);
-
-        Review savedReview = reviewRepository.save(review);
-        book.increaseReviewCount();
-
-        log.info("[review] 복구 완료 - reviewId: {}, bookId: {}, userId: {}, rating: {}, content: {}",
-            savedReview.getId(), savedReview.getBook().getId(), savedReview.getUser().getId(), rating, content);
-
-        ReviewDto reviewDto = reviewMapper.toDto(savedReview);
-        return reviewDto.toBuilder().likedByMe(false).build();  // likedByMe도 초기화
-    }
-
-    /**
-     * 새로운 리뷰를 생성하여 반환
-     */
-    private ReviewDto createNewReview(ReviewCreateRequest request, Book book, User user) {
-        Review review = new Review(request.rating(), request.content(), book, user);
+        Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);
         book.increaseReviewCount();
 
         log.info("[review] 생성 완료 - reviewId: {}, bookId: {}, userId: {}, rating: {}, content: {}",
-            savedReview.getId(), request.bookId(), request.userId(), request.rating(), request.content());
+            savedReview.getId(), bookId, userId, rating, content);
 
         return reviewMapper.toDto(savedReview);
     }
@@ -247,6 +207,13 @@ public class ReviewServiceImpl implements ReviewService {
                 log.warn("[review] 조회 실패 - 존재하지 않는 id: {}", reviewId);
                 throw new ReviewNotFoundException(reviewId);
             });
+    }
+
+    private void validateDuplicateReview(UUID bookId, UUID userId) {
+        if (reviewRepository.existsByBookIdAndUserId(bookId, userId)) {
+            log.warn("[review] 생성 실패 - 해당 review가 이미 존재함 bookId: {}, userId: {}", bookId, userId);
+            throw new DuplicationReviewException(bookId, userId);
+        }
     }
 
 }
