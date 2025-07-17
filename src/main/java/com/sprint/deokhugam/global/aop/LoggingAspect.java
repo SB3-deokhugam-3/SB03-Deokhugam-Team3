@@ -29,7 +29,7 @@ public class LoggingAspect {
     }
 
     /**
-     * 서비스 계층의 하위 패키지 포함 모든 메서드에 대한 포인트 컷
+     * 레포지토리 계층의 하위 패키지 포함 모든 메서드에 대한 포인트 컷
      */
     @Pointcut("execution(* com.sprint.deokhugam.domain..repository..*.*(..))")
     private void repositoryLayer() {
