@@ -1,14 +1,19 @@
 package com.sprint.deokhugam.domain.review.entity;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.comment.entity.Comment;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +52,9 @@ public class Review extends BaseUpdatableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
 
     public Review(Integer rating, String content, Book book, User user) {
         this.rating = rating;
