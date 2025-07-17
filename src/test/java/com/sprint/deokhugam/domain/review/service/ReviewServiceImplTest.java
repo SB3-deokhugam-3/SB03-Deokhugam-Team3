@@ -210,9 +210,6 @@ public class ReviewServiceImplTest {
         ReflectionTestUtils.setField(review3, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
         ReflectionTestUtils.setField(review3, "updatedAt", Instant.parse("2025-01-04T00:00:00Z"));
 
-
-
-
         /* review DTO 생성 */
         ReviewDto reviewDto1 = ReviewDto.builder()
             .id(UUID.fromString("cea1a965-2817-4431-90e3-e5701c70d43d"))
@@ -276,7 +273,7 @@ public class ReviewServiceImplTest {
     Instant now = Instant.now();
 
     @Test
-    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다() {
+    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다()  {
         // given
         Book book = mock(Book.class);
         User user = mock(User.class);
@@ -284,7 +281,8 @@ public class ReviewServiceImplTest {
         ReviewDto expectedDto = createDto(UUID.randomUUID());
         given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(reviewRepository.existsByBookIdAndUserId(bookId, userId)).willReturn(false);
+        given(reviewRepository.findByBookIdAndUserIdIncludingDeleted(bookId, userId))
+            .willReturn(Optional.empty());
         given(reviewRepository.save(any())).willReturn(savedReview);
         given(reviewMapper.toDto(savedReview)).willReturn(expectedDto);
 
@@ -297,6 +295,35 @@ public class ReviewServiceImplTest {
         then(userRepository).should().findById(userId);
         then(reviewRepository).should().save(any());
         then(reviewMapper).should().toDto(savedReview);
+    }
+
+    @Test
+    void 소프트_삭제된_리뷰가_있으면_복구하여_생성한다() {
+        // given
+        Book book = mock(Book.class);
+        User user = mock(User.class);
+        Review deletedReview = mock(Review.class);
+        ReviewDto expectedDto = createDto(deletedReview.getId());
+        ReviewCreateRequest request = createRequest();
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(reviewRepository.findByBookIdAndUserIdIncludingDeleted(bookId, userId))
+            .willReturn(Optional.of(deletedReview));
+        given(deletedReview.getIsDeleted()).willReturn(true);
+        given(deletedReview.getBook()).willReturn(book);
+        given(deletedReview.getUser()).willReturn(user);
+        given(deletedReview.getId()).willReturn(UUID.randomUUID());
+        given(reviewRepository.save(deletedReview)).willReturn(deletedReview);
+        given(reviewMapper.toDto(deletedReview)).willReturn(expectedDto);
+
+        // when
+        ReviewDto result = reviewService.create(createRequest());
+
+        // then
+        assertThat(result.likedByMe()).isFalse(); // 복구된 리뷰는 likedByMe = false
+        then(deletedReview).should().restore(request.content(), request.rating());
+        then(book).should().increaseReviewCount();
+        then(reviewRepository).should().save(deletedReview);
     }
 
     @Test
@@ -338,13 +365,16 @@ public class ReviewServiceImplTest {
     }
 
     @Test
-    void 이미_존재하는_리뷰라면_리뷰_생성에_실패한다() {
+    void 소프트_삭제가_되지않은_리뷰라면_리뷰_생성에_실패한다() {
         // given
         Book mockBook = mock(Book.class);
         User mockUser = mock(User.class);
+        Review activeReview = mock(Review.class);
         given(bookRepository.findById(bookId)).willReturn(Optional.of(mockBook));
         given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
-        given(reviewRepository.existsByBookIdAndUserId(bookId, userId)).willReturn(true);
+        given(reviewRepository.findByBookIdAndUserIdIncludingDeleted(bookId, userId))
+            .willReturn(Optional.of(activeReview));
+        given(activeReview.getIsDeleted()).willReturn(false);
 
         // when
         Throwable thrown = catchThrowable(() -> reviewService.create(createRequest()));
@@ -352,10 +382,7 @@ public class ReviewServiceImplTest {
         // then
         assertThat(thrown)
             .isInstanceOf(DuplicationReviewException.class);
-        then(bookRepository).should().findById(bookId);
-        then(userRepository).should().findById(userId);
-        then(reviewRepository).should().existsByBookIdAndUserId(bookId, userId);
-        then(reviewMapper).shouldHaveNoInteractions();
+        then(reviewRepository).should().findByBookIdAndUserIdIncludingDeleted(bookId, userId);
     }
 
     @Test
@@ -368,8 +395,6 @@ public class ReviewServiceImplTest {
         ReviewDto expectedDto = createDto(reviewId);
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(savedReview));
         given(reviewMapper.toDto(savedReview)).willReturn(expectedDto);
-        given(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, user.getId()))
-            .willReturn(false);
 
         // when
         ReviewDto result = reviewService.findById(reviewId, user.getId());
