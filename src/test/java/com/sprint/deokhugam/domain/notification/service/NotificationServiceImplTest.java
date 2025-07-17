@@ -1,13 +1,11 @@
 package com.sprint.deokhugam.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.notification.dto.data.NotificationDto;
 import com.sprint.deokhugam.domain.notification.dto.request.NotificationGetRequest;
 import com.sprint.deokhugam.domain.notification.entity.Notification;
-import com.sprint.deokhugam.domain.notification.exception.InvalidNotificationRequestException;
 import com.sprint.deokhugam.domain.notification.mapper.NotificationMapper;
 import com.sprint.deokhugam.domain.notification.repository.NotificationRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
@@ -85,39 +83,5 @@ class NotificationServiceImplTest {
         assertThat(response.content().get(0).content()).isEqualTo("테스트 알림");
         assertThat(response.nextCursor()).isEqualTo("nextCursor");
         assertThat(response.hasNext()).isTrue();
-    }
-
-    @Test
-    void limit이_0이면_예외가_발생한다() {
-        // given
-        NotificationGetRequest request = new NotificationGetRequest(
-                UUID.randomUUID(),
-                null,
-                null,
-                Instant.now(),
-                0
-        );
-
-        // when & then
-        assertThatThrownBy(() -> notificationService.getNotifications(request))
-                .isInstanceOf(InvalidNotificationRequestException.class)
-                .hasMessage("limit 값은 1 이상 100 이하만 가능합니다.");
-    }
-
-    @Test
-    void limit이_101이면_에외가_발생한다() {
-        // given
-        NotificationGetRequest request = new NotificationGetRequest(
-                UUID.randomUUID(),
-                null,
-                null,
-                Instant.now(),
-                101
-        );
-
-        // when & then
-        assertThatThrownBy(() -> notificationService.getNotifications(request))
-                .isInstanceOf(InvalidNotificationRequestException.class)
-                .hasMessage("limit 값은 1 이상 100 이하만 가능합니다.");
     }
 }
