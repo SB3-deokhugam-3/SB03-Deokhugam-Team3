@@ -167,8 +167,11 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void softDelete(UUID commentId, UUID userId) {
         Comment comment = commentRepository.findById(commentId)
-            .orElseThrow(() -> new CommentNotFoundException(commentId));
-        log.warn("[comment] 논리 삭제 실패 - 존재하지 않는 댓글: {}", commentId);
+            .orElseThrow(() -> {
+                log.warn("[comment] 논리 삭제 실패 - 존재하지 않는 댓글: {}", commentId);
+                return new CommentNotFoundException(commentId);
+            });
+
 
         validateAuthorizedUser(comment, userId);
         comment.softDelete();
