@@ -29,18 +29,18 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
 
     public List<Review> findAll(ReviewGetRequest params) {
         QReview review = QReview.review;
-        String direction = params.getDirection();
-        String orderBy = params.getOrderBy();
+        String direction = params.direction();
+        String orderBy = params.orderBy();
 
         BooleanBuilder whereCondition = new BooleanBuilder();
         BooleanBuilder cursorCondition = new BooleanBuilder();
 
-        if (params.getUserId() != null || params.getBookId() != null
-            || params.getKeyword() != null) {
+        if (params.userId() != null || params.bookId() != null
+            || params.keyword() != null) {
             whereCondition.and(filterByIdAndKeyword(review, params));
         }
         //Q. after만 오는 경우는 의미없음
-        boolean isCursorExisted = params.getCursor() != null;
+        boolean isCursorExisted = params.cursor() != null;
         if (isCursorExisted) {
             cursorCondition =
                 orderBy.equals(ORDER_BY_CREATED_AT) ? filterByCreatedAt(review, params)
@@ -51,40 +51,29 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
             .selectFrom(review)
             .where(whereCondition, cursorCondition)
             .orderBy(getOrderSpecifiers(review, orderBy, direction))
-            .limit(params.getLimit())
+            .limit(params.limit())
             .fetch();
     }
 
     public Long countAllByFilterCondition(ReviewGetRequest params) {
         QReview review = QReview.review;
-        String orderBy = params.getOrderBy();
+        String orderBy = params.orderBy();
 
         BooleanBuilder whereCondition = new BooleanBuilder();
-        BooleanBuilder cursorCondition = new BooleanBuilder();
-
-        whereCondition.and(filterByIdAndKeyword(review, params));
-
-        //Q. after만 오는 경우는 의미없음
-        boolean isCursorExisted = params.getCursor() != null;
-        if (isCursorExisted) {
-            cursorCondition =
-                orderBy.equals(ORDER_BY_CREATED_AT) ? filterByCreatedAt(review, params)
-                    : filterByRating(review, params);
-        }
 
         return queryFactory
             .select(review.count())
             .from(review)
-            .where(whereCondition, cursorCondition)
+            .where(whereCondition)
             .fetchOne();
 
     }
 
     private BooleanBuilder filterByIdAndKeyword(QReview review, ReviewGetRequest params) {
         BooleanBuilder whereCondition = new BooleanBuilder();
-        String keyword = params.getKeyword();
-        UUID userId = params.getUserId();
-        UUID bookId = params.getBookId();
+        String keyword = params.keyword();
+        UUID userId = params.userId();
+        UUID bookId = params.bookId();
 
         if (userId != null) {
             whereCondition.and(review.user.id.eq(userId));
@@ -108,8 +97,8 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
     private BooleanBuilder filterByCreatedAt(QReview review, ReviewGetRequest params) {
         try {
             BooleanBuilder whereCondition = new BooleanBuilder();
-            String direction = params.getDirection();
-            Instant cursor = Instant.parse(params.getCursor().toString());
+            String direction = params.direction();
+            Instant cursor = Instant.parse(params.cursor().toString());
             if (direction.equals(ORDER_DIRECTION_DESC)) {
                 whereCondition
                     .or(review.createdAt.lt(cursor));
@@ -120,7 +109,7 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
             return whereCondition;
         } catch (DateTimeParseException e) {
             throw new InvalidTypeException("review",
-                Map.of("requestedCursor", params.getCursor().toString()));
+                Map.of("requestedCursor", params.cursor().toString()));
         }
 
     }
@@ -128,9 +117,9 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
     private BooleanBuilder filterByRating(QReview review, ReviewGetRequest params) {
         try {
             BooleanBuilder whereCondition = new BooleanBuilder();
-            String direction = params.getDirection();
-            Integer cursor = Integer.valueOf(params.getCursor().toString());
-            Instant after = params.getAfter();
+            String direction = params.direction();
+            Integer cursor = Integer.valueOf(params.cursor().toString());
+            Instant after = params.after();
 
             if (direction.equals(ORDER_DIRECTION_DESC)) {
                 whereCondition
@@ -144,7 +133,7 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
             return whereCondition;
         } catch (NumberFormatException e) {
             throw new InvalidTypeException("review",
-                Map.of("requestedCursor", params.getCursor().toString()));
+                Map.of("requestedCursor", params.cursor().toString()));
         }
 
     }
