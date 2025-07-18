@@ -13,6 +13,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -41,6 +42,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
         MethodArgumentNotValidException.class,
+        MethodArgumentTypeMismatchException.class,
         IllegalArgumentException.class,
         MissingRequestHeaderException.class,
         MissingServletRequestParameterException.class
@@ -60,6 +62,16 @@ public class GlobalExceptionHandler {
                     details.put(error.getObjectName(), error.getDefaultMessage());
                 }
             });
+            errorCode = ErrorCode.INVALID_INPUT_VALUE;
+
+        } else if (ex instanceof MethodArgumentTypeMismatchException typeMismatchEx) {
+            logMessage = "[TYPE_MISMATCH] 타입 변환 실패: " + typeMismatchEx.getMessage();
+
+            if (debugEnabled) {
+                details.put("parameter", typeMismatchEx.getName());
+                details.put("value", typeMismatchEx.getValue());
+                details.put("requiredType", typeMismatchEx.getRequiredType().getSimpleName());
+            }
             errorCode = ErrorCode.INVALID_INPUT_VALUE;
 
         } else if (ex instanceof MissingRequestHeaderException headerEx) {

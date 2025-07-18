@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.review.entity;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
+import com.sprint.deokhugam.domain.reviewlike.entity.ReviewLike;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
 import jakarta.persistence.CascadeType;
@@ -52,6 +53,9 @@ public class Review extends BaseUpdatableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewLike> reviewLikes = new ArrayList<>();
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();

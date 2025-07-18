@@ -10,14 +10,20 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.entity.QBook;
+import com.sprint.deokhugam.domain.comment.entity.QComment;
+import com.sprint.deokhugam.domain.review.entity.QReview;
+import com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+
 
 @Repository
 @RequiredArgsConstructor
@@ -25,6 +31,8 @@ import org.springframework.util.StringUtils;
 public class BookRepositoryImpl implements BookRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
+
     private static final QBook book = QBook.book;
 
     @Override
@@ -75,6 +83,20 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
             .fetchOne();
 
         return count != null ? count : 0L;
+    }
+
+    @Override
+    public void hardDeleteBook(UUID bookId) {
+        log.info("[BookRepository] 도서 물리 삭제 실행 - bookId: {}", bookId);
+
+        // JPA의 delete 메서드를 사용하면 CASCADE로 자동 삭제
+        Book book = entityManager.find(Book.class, bookId);
+        if (book != null) {
+            entityManager.remove(book);
+            log.info("[BookRepository] 도서 및 관련 데이터 삭제 완료 - bookId: {}", bookId);
+        } else {
+            log.warn("[BookRepository] 삭제할 도서를 찾을 수 없음 - bookId: {}", bookId);
+        }
     }
 
     /**

@@ -33,8 +33,8 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-@WebMvcTest(UserController.class)
 @ActiveProfiles("test")
+@WebMvcTest(UserController.class)
 class UserControllerTest {
 
     @Autowired

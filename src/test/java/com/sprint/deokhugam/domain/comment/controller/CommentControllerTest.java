@@ -40,9 +40,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+@ActiveProfiles("test")
 @WebMvcTest(CommentController.class)
 @DisplayName("CommentController 슬라이스 테스트")
-@ActiveProfiles("test")
 class CommentControllerTest {
 
     @Autowired

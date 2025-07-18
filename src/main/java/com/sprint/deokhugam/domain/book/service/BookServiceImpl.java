@@ -6,6 +6,7 @@ import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
+import com.sprint.deokhugam.domain.book.exception.BookNotSoftDeletedException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
@@ -232,6 +233,50 @@ public class BookServiceImpl implements BookService {
 
         return bookMapper.toDto(updatedBook, s3Storage);
     }
+
+    @Override
+    @Transactional
+    public void delete(UUID bookId) {
+        log.info("[BookService] 도서 논리 삭제 요청 - id: {}", bookId);
+
+        Book book = findBook(bookId);
+
+
+        book.delete();
+        bookRepository.save(book);
+
+        log.info("[BookService] 도서 논리 삭제 완료 - id: {}", bookId);
+    }
+
+    @Override
+    @Transactional
+    public void hardDelete(UUID bookId) {
+        log.info("[BookService] 도서 물리 삭제 요청 - id: {}", bookId);
+
+        // 삭제 여부 확인 및 검증
+        Book book = bookRepository.findByIdIncludingDeleted(bookId)
+            .orElseThrow(() -> new BookNotFoundException(bookId));
+
+        if (!book.isDeleted()) { // 논리 삭제되지 않은 경우
+            log.error("[BookService] 물리 삭제 실패 - 논리 삭제되지 않은 도서입니다. id: {}", bookId);
+            throw new BookNotSoftDeletedException(bookId);
+        }
+
+        // S3에서 썸네일 이미지 삭제
+        if (book.getThumbnailUrl() != null) {
+            try {
+                s3Storage.deleteImage(book.getThumbnailUrl());
+                log.info("[BookService] 썸네일 이미지 삭제 완료 - id: {}", bookId);
+            } catch (Exception e) {
+                log.error("[BookService] 썸네일 이미지 삭제 실패 - id: {}, error: {}", bookId, e.getMessage());
+            }
+        }
+
+        // 데이터베이스에서 물리 삭제 (관련 데이터 모두 삭제)
+        bookRepository.hardDeleteBook(bookId);
+        log.info("[BookService] 도서 물리 삭제 완료 - id: {}", bookId);
+    }
+
 
     private Book findBook(UUID bookId) {
         return bookRepository.findById(bookId)
