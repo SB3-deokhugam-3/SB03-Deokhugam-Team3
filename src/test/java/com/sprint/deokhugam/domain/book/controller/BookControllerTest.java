@@ -7,8 +7,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -23,6 +27,8 @@ import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
+import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
+import com.sprint.deokhugam.domain.book.exception.BookNotSoftDeletedException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookServiceImpl;
@@ -237,7 +243,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 기본 파라미터")
     void 도서_목록을_기본값으로_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -257,7 +262,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 키워드 검색")
     void 도서_목록을_키워드로_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -277,7 +281,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 정렬 조건 설정")
     void 도서_목록을_정렬해서_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -297,7 +300,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 페이지 크기 설정")
     void 도서_목록을_페이지_크기를_정해서_조회한다() throws Exception {
         // given
         given(bookService.getBooks(any(BookSearchRequest.class))).willReturn(mockResponse);
@@ -314,7 +316,6 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("도서 목록 조회 - 빈 결과")
     void 도서_목록_조회시_빈_결과를_반환한다() throws Exception {
         // given
         CursorPageResponse<BookDto> emptyResponse = new CursorPageResponse<>(
@@ -705,5 +706,94 @@ class BookControllerTest {
 
         // then
         result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 존재하는_도서_ID로_삭제_요청하면_204_상태코드를_반환한다() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        doNothing().when(bookService).delete(bookId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}", bookId));
+
+        // then
+        result.andExpect(status().isNoContent());
+        verify(bookService).delete(bookId);
+    }
+
+    @Test
+    void 존재하지_않는_도서_ID로_삭제_요청하면_404_상태코드를_반환한다() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        doThrow(new BookNotFoundException(bookId)).when(bookService).delete(bookId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}", bookId));
+
+        // then
+        result.andExpect(status().isNotFound());
+        verify(bookService).delete(bookId);
+    }
+
+    @Test
+    void 도서_물리_삭제_API_성공() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        doNothing().when(bookService).hardDelete(bookId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}/hard", bookId));
+
+        // then
+        result.andExpect(status().isNoContent());
+        verify(bookService).hardDelete(bookId);
+    }
+
+    @Test
+    void 도서_물리_삭제_API_도서가_존재하지_않는_경우() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        doThrow(new BookNotFoundException(bookId))
+            .when(bookService).hardDelete(bookId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}/hard", bookId));
+
+        // then
+        result.andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("BOOK_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").value("BOOK 찾을 수 없습니다"));
+        verify(bookService).hardDelete(bookId);
+    }
+
+    @Test
+    void 도서_물리_삭제_API_소프트_삭제되지_않은_도서() throws Exception {
+        // given
+        UUID bookId = UUID.randomUUID();
+        doThrow(new BookNotSoftDeletedException(bookId))
+            .when(bookService).hardDelete(bookId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}/hard", bookId));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("BOOK_NOT_SOFT_DELETED_INVALID_INPUT_VALUE"))
+            .andExpect(jsonPath("$.message").value("BOOK_NOT_SOFT_DELETED 잘못된 입력 값입니다."));
+        verify(bookService).hardDelete(bookId);
+    }
+
+    @Test
+    void 도서_물리_삭제_API_잘못된_UUID_형식() throws Exception {
+        // given
+        String invalidBookId = "invalid-uuid-format";
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/books/{bookId}/hard", invalidBookId));
+
+        // then
+        result.andExpect(status().isBadRequest());
+        verify(bookService, never()).hardDelete(any(UUID.class));
     }
 }

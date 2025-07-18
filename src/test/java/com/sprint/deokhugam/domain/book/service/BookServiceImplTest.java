@@ -1,12 +1,16 @@
 package com.sprint.deokhugam.domain.book.service;
 
+import static com.sprint.deokhugam.fixture.BookFixture.createBookDto;
 import static com.sprint.deokhugam.fixture.BookFixture.createBookEntity;
-import static com.sprint.deokhugam.fixture.BookFixture.createTestBooks;
+import static com.sprint.deokhugam.fixture.BookFixture.createRequest;
+import static com.sprint.deokhugam.fixture.BookFixture.createUpdateRequest;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,6 +18,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
@@ -21,6 +26,7 @@ import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
+import com.sprint.deokhugam.domain.book.exception.BookNotSoftDeletedException;
 import com.sprint.deokhugam.domain.book.exception.DuplicateIsbnException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
@@ -48,6 +54,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("BookServiceImpl테스트")
 @ActiveProfiles("test")
 class BookServiceImplTest {
 
@@ -196,7 +203,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("첫 페이지 조회 - 키워드 검색 없이")
     void 키워드_없이_첫_페이지_조회() {
         //given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC",null,null,10);
@@ -221,7 +227,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("첫 페이지 조회 - 키워드 검색 포함")
     void 키워드_포함_첫_페이지_조회() {
         // given
         BookSearchRequest request = BookSearchRequest.of("Hot", "title", "DESC", null, null, 5);
@@ -245,7 +250,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("커서 기반 페이지네이션 - 다음 페이지 존재")
     void 커서_기반_페이지네이션_다음_페이지_존재() {
         // given
         Instant after = Instant.now().minusSeconds(3600);
@@ -271,7 +275,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("다양한 정렬 기준 테스트 - 평점순")
     void 평점순_정렬_테스트() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "rating", "DESC", null, null, 5);
@@ -291,7 +294,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효하지 않은 정렬 기준 - 예외 발생")
     void 유효하지_않은_정렬_기준_예외_발생() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "invalid", "DESC", null, null, 5);
@@ -303,7 +305,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효하지 않은 페이지 크기 - 예외 발생")
     void 유효하지_않은_페이지_크기_예외_발생() {
         // given
         BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", null, null, 101);
@@ -551,7 +552,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 서비스 사용 가능 - ISBN 추출 성공")
     void OCR_서비스_사용_가능_ISBN_추출_성공() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -570,7 +570,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 서비스 사용 불가능 - 예외 발생")
     void OCR_서비스_사용_불가능_예외_발생() {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -589,7 +588,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR에서 null 반환 - 예외 발생")
     void OCR에서_null_반환_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -609,7 +607,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR에서 빈 문자열 반환 - 예외 발생")
     void OCR에서_빈_문자열_반환_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -629,7 +626,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR에서 공백만 있는 문자열 반환 - 예외 발생")
     void OCR에서_공백만_있는_문자열_반환_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -649,7 +645,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 처리 중 예외 발생")
     void OCR_처리_중_예외_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -670,7 +665,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("OCR 처리 중 RuntimeException 발생")
     void OCR_처리_중_RuntimeException_발생() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -691,7 +685,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효한 ISBN-13 추출 성공")
     void 유효한_ISBN13_추출_성공() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -710,7 +703,6 @@ class BookServiceImplTest {
     }
 
     @Test
-    @DisplayName("유효한 ISBN-10 추출 성공")
     void 유효한_ISBN10_추출_성공() throws OcrException {
         // given
         MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
@@ -726,6 +718,114 @@ class BookServiceImplTest {
         assertThat(result).isEqualTo(expectedIsbn);
         assertThat(result).hasSize(10);
         assertThat(result).matches("\\d{10}");
+    }
+
+    @Test
+    void 도서를_논리_삭제하면_isDeleted_필드가_true로_변경된다() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        Book book = createBookEntity(title, author, description, publisher, publishedDate, isbn, null, 0.0, 0L);
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+
+        // when
+        bookService.delete(bookId);
+
+        // then
+        assertTrue(book.isDeleted());
+        verify(bookRepository).findById(bookId);
+        verify(bookRepository, never()).delete(book); // 물리 삭제가 호출되지 않았는지도 검증
+    }
+
+    @Test
+    void 도서_물리_삭제_성공() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        Book book = createBookEntity(
+            title, author, description, publisher, publishedDate, isbn,
+            "https://example.com/thumbnail.jpg", 4.5, 10L
+        );
+        book.delete(); // 소프트 삭제 상태로 설정
+
+        given(bookRepository.findByIdIncludingDeleted(bookId)).willReturn(Optional.of(book));
+
+        // when
+        assertDoesNotThrow(() -> bookService.hardDelete(bookId));
+
+        // then
+        verify(bookRepository).findByIdIncludingDeleted(bookId);
+        verify(bookRepository).hardDeleteBook(bookId);
+    }
+
+    @Test
+    void 도서_물리_삭제_도서가_존재하지_않는_경우() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        given(bookRepository.findByIdIncludingDeleted(bookId)).willReturn(Optional.empty());
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.hardDelete(bookId));
+
+        // then
+        assertThat(thrown).isInstanceOf(BookNotFoundException.class)
+            .hasMessage("BOOK 찾을 수 없습니다");
+        verify(bookRepository).findByIdIncludingDeleted(bookId);
+        verify(bookRepository, never()).hardDeleteBook(any(UUID.class));
+    }
+
+    @Test
+    void 도서_물리_삭제_소프트_삭제되지_않은_도서() {
+        // given
+        UUID bookId = UUID.randomUUID();
+        Book book = createBookEntity(
+            title, author, description, publisher, publishedDate, isbn,
+            "https://example.com/thumbnail.jpg", 4.5, 10L
+        );
+        // isDeleted = false 상태 (소프트 삭제되지 않음)
+
+        given(bookRepository.findByIdIncludingDeleted(bookId)).willReturn(Optional.of(book));
+
+        // when
+        Throwable thrown = catchThrowable(() -> bookService.hardDelete(bookId));
+
+        // then
+        assertThat(thrown).isInstanceOf(BookNotSoftDeletedException.class)
+            .hasMessage("BOOK_NOT_SOFT_DELETED 잘못된 입력 값입니다.");
+        verify(bookRepository).findByIdIncludingDeleted(bookId);
+        verify(bookRepository, never()).hardDeleteBook(any(UUID.class));
+    }
+
+    private List<Book> createTestBooks() {
+        Instant now = Instant.now();
+
+        // 첫 번째 Book 생성 및 createdAt 설정
+        Book book1 = createBookEntity("Super Hot Day", "김현기", "덥다 더워 덥다 더워",
+            "3팀", LocalDate.of(2023, 1, 1), "9788123456789", null,
+            4.5, 100L);
+
+        // ReflectionTestUtils를 사용하여 BaseEntity의 필드 설정
+        ReflectionTestUtils.setField(book1, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(book1, "createdAt", now.minusSeconds(3600));
+        ReflectionTestUtils.setField(book1, "updatedAt", now.minusSeconds(1800));
+
+        // 두 번째 Book 생성 및 createdAt 설정
+        Book book2 = createBookEntity("Spring Boot Guide", "박스프링", "스프링 부트 가이드",
+            "웹출판사", LocalDate.of(2023, 6, 1), "9788987654321", null,
+            4.8, 200L);
+
+        ReflectionTestUtils.setField(book2, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(book2, "createdAt", now.minusSeconds(7200));
+        ReflectionTestUtils.setField(book2, "updatedAt", now.minusSeconds(3600));
+
+        // 세 번째 Book 생성 및 createdAt 설정
+        Book book3 = createBookEntity("Database Desing", "이데이터", "데이터베이스 설계",
+            "DB출판사", LocalDate.of(2023, 3, 1), "9788555666777", null,
+            4.2, 50L);
+
+        ReflectionTestUtils.setField(book3, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(book3, "createdAt", now.minusSeconds(10800));
+        ReflectionTestUtils.setField(book3, "updatedAt", now.minusSeconds(5400));
+
+        return List.of(book1, book2, book3);
     }
 
     private List<BookDto> createTestBookDtos() {
@@ -744,50 +844,5 @@ class BookServiceImplTest {
                 null, 50L, 4.2, now.minusSeconds(10800),
                 now.minusSeconds(5400))
         );
-    }
-
-
-
-    private BookCreateRequest createRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn) {
-        return BookCreateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .build();
-    }
-
-    private BookUpdateRequest createUpdateRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate) {
-
-        return BookUpdateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .build();
-    }
-
-    private BookDto createBookDto(UUID id, String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl, Long reviewCount,
-        Double rating, Instant createdAt, Instant updatedAt) {
-        return BookDto.builder()
-            .id(id)
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .thumbnailUrl(thumbnailUrl)
-            .reviewCount(reviewCount)
-            .rating(rating)
-            .createdAt(createdAt)
-            .updatedAt(updatedAt)
-            .build();
     }
 }

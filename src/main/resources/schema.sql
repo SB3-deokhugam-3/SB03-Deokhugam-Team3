@@ -39,15 +39,15 @@ CREATE TABLE reviews
     id            UUID PRIMARY KEY,
 
     -- Column
-    created_at    TIMESTAMPTZ      NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL,
     updated_at    TIMESTAMPTZ,
-    book_id       UUID             NOT NULL,
-    user_id       UUID             NOT NULL,
-    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    content       TEXT             NOT NULL,
-    like_count    BIGINT           NOT NULL DEFAULT 0,
-    comment_count BIGINT           NOT NULL DEFAULT 0,
-    is_deleted    BOOLEAN          NOT NULL DEFAULT FALSE,
+    book_id       UUID        NOT NULL,
+    user_id       UUID        NOT NULL,
+    rating        INTEGER     NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    content       TEXT        NOT NULL,
+    like_count    BIGINT      NOT NULL DEFAULT 0,
+    comment_count BIGINT      NOT NULL DEFAULT 0,
+    is_deleted    BOOLEAN     NOT NULL DEFAULT FALSE,
 
     CONSTRAINT fk_reviews_book
         FOREIGN KEY (book_id)
@@ -95,7 +95,7 @@ CREATE TABLE notifications
     review_id  UUID        NOT NULL,
     user_id    UUID        NOT NULL,
     content    VARCHAR(255),
-    is_confirmed  BOOLEAN     NOT NULL,
+    confirmed  BOOLEAN     NOT NULL,
 
     CONSTRAINT fk_notifications_user
         FOREIGN KEY (user_id)
@@ -202,7 +202,7 @@ CREATE INDEX idx_popular_book_rankings ON popular_book_rankings (period, created
 CREATE INDEX idx_popular_review_rankings ON popular_review_rankings (period, created_at);
 
 -- notifications index 생성
-CREATE INDEX idx_notifications ON notifications (user_id, is_confirmed, created_at);
+CREATE INDEX idx_notifications ON notifications (user_id, confirmed, created_at);
 
 -- reviews index 생성
 CREATE INDEX idx_reviews_created_at ON reviews (book_id, created_at);
@@ -216,5 +216,5 @@ CREATE INDEX idx_review_likes ON review_likes (user_id);
 
 -- 지워지지 않은 review에 대한 unique index 생성
 CREATE UNIQUE INDEX review_active_unique
-    ON reviews(user_id, book_id)
+    ON reviews (user_id, book_id)
     WHERE is_deleted = false;

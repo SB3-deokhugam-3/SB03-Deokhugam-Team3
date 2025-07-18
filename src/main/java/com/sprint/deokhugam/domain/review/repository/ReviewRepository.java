@@ -15,5 +15,4 @@ public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomRev
 
     @Query(value = "SELECT * FROM reviews WHERE id = :id AND is_deleted = true", nativeQuery = true)
     Optional<Review> findDeletedById(@Param("id") UUID reviewId);
-
 }

@@ -1,10 +1,15 @@
 package com.sprint.deokhugam.domain.book.entity;
 
+import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,6 +56,10 @@ public class Book extends BaseUpdatableEntity  {
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
+
     public void updateTitle(String title) {
         this.title = title;
     }
@@ -85,4 +94,15 @@ public class Book extends BaseUpdatableEntity  {
         }
     }
 
+    public void delete() {
+        this.isDeleted = true;
+    }
+
+    public boolean isDeleted() {
+        return this.isDeleted;
+    }
+
+    public String getThumbnailUrl() {
+        return this.thumbnailUrl;
+    }
 }
