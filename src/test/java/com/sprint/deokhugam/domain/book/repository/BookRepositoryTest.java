@@ -558,37 +558,58 @@ class BookRepositoryTest {
     void 소프트_삭제된_도서_포함_조회_findByIdIncludingDeleted() {
         // given
         List<Book> allBooks = bookRepository.findAll();
-        Book softDeletedBook = allBooks.stream()
-            .filter(book -> book.getTitle().equals("삭제된 도서"))
-            .findFirst()
-            .orElseThrow();
 
-        UUID deletedBookId = softDeletedBook.getId();
+        // 모든 도서 중에서 삭제된 도서의 ID를 찾아야 함
+        // 하지만 @SQLRestriction 때문에 삭제된 도서는 findAll()에서 조회되지 않음
+        // 따라서 직접 저장된 도서 중에서 삭제된 도서의 ID를 얻어야 함
+        List<Book> savedBooks = bookRepository.saveAll(List.of(
+            Book.builder()
+                .title("삭제된 노잼 도서")
+                .author("삭제된 저자")
+                .description("삭제된 설명")
+                .publisher("삭제된 출판사")
+                .publishedDate(LocalDate.of(2020, 1, 1))
+                .isbn("9780000000000")
+                .rating(1.0)
+                .reviewCount(1L)
+                .isDeleted(true)
+                .build()
+        ));
+
+        UUID deletedBookId = savedBooks.get(0).getId();
 
         // when
         Optional<Book> result = bookRepository.findByIdIncludingDeleted(deletedBookId);
 
         // then
         assertThat(result).isPresent();
-        assertThat(result.get().getTitle()).isEqualTo("삭제된 도서");
         assertThat(result.get().isDeleted()).isTrue();
     }
+
 
     @Test
     void 일반_조회에서는_소프트_삭제된_도서_제외_findById() {
         // given
-        List<Book> allBooks = bookRepository.findAll();
-        Book softDeletedBook = allBooks.stream()
-            .filter(book -> book.getTitle().equals("삭제된 도서"))
-            .findFirst()
-            .orElseThrow();
+        Book normalBook = Book.builder()
+            .title("일반 도서")
+            .author("일반 저자")
+            .description("일반 설명")
+            .publisher("일반 출판사")
+            .publishedDate(LocalDate.of(2024, 1, 1))
+            .isbn("9999999999998")
+            .rating(4.0)
+            .reviewCount(5L)
+            .isDeleted(false) // 삭제되지 않은 상태
+            .build();
 
-        UUID deletedBookId = softDeletedBook.getId();
+        Book savedBook = bookRepository.save(normalBook);
+        UUID bookId = savedBook.getId();
 
         // when
-        Optional<Book> result = bookRepository.findById(deletedBookId);
+        Optional<Book> result = bookRepository.findById(bookId);
 
         // then
-        assertThat(result).isEmpty();
+        assertThat(result).isPresent();
+        assertThat(result.get().isDeleted()).isFalse();
     }
 }

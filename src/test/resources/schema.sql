@@ -217,5 +217,4 @@ CREATE INDEX idx_review_likes ON review_likes (user_id);
 
 -- 지워지지 않은 review에 대한 unique index 생성
 CREATE UNIQUE INDEX review_active_unique
-    ON reviews (user_id, book_id)
-    WHERE is_deleted = false;
+    ON reviews (user_id, book_id);

@@ -1,7 +1,6 @@
 package com.sprint.deokhugam.domain.book.service;
 
 import static com.sprint.deokhugam.fixture.BookFixture.createBookEntity;
-import static com.sprint.deokhugam.fixture.BookFixture.createTestBooks;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;

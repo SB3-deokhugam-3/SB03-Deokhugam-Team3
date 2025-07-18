@@ -1,8 +1,5 @@
 package com.sprint.deokhugam.domain.book.controller;
 
-import static com.sprint.deokhugam.fixture.BookFixture.createBookDto;
-import static com.sprint.deokhugam.fixture.BookFixture.createRequest;
-import static com.sprint.deokhugam.fixture.BookFixture.createUpdateRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
@@ -814,7 +811,8 @@ class BookControllerTest {
     private BookDto createBookDto(UUID id, String title, String author, String description,
         String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl,
         Long reviewCount,
-        Double rating) {
+        Double rating,
+        Instant createdAt, Instant updatedAt) {
         return BookDto.builder()
             .id(id)
             .title(title)
