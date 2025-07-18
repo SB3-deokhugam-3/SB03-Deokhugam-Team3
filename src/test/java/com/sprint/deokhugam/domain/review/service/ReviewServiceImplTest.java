@@ -13,6 +13,7 @@ import static org.mockito.Mockito.never;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
+import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
@@ -60,10 +61,13 @@ public class ReviewServiceImplTest {
     private BookRepository bookRepository;
 
     @Mock
+    private ReviewLikeRepository reviewLikeRepository;
+
+    @Mock
     private ReviewMapper reviewMapper;
 
     @Mock
-    private ReviewLikeRepository reviewLikeRepository;
+    private S3Storage s3Storage;
 
     @InjectMocks
     private ReviewServiceImpl reviewService;
@@ -283,7 +287,7 @@ public class ReviewServiceImplTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(reviewRepository.existsByBookIdAndUserId(bookId, userId)).willReturn(false);
         given(reviewRepository.save(any())).willReturn(savedReview);
-        given(reviewMapper.toDto(savedReview)).willReturn(expectedDto);
+        given(reviewMapper.toDto(savedReview, s3Storage)).willReturn(expectedDto);
 
         // when
         ReviewDto result = reviewService.create(createRequest());
@@ -293,7 +297,7 @@ public class ReviewServiceImplTest {
         then(bookRepository).should().findById(bookId);
         then(userRepository).should().findById(userId);
         then(reviewRepository).should().save(any());
-        then(reviewMapper).should().toDto(savedReview);
+        then(reviewMapper).should().toDto(savedReview, s3Storage);
     }
 
     @Test
@@ -338,21 +342,23 @@ public class ReviewServiceImplTest {
     void 존재하는_리뷰id로_리뷰를_조회할_수_있다() {
         // given
         UUID reviewId = UUID.randomUUID();
+        UUID requestUserId = UUID.randomUUID();
         Book book = mock(Book.class);
         User user = mock(User.class);
         Review savedReview = createReview(book, user);
         ReviewDto expectedDto = createDto(reviewId);
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(savedReview));
-        given(reviewMapper.toDto(savedReview)).willReturn(expectedDto);
+        given(reviewMapper.toDto(savedReview, s3Storage)).willReturn(expectedDto);
+        given(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, requestUserId)).willReturn(false);
 
         // when
-        ReviewDto result = reviewService.findById(reviewId, user.getId());
+        ReviewDto result = reviewService.findById(reviewId, requestUserId);
 
         // then
         assertThat(result).isEqualTo(expectedDto.toBuilder().likedByMe(false).build());
         then(reviewRepository).should().findById(reviewId);
-        then(reviewMapper).should().toDto(savedReview);
-
+        then(reviewMapper).should().toDto(savedReview, s3Storage);
+        then(reviewLikeRepository).should().existsByReviewIdAndUserId(reviewId, requestUserId);
     }
 
     @Test
@@ -376,16 +382,18 @@ public class ReviewServiceImplTest {
         //given
         ReviewGetRequest request = new ReviewGetRequest(null, null, null, null, null, 2,
             "createdAt", "ASC");
+        UUID requestUserId = UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b");
         given(reviewRepository.findAll(any(ReviewGetRequest.class)))
             .willReturn(mockReviews.subList(0, 3));
-        given(reviewRepository.countAllByFilterCondition(any()))
+        given(reviewRepository.countAllByFilterCondition(any(ReviewGetRequest.class)))
             .willReturn(100L);
-        given(reviewMapper.toDto(any(Review.class)))
+        given(reviewMapper.toDto(any(Review.class), any(S3Storage.class)))
             .willReturn(mockReviewDtos.get(0), mockReviewDtos.get(1));
+        given(reviewLikeRepository.existsByReviewIdAndUserId(any(UUID.class), any(UUID.class)))
+            .willReturn(false);
 
         //when
-        CursorPageResponse<ReviewDto> result = reviewService.findAll(request,
-            UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
+        CursorPageResponse<ReviewDto> result = reviewService.findAll(request, requestUserId);
 
         //then
         assertThat(result.content()).hasSize(2);
@@ -393,8 +401,8 @@ public class ReviewServiceImplTest {
         assertThat(result.hasNext()).isTrue();
         assertThat(result.nextCursor()).isNotNull();
         assertThat(result.nextAfter()).isNotNull();
-        then(reviewMapper).should(atLeastOnce()).toDto(any(Review.class));
-        then(reviewRepository).should().countAllByFilterCondition(any());
+        then(reviewMapper).should(atLeastOnce()).toDto(any(Review.class), any(S3Storage.class));
+        then(reviewRepository).should().countAllByFilterCondition(any(ReviewGetRequest.class));
     }
 
     @Test
@@ -548,7 +556,7 @@ public class ReviewServiceImplTest {
         ReviewDto updatedDto = updateDto(reviewId);
         given(mockUser.getId()).willReturn(userId);
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(basedReview));
-        given(reviewMapper.toDto(basedReview)).willReturn(updatedDto);
+        given(reviewMapper.toDto(basedReview, s3Storage)).willReturn(updatedDto);
 
         // when
         ReviewDto result = reviewService.update(reviewId, userId, updateRequest);
@@ -557,7 +565,7 @@ public class ReviewServiceImplTest {
         assertThat(result.content()).isEqualTo(newContent);
         assertThat(result.rating()).isEqualTo(newRating);
         then(reviewRepository).should().findById(reviewId);
-        then(reviewMapper).should().toDto(basedReview);
+        then(reviewMapper).should().toDto(basedReview, s3Storage);
         assertThat(basedReview.getContent()).isEqualTo(newContent);
         assertThat(basedReview.getRating()).isEqualTo(newRating);
     }

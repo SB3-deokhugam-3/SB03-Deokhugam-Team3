@@ -57,9 +57,12 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
 
     public Long countAllByFilterCondition(ReviewGetRequest params) {
         QReview review = QReview.review;
-        String orderBy = params.orderBy();
 
         BooleanBuilder whereCondition = new BooleanBuilder();
+
+        if (params.userId() != null || params.bookId() != null || params.keyword() != null) {
+            whereCondition.and(filterByIdAndKeyword(review, params));
+        }
 
         return queryFactory
             .select(review.count())
