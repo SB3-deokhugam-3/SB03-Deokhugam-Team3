@@ -94,7 +94,7 @@ public class BookFixture {
         ReflectionTestUtils.setField(book2, "updatedAt", now.minusSeconds(3600));
 
         // 세 번째 Book 생성 및 createdAt 설정
-        Book book3 = createBookEntity("Database Desing", "이데이터", "데이터베이스 설계",
+        Book book3 = createBookEntity("Database Design", "이데이터", "데이터베이스 설계",
             "DB출판사", LocalDate.of(2023, 3, 1), "9788555666777", null,
             4.2, 50L);
 
