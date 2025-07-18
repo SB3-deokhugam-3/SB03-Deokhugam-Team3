@@ -47,9 +47,7 @@ public class Comment extends BaseUpdatableEntity {
     }
 
     public void update(String newContent) {
-        if (newContent != null && !newContent.equals(this.content)) {
-            this.content = newContent;
-        }
+        this.content = newContent;
     }
 
     public void softDelete() {

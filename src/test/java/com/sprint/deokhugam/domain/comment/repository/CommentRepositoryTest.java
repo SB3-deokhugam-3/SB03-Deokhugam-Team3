@@ -11,6 +11,7 @@ import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,11 +25,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
-@ActiveProfiles("test")
+@ActiveProfiles("dev")
+@TestPropertySource(properties = "spring.sql.init.mode=never")
 @DisplayName("CommentRepository 단위 테스트")
 class CommentRepositoryTest {
 
@@ -170,11 +173,34 @@ class CommentRepositoryTest {
         assertThat(result.hasNext()).isFalse();
     }
 
+    @Test
+    @DisplayName("findByIdIncludingDeleted - 삭제 여부 상관없이 댓글을 조회할 수 있다")
+    void findByIdIncludingDeleted_논리삭제된_댓글_조회() {
+        // Given
+        Comment comment = create("삭제된 댓글");
+        comment.softDelete(); // 논리삭제
+        em.persist(comment);
+        em.flush();
+        em.clear();
+
+        // When
+        Optional<Comment> result = commentRepository.findByIdIncludingDeleted(comment.getId());
+
+        // Then
+        assertThat(result).isPresent();
+        assertThat(result.get().getIsDeleted()).isTrue();
+    }
+
     private Comment createComment(String content, Instant createdAt) {
         Comment comment = new Comment(review1, user1, content);
         ReflectionTestUtils.setField(comment, "createdAt", createdAt);
         ReflectionTestUtils.setField(comment, "updatedAt", createdAt);
         ReflectionTestUtils.setField(comment, "isDeleted", false);
+        return comment;
+    }
+
+    private Comment create(String content) {
+        Comment comment = new Comment(review1, user1, content);
         return comment;
     }
 }

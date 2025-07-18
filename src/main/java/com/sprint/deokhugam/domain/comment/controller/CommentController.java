@@ -6,11 +6,14 @@ import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
 import com.sprint.deokhugam.domain.comment.service.CommentService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Validated
 @RequestMapping("/api/comments")
 public class CommentController {
 
@@ -78,5 +82,29 @@ public class CommentController {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(response);
+    }
+
+    @DeleteMapping("/{commentId}")
+    ResponseEntity<Void> softDeleteComment(
+        @PathVariable @NotNull UUID commentId,
+        @RequestHeader("Deokhugam-Request-User-ID") @NotNull UUID requestUserId
+    ) {
+        commentService.softDelete(commentId, requestUserId);
+
+        return ResponseEntity
+            .noContent()
+            .build();
+    }
+
+    @DeleteMapping("/{commentId}/hard")
+    ResponseEntity<Void> hardDeleteComment(
+        @PathVariable @NotNull UUID commentId,
+        @RequestHeader("Deokhugam-Request-User-ID") @NotNull UUID requestUserId
+    ) {
+        commentService.hardDelete(commentId, requestUserId);
+
+        return ResponseEntity
+            .noContent()
+            .build();
     }
 }
