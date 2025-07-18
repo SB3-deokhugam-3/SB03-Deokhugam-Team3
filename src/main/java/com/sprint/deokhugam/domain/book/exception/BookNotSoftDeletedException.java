@@ -1,15 +1,14 @@
 package com.sprint.deokhugam.domain.book.exception;
 
+import com.sprint.deokhugam.global.exception.BadRequestException;
+import java.util.Map;
 import java.util.UUID;
-import lombok.Getter;
 
-@Getter
-public class BookNotSoftDeletedException extends RuntimeException {
-    private final UUID bookId;
+public class BookNotSoftDeletedException extends BadRequestException {
 
     public BookNotSoftDeletedException(UUID bookId) {
-        super("논리 삭제된 도서만 물리 삭제할 수 있습니다. bookId: " + bookId);
-        this.bookId = bookId;
+        super("BOOK_NOT_SOFT_DELETED", Map.of("bookId", bookId));
     }
 }
+
 

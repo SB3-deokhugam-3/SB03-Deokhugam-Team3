@@ -23,9 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
+@TestPropertySource(properties =  "spring.sql.init.mode=never")
 @ActiveProfiles("test")
 class BookRepositoryTest {
 
@@ -589,5 +591,4 @@ class BookRepositoryTest {
         // then
         assertThat(result).isEmpty();
     }
-
 }

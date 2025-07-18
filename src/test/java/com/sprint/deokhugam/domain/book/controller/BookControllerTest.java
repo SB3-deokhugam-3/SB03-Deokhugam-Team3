@@ -773,8 +773,8 @@ class BookControllerTest {
 
         // then
         result.andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value("BOOK_NOT_SOFT_DELETED"))
-            .andExpect(jsonPath("$.message").value("소프트 삭제되지 않은 도서입니다"));
+            .andExpect(jsonPath("$.code").value("BOOK_NOT_SOFT_DELETED_INVALID_INPUT_VALUE"))
+            .andExpect(jsonPath("$.message").value("BOOK_NOT_SOFT_DELETED 잘못된 입력 값입니다."));
         verify(bookService).hardDelete(bookId);
     }
 

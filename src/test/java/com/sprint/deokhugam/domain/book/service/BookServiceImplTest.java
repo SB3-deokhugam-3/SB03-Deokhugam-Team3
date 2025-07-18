@@ -783,7 +783,7 @@ class BookServiceImplTest {
 
         // then
         assertThat(thrown).isInstanceOf(BookNotSoftDeletedException.class)
-            .hasMessage("소프트 삭제되지 않은 도서입니다");
+            .hasMessage("BOOK_NOT_SOFT_DELETED 잘못된 입력 값입니다.");
         verify(bookRepository).findByIdIncludingDeleted(bookId);
         verify(bookRepository, never()).hardDeleteBook(any(UUID.class));
     }
