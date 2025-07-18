@@ -11,6 +11,6 @@ public interface NotificationMapper {
     // entity -> dto 매핑
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "review.id", target = "reviewId")
-    @Mapping(source = "confirmed", target = "isConfirmed")
+    @Mapping(source = "confirmed", target = "confirmed")
     NotificationDto toDto(Notification notification);
 }

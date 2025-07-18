@@ -10,7 +10,7 @@ public record NotificationDto(
         UUID userId,
         UUID reviewId,
         String content,
-        boolean isConfirmed,
+        boolean confirmed,
         Instant createdAt,
         Instant updatedAt
 ) {
