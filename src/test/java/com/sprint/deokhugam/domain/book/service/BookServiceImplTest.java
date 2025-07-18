@@ -1,5 +1,7 @@
 package com.sprint.deokhugam.domain.book.service;
 
+import static com.sprint.deokhugam.fixture.BookFixture.createBookEntity;
+import static com.sprint.deokhugam.fixture.BookFixture.createTestBooks;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
@@ -41,10 +43,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 class BookServiceImplTest {
 
     @InjectMocks
@@ -724,41 +728,6 @@ class BookServiceImplTest {
         assertThat(result).matches("\\d{10}");
     }
 
-
-    private List<Book> createTestBooks() {
-        Instant now = Instant.now();
-
-        // 첫 번째 Book 생성 및 createdAt 설정
-        Book book1 = createBookEntity("Super Hot Day", "김현기", "덥다 더워 덥다 더워",
-            "3팀", LocalDate.of(2023, 1, 1), "9788123456789", null,
-            4.5, 100L);
-
-        // ReflectionTestUtils를 사용하여 BaseEntity의 필드 설정
-        ReflectionTestUtils.setField(book1, "id", UUID.randomUUID());
-        ReflectionTestUtils.setField(book1, "createdAt", now.minusSeconds(3600));
-        ReflectionTestUtils.setField(book1, "updatedAt", now.minusSeconds(1800));
-
-        // 두 번째 Book 생성 및 createdAt 설정
-        Book book2 = createBookEntity("Spring Boot Guide", "박스프링", "스프링 부트 가이드",
-            "웹출판사", LocalDate.of(2023, 6, 1), "9788987654321", null,
-            4.8, 200L);
-
-        ReflectionTestUtils.setField(book2, "id", UUID.randomUUID());
-        ReflectionTestUtils.setField(book2, "createdAt", now.minusSeconds(7200));
-        ReflectionTestUtils.setField(book2, "updatedAt", now.minusSeconds(3600));
-
-        // 세 번째 Book 생성 및 createdAt 설정
-        Book book3 = createBookEntity("Database Desing", "이데이터", "데이터베이스 설계",
-            "DB출판사", LocalDate.of(2023, 3, 1), "9788555666777", null,
-            4.2, 50L);
-
-        ReflectionTestUtils.setField(book3, "id", UUID.randomUUID());
-        ReflectionTestUtils.setField(book3, "createdAt", now.minusSeconds(10800));
-        ReflectionTestUtils.setField(book3, "updatedAt", now.minusSeconds(5400));
-
-        return List.of(book1, book2, book3);
-    }
-
     private List<BookDto> createTestBookDtos() {
         Instant now = Instant.now();
         return List.of(
@@ -777,21 +746,7 @@ class BookServiceImplTest {
         );
     }
 
-    private Book createBookEntity(String title, String author, String description, String publisher,
-        LocalDate publishedDate, String isbn, String thumbnailUrl, Double rating, Long reviewCount) {
-        return Book.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .thumbnailUrl(thumbnailUrl)
-            .rating(rating)
-            .reviewCount(reviewCount)
-            .isDeleted(false)
-            .build();
-    }
+
 
     private BookCreateRequest createRequest(String title, String author, String description,
         String publisher, LocalDate publishedDate, String isbn) {
