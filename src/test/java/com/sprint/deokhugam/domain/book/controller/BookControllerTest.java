@@ -1,5 +1,8 @@
 package com.sprint.deokhugam.domain.book.controller;
 
+import static com.sprint.deokhugam.fixture.BookFixture.createBookDto;
+import static com.sprint.deokhugam.fixture.BookFixture.createRequest;
+import static com.sprint.deokhugam.fixture.BookFixture.createUpdateRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
@@ -792,52 +795,5 @@ class BookControllerTest {
         // then
         result.andExpect(status().isBadRequest());
         verify(bookService, never()).hardDelete(any(UUID.class));
-    }
-
-
-
-    private BookCreateRequest createRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn) {
-        return BookCreateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .build();
-    }
-
-    private BookDto createBookDto(UUID id, String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl,
-        Long reviewCount,
-        Double rating,
-        Instant createdAt, Instant updatedAt) {
-        return BookDto.builder()
-            .id(id)
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .thumbnailUrl(thumbnailUrl)
-            .reviewCount(reviewCount)
-            .rating(rating)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
-            .build();
-    }
-
-    private BookUpdateRequest createUpdateRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate) {
-
-        return BookUpdateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .build();
     }
 }

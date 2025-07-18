@@ -1,6 +1,9 @@
 package com.sprint.deokhugam.domain.book.service;
 
+import static com.sprint.deokhugam.fixture.BookFixture.createBookDto;
 import static com.sprint.deokhugam.fixture.BookFixture.createBookEntity;
+import static com.sprint.deokhugam.fixture.BookFixture.createRequest;
+import static com.sprint.deokhugam.fixture.BookFixture.createUpdateRequest;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
@@ -841,50 +844,5 @@ class BookServiceImplTest {
                 null, 50L, 4.2, now.minusSeconds(10800),
                 now.minusSeconds(5400))
         );
-    }
-
-
-
-    private BookCreateRequest createRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn) {
-        return BookCreateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .build();
-    }
-
-    private BookUpdateRequest createUpdateRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate) {
-
-        return BookUpdateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .build();
-    }
-
-    private BookDto createBookDto(UUID id, String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl, Long reviewCount,
-        Double rating, Instant createdAt, Instant updatedAt) {
-        return BookDto.builder()
-            .id(id)
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .thumbnailUrl(thumbnailUrl)
-            .reviewCount(reviewCount)
-            .rating(rating)
-            .createdAt(createdAt)
-            .updatedAt(updatedAt)
-            .build();
     }
 }

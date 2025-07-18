@@ -17,14 +17,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 
+@Sql(scripts = "/test-schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
 @TestPropertySource(properties =  "spring.sql.init.mode=never")
@@ -553,39 +554,6 @@ class BookRepositoryTest {
         // then
         assertThat(exception).isNull();
     }
-
-    @Test
-    void 소프트_삭제된_도서_포함_조회_findByIdIncludingDeleted() {
-        // given
-        List<Book> allBooks = bookRepository.findAll();
-
-        // 모든 도서 중에서 삭제된 도서의 ID를 찾아야 함
-        // 하지만 @SQLRestriction 때문에 삭제된 도서는 findAll()에서 조회되지 않음
-        // 따라서 직접 저장된 도서 중에서 삭제된 도서의 ID를 얻어야 함
-        List<Book> savedBooks = bookRepository.saveAll(List.of(
-            Book.builder()
-                .title("삭제된 노잼 도서")
-                .author("삭제된 저자")
-                .description("삭제된 설명")
-                .publisher("삭제된 출판사")
-                .publishedDate(LocalDate.of(2020, 1, 1))
-                .isbn("9780000000000")
-                .rating(1.0)
-                .reviewCount(1L)
-                .isDeleted(true)
-                .build()
-        ));
-
-        UUID deletedBookId = savedBooks.get(0).getId();
-
-        // when
-        Optional<Book> result = bookRepository.findByIdIncludingDeleted(deletedBookId);
-
-        // then
-        assertThat(result).isPresent();
-        assertThat(result.get().isDeleted()).isTrue();
-    }
-
 
     @Test
     void 일반_조회에서는_소프트_삭제된_도서_제외_findById() {

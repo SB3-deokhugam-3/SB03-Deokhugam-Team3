@@ -34,10 +34,6 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
     private final EntityManager entityManager;
 
     private static final QBook book = QBook.book;
-    private static final QReview review = QReview.review;
-    private static final QComment comment = QComment.comment;
-    private static final QReviewLike reviewLike = QReviewLike.reviewLike;
-
 
     @Override
     public List<Book> findBooksWithKeyword(BookSearchRequest request) {
@@ -93,33 +89,14 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
     public void hardDeleteBook(UUID bookId) {
         log.info("[BookRepository] 도서 물리 삭제 실행 - bookId: {}", bookId);
 
-        // 1. 리뷰 좋아요 삭제
-        long deletedReviewLikes = queryFactory
-            .delete(reviewLike)
-            .where(reviewLike.review.book.id.eq(bookId))
-            .execute();
-        log.info("[BookRepository] 리뷰 좋아요 삭제 완료 - count: {}", deletedReviewLikes);
-
-        // 2. 댓글 삭제
-        long deletedComments = queryFactory
-            .delete(comment)
-            .where(comment.review.book.id.eq(bookId))
-            .execute();
-        log.info("[BookRepository] 댓글 삭제 완료 - count: {}", deletedComments);
-
-        // 3. 리뷰 삭제
-        long deletedReviews = queryFactory
-            .delete(review)
-            .where(review.book.id.eq(bookId))
-            .execute();
-        log.info("[BookRepository] 리뷰 삭제 완료 - count: {}", deletedReviews);
-
-        // 4. 도서 삭제 (네이티브 쿼리 사용)
-        int deletedBooks = entityManager
-            .createNativeQuery("DELETE FROM books WHERE id = :bookId")
-            .setParameter("bookId", bookId)
-            .executeUpdate();
-        log.info("[BookRepository] 도서 삭제 완료 - count: {}", deletedBooks);
+        // JPA의 delete 메서드를 사용하면 CASCADE로 자동 삭제
+        Book book = entityManager.find(Book.class, bookId);
+        if (book != null) {
+            entityManager.remove(book);
+            log.info("[BookRepository] 도서 및 관련 데이터 삭제 완료 - bookId: {}", bookId);
+        } else {
+            log.warn("[BookRepository] 삭제할 도서를 찾을 수 없음 - bookId: {}", bookId);
+        }
     }
 
     /**

@@ -15,9 +15,6 @@ import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
-import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
-import com.sprint.deokhugam.domain.review.entity.Review;
-import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.io.IOException;
 import java.util.List;
@@ -242,11 +239,10 @@ public class BookServiceImpl implements BookService {
     public void delete(UUID bookId) {
         log.info("[BookService] 도서 논리 삭제 요청 - id: {}", bookId);
 
-        Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new BookNotFoundException(bookId));
+        Book book = findBook(bookId);
+
 
         book.delete();
-
         bookRepository.save(book);
 
         log.info("[BookService] 도서 논리 삭제 완료 - id: {}", bookId);
