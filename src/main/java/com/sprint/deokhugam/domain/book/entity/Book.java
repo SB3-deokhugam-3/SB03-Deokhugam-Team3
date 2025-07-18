@@ -42,7 +42,7 @@ public class Book extends BaseUpdatableEntity  {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
-    @Column(nullable = false)
+    @Column(name = "review_count", nullable = false)
     private Long reviewCount = 0L;
 
     @Column(nullable = false)
