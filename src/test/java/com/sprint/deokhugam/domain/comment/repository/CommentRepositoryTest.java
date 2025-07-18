@@ -84,15 +84,12 @@ class CommentRepositoryTest {
     @Test
     void findByReviewId_정상_조회() {
         // given
-        Comment comment1 = createComment("댓1");
-        Comment comment2 = createComment("댓2");
-        Comment comment3 = createComment("댓3");
-        
-        // 시간 차를 두고 저장해서 순서를 보장
+        Instant baseTime = Instant.now();
+        Comment comment1 = createComment("댓1", baseTime.minusSeconds(20));
+        Comment comment2 = createComment("댓2", baseTime.minusSeconds(10));
+        Comment comment3 = createComment("댓3", baseTime);
         em.persistAndFlush(comment1);
-        try { Thread.sleep(10); } catch (InterruptedException e) {}
         em.persistAndFlush(comment2);
-        try { Thread.sleep(10); } catch (InterruptedException e) {}
         em.persistAndFlush(comment3);
         
         em.clear();
