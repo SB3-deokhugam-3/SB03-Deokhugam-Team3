@@ -12,4 +12,6 @@ public interface NotificationRepositoryCustom {
             UUID cursor,
             int limit
     );
+
+    void markAllAsReadByUserId(UUID userId);
 }

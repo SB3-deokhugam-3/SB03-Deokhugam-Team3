@@ -7,6 +7,7 @@ import com.sprint.deokhugam.domain.notification.mapper.NotificationMapper;
 import com.sprint.deokhugam.domain.notification.repository.NotificationRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,6 @@ public class NotificationServiceImpl implements NotificationService {
         List<NotificationDto> content = notifications.content().stream()
                 .map(notificationMapper::toDto)
                 .toList();
-
         return new CursorPageResponse<>(
                 content,
                 notifications.nextCursor(),
@@ -40,5 +40,11 @@ public class NotificationServiceImpl implements NotificationService {
                 null,
                 notifications.hasNext()
         );
+    }
+
+    @Transactional
+    @Override
+    public void markAllAsRead(UUID userId) {
+        notificationRepository.markAllAsReadByUserId(userId);
     }
 }

@@ -1,6 +1,8 @@
 package com.sprint.deokhugam.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.notification.dto.data.NotificationDto;
@@ -48,7 +50,7 @@ class NotificationServiceImplTest {
                 .userId(userId)
                 .reviewId(reviewId)
                 .content("테스트 알림")
-                .isConfirmed(false)
+                .confirmed(false)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -83,5 +85,17 @@ class NotificationServiceImplTest {
         assertThat(response.content().get(0).content()).isEqualTo("테스트 알림");
         assertThat(response.nextCursor()).isEqualTo("nextCursor");
         assertThat(response.hasNext()).isTrue();
+    }
+
+    @Test
+    void markAllAsRead_호출되면_Repository메서드가_정확히_실행된다() {
+        // given
+        UUID userId = UUID.randomUUID();
+
+        // when
+        notificationService.markAllAsRead(userId);
+
+        // then
+        verify(notificationRepository, times(1)).markAllAsReadByUserId(userId);
     }
 }

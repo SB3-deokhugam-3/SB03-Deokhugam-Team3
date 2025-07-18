@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS notifications
     review_id    VARCHAR(36) NOT NULL,
     user_id      VARCHAR(36) NOT NULL,
     content      VARCHAR(255),
-    is_confirmed BOOLEAN     NOT NULL,
+    confirmed BOOLEAN     NOT NULL,
 
     CONSTRAINT fk_notifications_user
         FOREIGN KEY (user_id)
@@ -203,7 +203,7 @@ CREATE INDEX IF NOT EXISTS idx_popular_book_rankings ON popular_book_rankings (p
 CREATE INDEX IF NOT EXISTS idx_popular_review_rankings ON popular_review_rankings (period, created_at);
 
 -- notifications index 생성
-CREATE INDEX IF NOT EXISTS idx_notifications ON notifications (user_id, is_confirmed, created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications ON notifications (user_id, confirmed, created_at);
 
 -- reviews index 생성
 CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews (book_id, created_at);

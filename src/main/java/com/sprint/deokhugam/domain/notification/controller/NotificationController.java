@@ -6,11 +6,14 @@ import com.sprint.deokhugam.domain.notification.service.NotificationService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,5 +42,13 @@ public class NotificationController {
 
         CursorPageResponse<NotificationDto> response = notificationService.getNotifications(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/read-all")
+    public ResponseEntity<?> readAllNotifications(
+            @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
+
+        notificationService.markAllAsRead(userId);
+        return ResponseEntity.noContent().build();
     }
 }
