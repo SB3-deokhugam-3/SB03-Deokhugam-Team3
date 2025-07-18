@@ -91,22 +91,16 @@ class NotificationRepositoryImplTest {
         // when
         notificationRepository.markAllAsReadByUserId(userId);
 
-// ⚠️ 꼭 지켜야 함: 영속성 컨텍스트 초기화
         em.flush();
         em.clear(); // ← 이걸로 1차 캐시 싹 밀어줘야 DB에서 최신 데이터 다시 조회됨
 
-// then
+        // then
         List<Notification> all = em.createQuery("""
                         select n from Notification n
                         where n.user.id = :userId
                         """, Notification.class)
                 .setParameter("userId", userId)
                 .getResultList();
-
-// 확인용
-        for (Notification n : all) {
-            System.out.println("ID: " + n.getId() + ", isConfirmed: " + n.isConfirmed());
-        }
 
         assertThat(all).hasSize(2);
         assertThat(all).allSatisfy(n -> assertThat(n.isConfirmed()).isTrue());
