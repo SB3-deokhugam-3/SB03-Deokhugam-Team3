@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.review.service;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
+import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewFeature;
@@ -42,6 +43,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final BookRepository bookRepository;
     private final ReviewLikeRepository reviewLikeRepository;
     private final ReviewMapper reviewMapper;
+    private final S3Storage s3Storage;
 
     private static final String ORDER_BY_CREATED_AT = "createdAt";
     private static final String ORDER_BY_RATING = "rating";
@@ -95,7 +97,7 @@ public class ReviewServiceImpl implements ReviewService {
         // TODO : likedByMe는 나중에 mapper 에서 처리하는게 좋을듯 -> 서비스 관련 로직이라 서비스에 냅둘것
 
         return reviews.stream().map((review -> {
-            ReviewDto reviewDto = reviewMapper.toDto(review);
+            ReviewDto reviewDto = reviewMapper.toDto(review, s3Storage);
             boolean likedByMe = reviewLikeRepository.existsByReviewIdAndUserId(review.getId(),
                 requestUserId);
             return reviewDto.toBuilder().likedByMe(likedByMe).build();
@@ -123,14 +125,14 @@ public class ReviewServiceImpl implements ReviewService {
         log.info("[review] 생성 완료 - reviewId: {}, bookId: {}, userId: {}, rating: {}, content: {}",
             savedReview.getId(), bookId, userId, rating, content);
 
-        return reviewMapper.toDto(savedReview);
+        return reviewMapper.toDto(savedReview, s3Storage);
     }
 
     @Override
     public ReviewDto findById(UUID reviewId, UUID requestUserId) {
         log.info("[review] 조회 요청: id={}", reviewId);
         Review review = findByReviewId(reviewId);
-        ReviewDto reviewDto = reviewMapper.toDto(review);
+        ReviewDto reviewDto = reviewMapper.toDto(review, s3Storage);
 
         boolean likedByMe = reviewLikeRepository.existsByReviewIdAndUserId(reviewId, requestUserId);
         return reviewDto.toBuilder().likedByMe(likedByMe).build();
@@ -174,7 +176,7 @@ public class ReviewServiceImpl implements ReviewService {
         log.info("[review] 수정 완료 - reviewId: {}, userId: {}, newContent={}, newRating={}", reviewId,
             userId, request.content(), request.rating());
 
-        return reviewMapper.toDto(review);
+        return reviewMapper.toDto(review, s3Storage);
     }
 
     // 검증 메서드
