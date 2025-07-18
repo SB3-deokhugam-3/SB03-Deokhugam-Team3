@@ -1,16 +1,21 @@
 package com.sprint.deokhugam.domain.notification.repository;
 
+import static com.sprint.deokhugam.domain.notification.entity.QNotification.notification;
+
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.notification.entity.Notification;
 import com.sprint.deokhugam.domain.notification.entity.QNotification;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,6 +23,7 @@ import org.springframework.stereotype.Repository;
 public class NotificationRepositoryImpl implements NotificationRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager em;
 
     @Override
     public CursorPageResponse<Notification> findByUserIdWithCursor(UUID userId, Instant after, UUID cursor, int limit) {
@@ -40,10 +46,14 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
                 .limit(limit + 1)
                 .fetch();
 
+        for (Notification n : results) {
+            em.detach(n); // 1차 캐시에서 강제로 떼어내기
+
+        }
         log.info("[NotificationRepository] userId: {}, 알림 개수: {}", userId, results.size());
 
         boolean hasNext = results.size() > limit;
-        
+
         if (hasNext) {
             results = results.subList(0, limit);
         }
@@ -65,5 +75,21 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
                 null,
                 hasNext
         );
+    }
+
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
+    public void markAllAsReadByUserId(UUID userId) {
+        queryFactory
+                .update(notification)
+                .set(notification.isConfirmed, true)
+                .set(notification.updatedAt, Instant.now())
+                .where(notification.user.id.eq(userId)
+                        .and(notification.isConfirmed.eq(false)))
+                .execute();
+
+        em.flush();
+        em.clear();
     }
 }
