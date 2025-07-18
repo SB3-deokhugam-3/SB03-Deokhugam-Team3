@@ -215,7 +215,6 @@ CREATE INDEX idx_comments ON comments (review_id, created_at DESC);
 -- review likes index 생성
 CREATE INDEX idx_review_likes ON review_likes (user_id);
 
--- 지워지지 않은 review에 대한 unique index 생성
-CREATE UNIQUE INDEX review_active_unique
-    ON reviews (user_id, book_id)
-    WHERE is_deleted = false;
+-- 지워지지 않은 review에 대한 unique index 생성 (H2에서 WHERE 절 조건부 인덱스 지원 제한으로 제거)
+-- PostgreSQL 환경에서는 다음과 같이 사용: 
+-- CREATE UNIQUE INDEX review_active_unique ON reviews(user_id, book_id) WHERE is_deleted = false;

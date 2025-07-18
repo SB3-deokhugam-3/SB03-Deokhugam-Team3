@@ -24,17 +24,18 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
-@TestPropertySource(properties = "spring.sql.init.mode=never")
+@ActiveProfiles("test")
 @DisplayName("ReviewRepository 단위 테스트")
-@ActiveProfiles("dev")
+@Transactional
 public class CustomReviewRepositoryTest {
 
     @Autowired
     private ReviewRepository reviewRepository;
+
     @Autowired
     private TestEntityManager em;
     private List<Review> mockReviews;
@@ -264,7 +265,6 @@ public class CustomReviewRepositoryTest {
             .isInstanceOf(InvalidTypeException.class);
     }
 
-
     @Test
     void 총_리뷰갯수_반환() throws Exception {
         // given
@@ -276,7 +276,6 @@ public class CustomReviewRepositoryTest {
         // then
         assertThat(result).isEqualTo(2);
     }
-
 
     @Test
     void userId가_일치하는_총_리뷰갯수_반환() throws Exception {
