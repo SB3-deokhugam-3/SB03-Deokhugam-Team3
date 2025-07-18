@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
 @ActiveProfiles("test")
 @DisplayName("ReviewRepository 단위 테스트")
-@Transactional
 public class CustomReviewRepositoryTest {
 
     @Autowired
@@ -136,7 +135,7 @@ public class CustomReviewRepositoryTest {
         // ---------- [REVIEW 3] ----------
         Review review3 = Review.builder()
             .content("리뷰3")
-            .rating(0)
+            .rating(2)
             .likeCount(77L)
             .commentCount(6L)
             .isDeleted(false)
