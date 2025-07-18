@@ -3,9 +3,11 @@ package com.sprint.deokhugam.domain.comment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.verify;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
@@ -13,6 +15,7 @@ import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
 import com.sprint.deokhugam.domain.comment.exception.CommentNotFoundException;
+import com.sprint.deokhugam.domain.comment.exception.CommentNotSoftDeletedException;
 import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.exception.CommentUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.comment.mapper.CommentMapper;
@@ -24,6 +27,7 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -69,7 +73,6 @@ public class CommentServiceImplTest {
     private Comment comment1;
     private String content;
     private CommentDto expectedDto;
-
 
     @BeforeEach
     void 초기_설정() {
@@ -350,6 +353,119 @@ public class CommentServiceImplTest {
             .isInstanceOf(InvalidCursorTypeException.class);
     }
 
+    @Test
+    @DisplayName("댓글을_논리삭제하면_isDeleted가_true가_된다")
+    void 댓글을_논리삭제하면_isDeleted가_true가_된다() {
+        // Given
+        UUID commentId = comment1.getId();
+        given(commentRepository.findById(commentId))
+            .willReturn(Optional.of(comment1));
+
+        // When
+        commentService.softDelete(commentId, user1.getId());
+
+        // Then
+        verify(commentRepository).findById(comment1.getId());
+    }
+
+    @Test
+    @DisplayName("존재하지_않는_댓글_논리삭제시_예외가_발생한다")
+    void 존재하지_않는_댓글_논리삭제시_예외가_발생한다() {
+        // Given
+        UUID nonExistentId = UUID.randomUUID();
+        given(commentRepository.findById(nonExistentId))
+            .willReturn(Optional.empty());
+
+        // When
+        Throwable result = catchThrowable(() ->
+            commentService.softDelete(nonExistentId, user1.getId()));
+
+        // Then
+        assertThat(result).isInstanceOf(CommentNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("권한없는_사용자가_댓글_논리삭제시_예외가_발생한다")
+    void 권한없는_사용자가_댓글_논리삭제시_예외가_발생한다() {
+        // Given
+        UUID reviewId = UUID.randomUUID();
+        UUID unauthorizedUserId = UUID.randomUUID();
+        given(commentRepository.findById(reviewId))
+            .willReturn(Optional.of(comment1));
+
+        // When
+        Throwable result = catchThrowable(() ->
+            commentService.softDelete(reviewId, unauthorizedUserId));
+
+        // Then
+        assertThat(result).isInstanceOf(CommentUnauthorizedAccessException.class);
+    }
+
+    @Test
+    @DisplayName("논리삭제된_댓글을_물리삭제하면_DB에서_완전히_삭제된다")
+    void 논리삭제된_댓글을_물리삭제하면_DB에서_완전히_삭제된다() {
+        // Given
+        UUID reviewId = UUID.randomUUID();
+        Comment softDeletedComment = createSoftDeleted(review1, user1, "댓1");
+
+        given(commentRepository.findByIdIncludingDeleted(reviewId))
+            .willReturn(Optional.of(softDeletedComment));
+
+        // When
+        commentService.hardDelete(reviewId, user1.getId());
+
+        // Then
+        verify(commentRepository).delete(softDeletedComment);
+    }
+
+    @Test
+    @DisplayName("존재하지_않는_댓글_물리삭제시_예외가_발생한다")
+    void 존재하지_않는_댓글_물리삭제시_예외가_발생한다() {
+        // Given
+        UUID nonExistentId = UUID.randomUUID();
+        given(commentRepository.findByIdIncludingDeleted(nonExistentId))
+            .willReturn(Optional.empty());
+
+        // When
+        Throwable result = catchThrowable(() ->
+            commentService.hardDelete(nonExistentId, user1.getId()));
+
+        // Then
+        assertThat(result).isInstanceOf(CommentNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("논리삭제되지_않은_댓글_물리삭제시_예외가_발생한다")
+    void 논리삭제되지_않은_댓글_물리삭제시_예외가_발생한다() {
+        // Given
+        given(commentRepository.findByIdIncludingDeleted(comment1.getId()))
+            .willReturn(Optional.of(comment1));
+
+        // When
+        Throwable result = catchThrowable(() ->
+            commentService.hardDelete(comment1.getId(), user1.getId()));
+
+        // Then
+        assertThat(result).isInstanceOf(CommentNotSoftDeletedException.class);
+    }
+
+    @Test
+    @DisplayName("권한없는_사용자가_댓글_물리삭제시_예외가_발생한다")
+    void 권한없는_사용자가_댓글_물리삭제시_예외가_발생한다() {
+        // Given
+        UUID unauthorizedUserId = UUID.randomUUID();
+        Comment softDeletedComment = createSoftDeleted(review1, user1, "댓1");
+        given(commentRepository.findByIdIncludingDeleted(softDeletedComment.getId()))
+            .willReturn(Optional.of(softDeletedComment));
+
+        // When
+        Throwable result = catchThrowable(() ->
+            commentService.hardDelete(softDeletedComment.getId(), unauthorizedUserId));
+
+        // Then
+        assertThat(result).isInstanceOf(CommentUnauthorizedAccessException.class);
+    }
+
     private CommentDto createDto(UUID reviewId, String content, Instant createdAt) {
         return CommentDto.builder()
             .id(UUID.randomUUID())
@@ -365,4 +481,12 @@ public class CommentServiceImplTest {
     private Comment create(Review review, User user, String content) {
         return new Comment(review, user, content);
     }
+
+    private static Comment createSoftDeleted(Review review, User user, String content) {
+        Comment comment = new Comment(review, user, content);
+        comment.softDelete();
+        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+        return comment;
+    }
+
 }

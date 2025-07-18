@@ -160,12 +160,8 @@ public class CustomReviewRepositoryTest {
     @Test
     void 키워드를_포함하여_리뷰를_전체조회한다() throws Exception {
         //given
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("DESC")
-            .keyword("유저2") // 닉네임
-            .limit(2)
-            .build();
+        ReviewGetRequest request = new ReviewGetRequest(null, null, "유저2", null, null, 2,
+            "createdAt", "DESC");
 
         //when
         List<Review> result = reviewRepository.findAll(request);
@@ -179,13 +175,8 @@ public class CustomReviewRepositoryTest {
     void userId가_일치하는_리뷰를_전체조회한다() throws Exception {
         // given
         UUID userId = reviewRepository.findAll().get(0).getUser().getId();
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("DESC")
-            .userId(userId)
-            .limit(10)
-            .build();
-
+        ReviewGetRequest request = new ReviewGetRequest(userId, null, null, null, null, 10,
+            "createdAt", "DESC");
         // when
         List<Review> result = reviewRepository.findAll(request);
 
@@ -198,13 +189,8 @@ public class CustomReviewRepositoryTest {
     void bookId가_일치하는_리뷰를_전체조회한다() throws Exception {
         // given
         UUID bookId = reviewRepository.findAll().get(1).getBook().getId();
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("DESC")
-            .bookId(bookId)
-            .limit(10)
-            .build();
-
+        ReviewGetRequest request = new ReviewGetRequest(null, bookId, null, null, null, 10,
+            "createdAt", "DESC");
         // when
         List<Review> result = reviewRepository.findAll(request);
 
@@ -218,14 +204,8 @@ public class CustomReviewRepositoryTest {
     void 최신순_오름차순으로_다음페이지_리뷰를_전체조회한다() throws Exception {
         // given
         Instant after = Instant.parse("2025-01-02T00:00:00Z");
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("ASC")
-            .cursor(after)
-            .after(after)
-            .limit(10)
-            .build();
-
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, after, after, 10,
+            "createdAt", "DESC");
         // when
         List<Review> result = reviewRepository.findAll(request);
 
@@ -239,13 +219,8 @@ public class CustomReviewRepositoryTest {
     void 최신순으로_조회하지만_cursor값이_datetime타입이_아니라면_400에러를_반환한다() throws Exception {
         // given
         Instant after = Instant.parse("2025-01-02T00:00:00Z");
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("ASC")
-            .cursor("1.0")
-            .after(after)
-            .limit(10)
-            .build();
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, "1", after, 10,
+            "createdAt", "ASC");
 
         // when
         Throwable thrown = catchThrowable(() -> reviewRepository.findAll(request));
@@ -259,13 +234,8 @@ public class CustomReviewRepositoryTest {
     void 평점순_오름차순으로_다음페이지_리뷰를_전체조회한다() throws Exception {
         // given
         Instant after = Instant.parse("2025-01-02T00:00:00Z");
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("rating")
-            .direction("ASC")
-            .cursor("1")
-            .after(after)
-            .limit(10)
-            .build();
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, "1", after, 10,
+            "rating", "ASC");
 
         // when
         List<Review> result = reviewRepository.findAll(request);
@@ -283,13 +253,8 @@ public class CustomReviewRepositoryTest {
     void 평점순으로_조회하지만_cursor값이_Integer타입이_아니라면_400에러를_반환한다() throws Exception {
         // given
         Instant after = Instant.parse("2025-01-02T00:00:00Z");
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("rating")
-            .direction("ASC")
-            .cursor("invalid")
-            .after(after)
-            .limit(10)
-            .build();
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, "invalid", after, 10,
+            "rating", "ASC");
 
         // when
         Throwable thrown = catchThrowable(() -> reviewRepository.findAll(request));
@@ -303,12 +268,8 @@ public class CustomReviewRepositoryTest {
     @Test
     void 총_리뷰갯수_반환() throws Exception {
         // given
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("ASC")
-            .limit(10)
-            .build();
-
+        ReviewGetRequest request = new ReviewGetRequest(null, null, null, null, null, 10,
+            "createdAt", "ASC");
         // when
         Long result = reviewRepository.countAllByFilterCondition(request);
 
@@ -321,13 +282,8 @@ public class CustomReviewRepositoryTest {
     void userId가_일치하는_총_리뷰갯수_반환() throws Exception {
         // given
         UUID userId = reviewRepository.findAll().get(0).getUser().getId();
-        ReviewGetRequest request = ReviewGetRequest.builder()
-            .orderBy("createdAt")
-            .direction("DESC")
-            .userId(userId)
-            .limit(10)
-            .build();
-
+        ReviewGetRequest request = new ReviewGetRequest(userId, null, null, null, null, 10,
+            "createdAt", "DESC");
         // when
         Long result = reviewRepository.countAllByFilterCondition(request);
 

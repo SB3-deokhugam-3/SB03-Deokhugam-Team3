@@ -5,12 +5,15 @@ import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
 import com.sprint.deokhugam.domain.comment.exception.CommentNotFoundException;
+import com.sprint.deokhugam.domain.comment.exception.CommentNotSoftDeletedException;
 import com.sprint.deokhugam.domain.comment.exception.CommentUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.mapper.CommentMapper;
 import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
+import com.sprint.deokhugam.domain.review.dto.request.ReviewFeature;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
+import com.sprint.deokhugam.domain.review.exception.ReviewNotSoftDeletedException;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
@@ -160,11 +163,42 @@ public class CommentServiceImpl implements CommentService {
         return commentResponse;
     }
 
+    @Transactional
+    @Override
+    public void softDelete(UUID commentId, UUID userId) {
+        Comment comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> {
+                log.warn("[comment] 논리 삭제 실패 - 존재하지 않는 댓글: {}", commentId);
+                return new CommentNotFoundException(commentId);
+            });
+
+
+        validateAuthorizedUser(comment, userId);
+        comment.softDelete();
+        comment.getReview().decreaseCommentCount();
+    }
+
+    @Transactional
+    @Override
+    public void hardDelete(UUID commentId, UUID userId) {
+        Comment comment = commentRepository.findByIdIncludingDeleted(commentId)
+            .orElseThrow(() -> {
+                log.warn("[comment] 물리 삭제 실패 - 존재하지 않는 댓글: {}", commentId);
+                return new CommentNotFoundException(commentId);
+            });
+
+        if (!comment.getIsDeleted()) {
+            log.warn("[comment] 물리 삭제 실패 - 논리 삭제되지 않음: {}", commentId);
+            throw new CommentNotSoftDeletedException(commentId);
+        }
+
+        validateAuthorizedUser(comment, userId);
+        commentRepository.delete(comment);
+    }
+
     private void validateAuthorizedUser(Comment comment, UUID userId) {
         if (!comment.getUser().getId().equals(userId)) {
-            log.warn("[comment] {} - 해당 유저는 권한이 없음: commentId={}, userId={}", comment.getId(),
-                userId,
-                userId);
+            log.warn("[comment] 권한 검증 실패 - 해당 유저는 권한이 없음: commentId={}, userId={}", comment.getId(), userId);
             throw new CommentUnauthorizedAccessException(comment.getId(), userId);
         }
     }

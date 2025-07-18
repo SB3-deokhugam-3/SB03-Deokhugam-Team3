@@ -1,5 +1,8 @@
 package com.sprint.deokhugam.domain.book.controller;
 
+import static com.sprint.deokhugam.fixture.BookFixture.createBookDto;
+import static com.sprint.deokhugam.fixture.BookFixture.createRequest;
+import static com.sprint.deokhugam.fixture.BookFixture.createUpdateRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
@@ -35,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -42,6 +46,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @WebMvcTest(controllers = BookController.class)
 @DisplayName("BookController 테스트")
+@ActiveProfiles("test")
 class BookControllerTest {
 
     @Autowired
@@ -76,11 +81,13 @@ class BookControllerTest {
 
         BookDto book1 = createBookDto(UUID.randomUUID(), "테스트 도서 1", "테스트 저자 1",
             "테스트 설명 1", "테스트 출판사 1", LocalDate.of(2024, 1, 1),
-            "1234567890", "https://example.com/image1.jpg", 10L, 4.5);
+            "1234567890", "https://example.com/image1.jpg", 10L, 4.5,
+            Instant.now(), Instant.now());
 
         BookDto book2 = createBookDto(UUID.randomUUID(), "테스트 도서 2", "테스트 저자 2",
             "테스트 설명 2", "테스트 출판사 2", LocalDate.of(2024, 2, 1),
-            "1234567891", "https://example.com/image2.jpg", 5L, 4.0);
+            "1234567891", "https://example.com/image2.jpg", 5L, 4.0,
+            Instant.now(), Instant.now());
 
         mockBooks = List.of(book1, book2);
         mockResponse = new CursorPageResponse<>(
@@ -109,7 +116,7 @@ class BookControllerTest {
             "thumbnailImage", "thumbnail.png", "image/png", "fake-image-content".getBytes());
 
         BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher,
-            publishedDate, isbn, thumbnailUrl, 0L, 0.0);
+            publishedDate, isbn, thumbnailUrl, 0L, 0.0, Instant.now(), Instant.now());
 
         given(bookService.create(any(BookCreateRequest.class), any(MultipartFile.class)))
             .willReturn(expectedResponse);
@@ -339,7 +346,8 @@ class BookControllerTest {
         // given
         UUID bookId = UUID.randomUUID();
         BookDto book = createBookDto(bookId, title, author, description, publisher, publishedDate,
-            isbn, "https://example.com/image1.jpg", 10L, 4.5);
+            isbn, "https://example.com/image1.jpg", 10L, 4.5,
+            Instant.now(), Instant.now());
 
         given(bookService.findById(bookId)).willReturn(book);
 
@@ -638,7 +646,8 @@ class BookControllerTest {
             "thumbnailImage", "thumbnail.png", "image/png", "fake-image-content".getBytes());
 
         BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher,
-            publishedDate, isbn, thumbnailUrl, 0L, 0.0);
+            publishedDate, isbn, thumbnailUrl, 0L, 0.0,
+            Instant.now(), Instant.now());
 
         given(bookService.update(any(UUID.class), any(BookUpdateRequest.class), any(MultipartFile.class)))
             .willReturn(expectedResponse);
@@ -696,49 +705,5 @@ class BookControllerTest {
 
         // then
         result.andExpect(status().isBadRequest());
-    }
-
-    private BookCreateRequest createRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn) {
-        return BookCreateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .build();
-    }
-
-    private BookDto createBookDto(UUID id, String title, String author, String description,
-        String publisher, LocalDate publishedDate, String isbn, String thumbnailUrl,
-        Long reviewCount,
-        Double rating) {
-        return BookDto.builder()
-            .id(id)
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .thumbnailUrl(thumbnailUrl)
-            .reviewCount(reviewCount)
-            .rating(rating)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
-            .build();
-    }
-
-    private BookUpdateRequest createUpdateRequest(String title, String author, String description,
-        String publisher, LocalDate publishedDate) {
-
-        return BookUpdateRequest.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .build();
     }
 }

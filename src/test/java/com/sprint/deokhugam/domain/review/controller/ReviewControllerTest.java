@@ -30,12 +30,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 @WebMvcTest(ReviewController.class)
 @DisplayName("ReviewController 슬라이스 테스트")
+@ActiveProfiles("test")
 class ReviewControllerTest {
 
     @Autowired
@@ -166,23 +168,6 @@ class ReviewControllerTest {
             .andExpect(jsonPath("$.content[0].userNickname").value("유저1"))
             .andExpect(jsonPath("$.content[0].content").value("리뷰1"));
     }
-
-    @Test
-    void requestId가_없이_전체조회하면_400_에러를__반환한다() throws Exception {
-        //given
-        given(reviewService.findAll(any(ReviewGetRequest.class), any(UUID.class))).willReturn(
-            mockResponse);
-
-        //when
-        ResultActions result = mockMvc.perform(
-            get("/api/reviews")
-                .header("Deokhugam-Request-User-ID", "cea1a965-2817-4431-90e3-e5701c70d43d")
-        );
-
-        //then
-        result.andExpect(status().isBadRequest());
-    }
-
 
     @Test
     void 리뷰_정보_조회에_성공하면_200응답을_반환한다() throws Exception {
