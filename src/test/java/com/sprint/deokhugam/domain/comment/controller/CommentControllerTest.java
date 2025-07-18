@@ -6,8 +6,10 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,6 +43,7 @@ import org.springframework.test.web.servlet.ResultActions;
 @ActiveProfiles("test")
 @WebMvcTest(CommentController.class)
 @DisplayName("CommentController 슬라이스 테스트")
+@ActiveProfiles("test")
 class CommentControllerTest {
 
     @Autowired
@@ -389,5 +392,68 @@ class CommentControllerTest {
             .andExpect(jsonPath("$.totalElements").value(0))
             .andExpect(jsonPath("$.hasNext").value(false))
             .andDo(print());
+    }
+
+    @Test
+    @DisplayName("댓글을_논리삭제하면_204가_반환된다")
+    void 댓글을_논리삭제하면_204가_반환된다() throws Exception {
+        // given
+        UUID commentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        willDoNothing().given(commentService).softDelete(commentId, userId);
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/comments/{commentId}", commentId)
+                .header("Deokhugam-Request-User-ID", userId.toString()));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("논리삭제된_댓글을_물리삭제하면_204가_반환된다")
+    void 논리삭제된_댓글을_물리삭제하면_204가_반환된다() throws Exception {
+        // Given
+        UUID commentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        willDoNothing().given(commentService).hardDelete(commentId, userId);
+
+        // When
+        ResultActions result = mockMvc.perform(delete("/api/comments/{commentId}/hard", commentId)
+                .header("Deokhugam-Request-User-ID", userId.toString()));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("삭제시_요청자_ID가_없으면_400이_반환된다")
+    void 삭제시_요청자_ID가_없으면_400이_반환된다() throws Exception {
+        // given
+        UUID commentId = UUID.randomUUID();
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/comments/{commentId}", commentId));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("물리삭제시_요청자_ID가_없으면_400이_반환된다")
+    void 물리삭제시_요청자_ID가_없으면_400이_반환된다() throws Exception {
+        // given
+        UUID commentId = UUID.randomUUID();
+
+        // when
+        ResultActions result = mockMvc.perform(delete("/api/comments/{commentId}/hard", commentId));
+
+        // then
+        result.andDo(print())
+            .andExpect(status().isBadRequest());
     }
 }

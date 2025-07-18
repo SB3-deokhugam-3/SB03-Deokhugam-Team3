@@ -1,5 +1,7 @@
 package com.sprint.deokhugam.domain.book.service;
 
+import static com.sprint.deokhugam.fixture.BookFixture.createBookEntity;
+import static com.sprint.deokhugam.fixture.BookFixture.createTestBooks;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
@@ -45,11 +47,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BookServiceImpl테스트")
+@ActiveProfiles("test")
 class BookServiceImplTest {
 
     @InjectMocks
@@ -840,21 +844,7 @@ class BookServiceImplTest {
         );
     }
 
-    private Book createBookEntity(String title, String author, String description, String publisher,
-        LocalDate publishedDate, String isbn, String thumbnailUrl, Double rating, Long reviewCount) {
-        return Book.builder()
-            .title(title)
-            .author(author)
-            .description(description)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .isbn(isbn)
-            .thumbnailUrl(thumbnailUrl)
-            .rating(rating)
-            .reviewCount(reviewCount)
-            .isDeleted(false)
-            .build();
-    }
+
 
     private BookCreateRequest createRequest(String title, String author, String description,
         String publisher, LocalDate publishedDate, String isbn) {
