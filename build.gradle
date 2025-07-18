@@ -56,6 +56,9 @@ dependencies {
 
     // OCR - tesseract
     implementation 'net.sourceforge.tess4j:tess4j:5.11.0'
+
+    // aop
+    implementation "org.springframework.boot:spring-boot-starter-aop"
 }
 
 // querydsl Q클래스 생성 경로설정
