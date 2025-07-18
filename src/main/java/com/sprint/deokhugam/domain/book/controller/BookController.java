@@ -151,7 +151,6 @@ public class BookController {
         return ResponseEntity.noContent().build();
     }
 
-    // 논리 삭제된 도서를 실제로 삭제하는 물리 삭제 API 추가
     @DeleteMapping("/{bookId}/hard")
     public ResponseEntity<Void> hardDelete(@PathVariable UUID bookId) {
         log.info("[BookController] 도서 물리 삭제 요청 - id: {}", bookId);

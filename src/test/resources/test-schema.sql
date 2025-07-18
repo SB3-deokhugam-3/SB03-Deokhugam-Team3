@@ -1,5 +1,5 @@
 -- user table
-CREATE TABLE users
+CREATE TABLE IF NOT EXISTS users
 (
     -- Primary Key
     id         VARCHAR(36) PRIMARY KEY,
@@ -13,7 +13,7 @@ CREATE TABLE users
     is_deleted BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
-CREATE TABLE books
+CREATE TABLE IF NOT EXISTS books
 (
     -- Primary Key
     id             VARCHAR(36) PRIMARY KEY,
@@ -33,7 +33,7 @@ CREATE TABLE books
     is_deleted     BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
-CREATE TABLE reviews
+CREATE TABLE IF NOT EXISTS reviews
 (
     -- Primary Key
     id            VARCHAR(36) PRIMARY KEY,
@@ -60,7 +60,7 @@ CREATE TABLE reviews
             ON DELETE CASCADE
 );
 
-CREATE TABLE comments
+CREATE TABLE IF NOT EXISTS comments
 (
     -- Primary Key
     id         VARCHAR(36) PRIMARY KEY,
@@ -84,7 +84,7 @@ CREATE TABLE comments
             ON DELETE CASCADE
 );
 
-CREATE TABLE notifications
+CREATE TABLE IF NOT EXISTS notifications
 (
     -- Primary Key
     id           VARCHAR(36) PRIMARY KEY,
@@ -108,7 +108,7 @@ CREATE TABLE notifications
             ON DELETE CASCADE
 );
 
-CREATE TABLE review_likes
+CREATE TABLE IF NOT EXISTS review_likes
 (
     -- PRIMARY KEY
     id         VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -131,7 +131,7 @@ CREATE TABLE review_likes
     CONSTRAINT review_like_unique UNIQUE (review_id, user_id)
 );
 
-CREATE TABLE power_users
+CREATE TABLE IF NOT EXISTS power_users
 (
     -- Primary Key
     id               VARCHAR(36) PRIMARY KEY,
@@ -152,7 +152,7 @@ CREATE TABLE power_users
             ON DELETE CASCADE
 );
 
-CREATE TABLE popular_book_rankings
+CREATE TABLE IF NOT EXISTS popular_book_rankings
 (
     -- Primary Key
     id           VARCHAR(36) PRIMARY KEY,
@@ -172,7 +172,7 @@ CREATE TABLE popular_book_rankings
             ON DELETE CASCADE
 );
 
-CREATE TABLE popular_review_rankings
+CREATE TABLE IF NOT EXISTS popular_review_rankings
 (
     -- Primary Key
     id            VARCHAR(36) PRIMARY KEY,
@@ -194,27 +194,28 @@ CREATE TABLE popular_review_rankings
 
 -- Indexes
 
-CREATE INDEX idx_power_users ON power_users (period, created_at);
+CREATE INDEX IF NOT EXISTS idx_power_users ON power_users (period, created_at);
 
 -- popular_book_rankings index 생성
-CREATE INDEX idx_popular_book_rankings ON popular_book_rankings (period, created_at);
+CREATE INDEX IF NOT EXISTS idx_popular_book_rankings ON popular_book_rankings (period, created_at);
 
 -- popular_review_rankings index 생성
-CREATE INDEX idx_popular_review_rankings ON popular_review_rankings (period, created_at);
+CREATE INDEX IF NOT EXISTS idx_popular_review_rankings ON popular_review_rankings (period, created_at);
 
 -- notifications index 생성
-CREATE INDEX idx_notifications ON notifications (user_id, is_confirmed, created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications ON notifications (user_id, is_confirmed, created_at);
 
 -- reviews index 생성
-CREATE INDEX idx_reviews_created_at ON reviews (book_id, created_at);
-CREATE INDEX idx_reviews_rating ON reviews (book_id, rating);
+CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews (book_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_reviews_rating ON reviews (book_id, rating);
 
 -- comments index 생성
-CREATE INDEX idx_comments ON comments (review_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments ON comments (review_id, created_at DESC);
 
 -- review likes index 생성
-CREATE INDEX idx_review_likes ON review_likes (user_id);
+CREATE INDEX IF NOT EXISTS idx_review_likes ON review_likes (user_id);
 
 -- 지워지지 않은 review에 대한 unique index 생성
-CREATE UNIQUE INDEX review_active_unique
-    ON reviews (user_id, book_id);
+CREATE UNIQUE INDEX IF NOT EXISTS review_active_unique
+    ON reviews (user_id, book_id)
+--     WHERE is_deleted = false;
