@@ -30,8 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
-@ActiveProfiles("dev")
-@TestPropertySource(properties = "spring.sql.init.mode=never")
+@ActiveProfiles("test")
 @DisplayName("CommentRepository 단위 테스트")
 class CommentRepositoryTest {
 
@@ -85,14 +84,15 @@ class CommentRepositoryTest {
     @Test
     void findByReviewId_정상_조회() {
         // given
-        Instant baseTime = Instant.parse("2024-01-01T12:00:00Z");
-        Comment comment1 = createComment("댓1", baseTime.minusSeconds(300));
-        Comment comment2 = createComment("댓2", baseTime.minusSeconds(180));
-        Comment comment3 = createComment("댓3", baseTime.minusSeconds(60));
-        commentRepository.save(comment1);
-        commentRepository.save(comment2);
-        commentRepository.save(comment3);
-        em.flush();
+        Instant baseTime = Instant.now();
+        Comment comment1 = createComment("댓1", baseTime.minusSeconds(20));
+        Comment comment2 = createComment("댓2", baseTime.minusSeconds(10));
+        Comment comment3 = createComment("댓3", baseTime);
+        em.persistAndFlush(comment1);
+        em.persistAndFlush(comment2);
+        em.persistAndFlush(comment3);
+        
+        em.clear();
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         // when - 첫 페이지 조회
@@ -101,6 +101,7 @@ class CommentRepositoryTest {
 
         // then
         assertThat(result.getContent()).hasSize(3);
+        // 최신 순으로 정렬되므로 마지막에 저장된 comment3가 첫 번째
         assertThat(result.getContent().get(0).getContent()).isEqualTo("댓3");
         assertThat(result.getContent().get(1).getContent()).isEqualTo("댓2");
         assertThat(result.getContent().get(2).getContent()).isEqualTo("댓1");
@@ -197,6 +198,10 @@ class CommentRepositoryTest {
         ReflectionTestUtils.setField(comment, "updatedAt", createdAt);
         ReflectionTestUtils.setField(comment, "isDeleted", false);
         return comment;
+    }
+
+    private Comment createComment(String content) {
+        return new Comment(review1, user1, content);
     }
 
     private Comment create(String content) {
