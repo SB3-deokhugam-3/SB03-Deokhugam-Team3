@@ -59,6 +59,10 @@ dependencies {
 
     // aop
     implementation "org.springframework.boot:spring-boot-starter-aop"
+
+    // spring batch
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    testImplementation 'org.springframework.batch:spring-batch-test'
 }
 
 // querydsl Q클래스 생성 경로설정
