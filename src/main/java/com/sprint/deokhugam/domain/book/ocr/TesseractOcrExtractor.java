@@ -128,7 +128,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
             throw OcrException.clientError("이미지 파일이 없습니다.");
         }
 
-        // 파일 크기 검증 (10MB 제한)
+        // 파일 크기 검증 ( 5MB 제한 )
         if (imageFile.getSize() > 5 * 1024 * 1024) {
             throw OcrException.clientError("이미지 파일 크기가 너무 큽니다. (최대 5MB)");
         }
@@ -151,7 +151,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
             return null;
         }
 
-        // 텍스트 정규화 (개행 문자를 공백으로 변환, 여러 공백을 하나로 통합)
+        // 텍스트 정규화 ( 개행 문자를 공백으로 변환, 여러 공백을 하나로 통합 )
         String normalizedText = text.replaceAll("\\s+", " ");
 
         log.debug("[OCR] 정규화된 텍스트: {}", normalizedText);
@@ -169,7 +169,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
             }
         }
 
-        // 추가적인 ISBN 패턴 검색 (숫자만으로 구성된 10자리 or 13자리)
+        // 추가적인 ISBN 패턴 검색 ( 숫자만으로 구성된 10자리 or 13자리 )
         Pattern numericPattern = Pattern.compile("\\b(\\d{10}|\\d{13})\\b");
         Matcher numericMatcher = numericPattern.matcher(normalizedText);
 
@@ -201,7 +201,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
     }
 
     private BufferedImage preprocessImage(BufferedImage image) {
-        // 이미지 전처리 로직 (크기 조정, 노이즈 제거 등)
+        // 이미지 전처리 로직 ( 크기 조정, 노이즈 제거 등 )
         // 여기서는 단순하게 원본 이미지를 반환
         // 필요에 따라 이미지 품질 향상 로직을 여기에 추가 가능
         return image;

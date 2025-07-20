@@ -10,9 +10,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.entity.QBook;
-import com.sprint.deokhugam.domain.comment.entity.QComment;
-import com.sprint.deokhugam.domain.review.entity.QReview;
-import com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -179,7 +176,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
             default -> orderSpecifiers.add(new OrderSpecifier<>(order, book.title));
         }
 
-        // 보조 정렬 조건 (생성시간)
+        // 보조 정렬 조건 ( 생성시간 )
         orderSpecifiers.add(new OrderSpecifier<>(timeOrder, book.createdAt));
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
