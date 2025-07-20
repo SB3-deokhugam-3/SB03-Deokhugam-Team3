@@ -25,6 +25,9 @@ public class PowerUserBatchService {
      * */
     @Transactional
     public void calculateDailyPowerUsers() {
+        // 기존 일간 데이터 삭제
+        powerUserRepository.deleteByPeriod(PeriodType.DAILY);
+
         LocalDateTime endTime = LocalDateTime.now();
         LocalDateTime startTime = endTime.minusDays(1);
 

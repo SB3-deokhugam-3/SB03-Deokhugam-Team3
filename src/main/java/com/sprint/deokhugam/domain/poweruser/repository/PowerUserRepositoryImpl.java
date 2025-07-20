@@ -12,6 +12,7 @@ import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,39 +38,68 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
         QReviewLike reviewLike = QReviewLike.reviewLike;
         QComment comment = QComment.comment;
 
-        // 기간별 사영자 활동 점수 계산
-        List<PowerUser> powerUsers = queryFactory
-            .select(Projections.constructor(PowerUser.class,
+        var baseQuery = queryFactory
+            .from(review)
+            .join(review.user, user)
+            .leftJoin(reviewLike).on(reviewLike.review.eq(review))
+            .leftJoin(comment).on(comment.review.eq(review));
+
+        // 기간 조건 추가 ( ALL_TIME이 아닌 경우만 )
+        if (startDate != null && endDate != null) {
+            baseQuery = baseQuery
+                .where(review.createdAt.between(startDate, endDate)
+                    .and(reviewLike.createdAt.between(startDate, endDate).or(reviewLike.createdAt.isNull()))
+                    .and(comment.createdAt.between(startDate, endDate).or(comment.createdAt.isNull())));
+        }
+
+        // 활동 점수 계산 결과 조회
+        var resultTuples = baseQuery
+            .select(
                 user,
-                // score = (리뷰 점수 합 * 0.4) + (좋아요 수 * 0.3) + (댓글 수 * 0.3)
-                review.rating.sum().multiply(0.4)
-                    .add(reviewLike.count().multiply(0.3))
+                // ( 리뷰 점수 합 * 0.5 ) + ( 좋아요 수 * 0.2 ) + ( 댓글 수 * 0.3 )
+                review.rating.sum().castToNum(Double.class).multiply(0.5)
+                    .add(reviewLike.count().multiply(0.2))
                     .add(comment.count().multiply(0.3)),
                 review.rating.sum(),
                 reviewLike.count(),
                 comment.count()
-            ))
-            .from(review)
-            .join(review.user, user)
-            .leftJoin(reviewLike).on(reviewLike.review.eq(review)
-                .and(reviewLike.createdAt.between(startDate,endDate)))
-            .leftJoin(comment).on(comment.review.eq(review)
-                .and(comment.createdAt.between(startDate,endDate)))
-            .where(review.createdAt.between(startDate, endDate))
+            )
             .groupBy(user.id)
             .having(review.count().gt(0)) // 리뷰가 있는 사용자만
-            .orderBy(review.rating.sum().multiply(0.4)
-                .add(reviewLike.count().multiply(0.3))
+            .orderBy(review.rating.sum().castToNum(Double.class).multiply(0.5)
+                .add(reviewLike.count().multiply(0.2))
                 .add(comment.count().multiply(0.3)).desc())
             .fetch();
 
-        // 순위 부여
-        for (int i = 0; i < powerUsers.size(); i++) {
-            powerUsers.get(i).setRank((long) (i + 1));
+        // PowerUser 객체 생성
+        List<PowerUser> powerUsers = new ArrayList<>();
+        for (int i = 0; i < resultTuples.size(); i++) {
+            var tuple = resultTuples.get(i);
+
+            // Integer를 Double로 안전하게 변환
+            Integer ratingSum = tuple.get(review.rating.sum());
+            Double reviewScoreSum = ratingSum != null ? ratingSum.doubleValue() : 0.0;
+
+            // 점수 계산
+            Long likeCount = tuple.get(reviewLike.count());
+            Long commentCount = tuple.get(comment.count());
+            Double score = (reviewScoreSum * 0.5) + (likeCount * 0.2) + (commentCount * 0.3);
+
+            PowerUser powerUser = new PowerUser(
+                tuple.get(user),                    // User
+                period,                             // PeriodType
+                (long) (i + 1),                     // Long rank
+                score,                              // Double score
+                reviewScoreSum,                     // Double reviewScoreSum
+                likeCount,                          // Long likeCount
+                commentCount                        // Long commentCount
+            );
+            powerUsers.add(powerUser);
         }
 
         return powerUsers;
     }
+
 
     @Override
     @Transactional
@@ -134,5 +164,53 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
 
         entityManager.flush();
         entityManager.clear();
+    }
+
+    @Override
+    public List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit, String cursor, String after) {
+        QPowerUser powerUser = QPowerUser.powerUser;
+        QUser user = QUser.user;
+
+        var query = queryFactory
+            .selectFrom(powerUser)
+            .join(powerUser.user, user).fetchJoin()
+            .where(powerUser.period.eq(period));
+
+        // 커서 기반 필터링 (순위 기준)
+        if (cursor != null && !cursor.isEmpty()) {
+            try {
+                Long cursorRank = Long.parseLong(cursor);
+                if ("DESC".equalsIgnoreCase(direction)) {
+                    query = query.where(powerUser.rank.lt(cursorRank));
+                } else {
+                    query = query.where(powerUser.rank.gt(cursorRank));
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Invalid cursor format: {}", cursor);
+            }
+        }
+
+        // after 시간 기준 필터링 (추가 정렬 조건)
+        if (after != null && !after.isEmpty()) {
+            try {
+                Instant afterTime = Instant.parse(after);
+                if ("DESC".equalsIgnoreCase(direction)) {
+                    query = query.where(powerUser.createdAt.lt(afterTime));
+                } else {
+                    query = query.where(powerUser.createdAt.gt(afterTime));
+                }
+            } catch (Exception e) {
+                log.warn("Invalid after format: {}", after);
+            }
+        }
+
+        // 정렬 방향 적용
+        if ("DESC".equalsIgnoreCase(direction)) {
+            query = query.orderBy(powerUser.rank.desc());
+        } else {
+            query = query.orderBy(powerUser.rank.asc());
+        }
+
+        return query.limit(limit).fetch();
     }
 }

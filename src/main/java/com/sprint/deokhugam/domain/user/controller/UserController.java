@@ -1,10 +1,14 @@
 package com.sprint.deokhugam.domain.user.controller;
 
+import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
+import com.sprint.deokhugam.domain.poweruser.service.PowerUserService;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.service.UserService;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -27,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final PowerUserService powerUserService;
 
     @PostMapping
     public ResponseEntity<UserDto> create(
@@ -121,4 +127,34 @@ public class UserController {
                 .status(HttpStatus.OK)
                 .body(deletedUser);
     }
+
+    /**
+     * 파워 유저 목록 조회 ( 커서 기반 페이지네이션 )
+     * */
+    @GetMapping("/power")
+    public ResponseEntity<CursorPageResponse<PowerUserDto>> getPowerUsers(
+        @RequestParam(value = "period", defaultValue = "DAILY") String period,
+        @RequestParam(value = "direction", defaultValue = "ASC") String direction,
+        @RequestParam(value = "cursor", required = false) String cursor,
+        @RequestParam(value = "after", required = false) String after,
+        @RequestParam(value = "limit", defaultValue = "50") int limit
+    ) {
+        log.info("[UserController] 파워유저 목록 조회 요청: period: {}, direction: {}, limit: {}, cursor: {}, after: {}",
+            period, direction, limit, cursor, after);
+
+        // 입력 검증
+        if (limit < 1 || limit > 100) {
+            throw new IllegalArgumentException("limit은 1 이상 100 이하여야 합니다.");
+        }
+
+        PeriodType periodType = PeriodType.valueOf(period.toUpperCase());
+        CursorPageResponse<PowerUserDto> response = powerUserService.getPowerUsersWithCursor(
+            periodType, direction, limit, cursor, after);
+
+        log.info("[UserController] 파워유저 목록 조회 완료: {} 명", response.content().size());
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }

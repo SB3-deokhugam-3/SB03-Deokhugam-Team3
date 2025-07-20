@@ -32,4 +32,10 @@ public interface PowerUserRepositoryCustom {
      *  파워 유저 배치 삽입/업데이트
      *  */
     void batchUpsertPowerUsers(List<PowerUser> powerUsers);
+
+    /**
+     * 커서 기반 파워유저 조회
+     */
+    List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit, String cursor, String after);
+
 }

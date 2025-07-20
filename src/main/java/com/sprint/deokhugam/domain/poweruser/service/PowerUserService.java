@@ -1,7 +1,9 @@
 package com.sprint.deokhugam.domain.poweruser.service;
 
+import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -51,5 +53,63 @@ public class PowerUserService {
         return powerUserRepository.findByPeriodOrderByRankAsc(period,pageable);
     }
 
+    /**
+     * 커서 기반 파워유저 조회
+     */
+    public CursorPageResponse<PowerUserDto> getPowerUsersWithCursor(
+        PeriodType period, String direction, int size, String cursor, String after) {
 
+        // 커서 기반 조회 (size + 1로 다음 페이지 존재 여부 확인)
+        List<PowerUser> powerUsers = powerUserRepository.findPowerUsersWithCursor(
+            period, direction, size + 1, cursor, after);
+
+        // 다음 페이지 존재 여부 확인
+        boolean hasNext = powerUsers.size() > size;
+        if (hasNext) {
+            powerUsers = powerUsers.subList(0, size);
+        }
+
+        // PowerUserDto 변환
+        List<PowerUserDto> content = powerUsers.stream()
+            .map(this::convertToDto)
+            .toList();
+
+        // 다음 커서 정보 생성
+        String nextCursor = null;
+        String nextAfter = null;
+        if (hasNext && !powerUsers.isEmpty()) {
+            PowerUser lastUser = powerUsers.get(powerUsers.size() - 1);
+            nextCursor = lastUser.getRank().toString();
+            nextAfter = lastUser.getCreatedAt().toString();
+        }
+
+        // 전체 개수 조회
+        Long totalElements = powerUserRepository.countByPeriod(period);
+
+        return new CursorPageResponse<>(
+            content,
+            nextCursor,
+            nextAfter,
+            size,
+            totalElements,
+            hasNext
+        );
+    }
+
+    /**
+     * PowerUser -> PowerUserDto 변환
+     */
+    private PowerUserDto convertToDto(PowerUser powerUser) {
+        return PowerUserDto.builder()
+            .userId(powerUser.getUser().getId())
+            .nickname(powerUser.getUser().getNickname())
+            .period(powerUser.getPeriod().name())
+            .createdAt(powerUser.getCreatedAt())
+            .rank(powerUser.getRank())
+            .score(powerUser.getScore())
+            .reviewScoreSum(powerUser.getReviewScoreSum())
+            .likeCount(powerUser.getLikeCount())
+            .commentCount(powerUser.getCommentCount())
+            .build();
+    }
 }

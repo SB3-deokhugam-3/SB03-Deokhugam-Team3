@@ -43,6 +43,11 @@ public interface PowerUserRepository extends JpaRepository<PowerUser, UUID>, Pow
         @Param("endRank") Long endRank);
 
     /**
+     * 커서 기반 파워유저 조회
+     */
+    List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit, String cursor, String after);
+
+    /**
      *  기간별 삭제
      *  */
     void deleteByPeriod(PeriodType period);
