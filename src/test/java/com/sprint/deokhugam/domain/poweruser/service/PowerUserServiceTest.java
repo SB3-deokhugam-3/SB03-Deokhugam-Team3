@@ -30,7 +30,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PowerUserService 단위 테스트")
+@DisplayName("PowerUserService 테스트")
 public class PowerUserServiceTest {
 
     @Mock
