@@ -30,7 +30,8 @@ public class NotificationServiceImpl implements NotificationService {
             log.warn("[notification] 알림 생성 실패 - user: {}, review: {}", user, review);
             throw new InvalidUserRequestException("error", "null 값이 들어왔습니다.");
         }
-        Notification notification = new Notification(user, review, content, isConfirmed);
+        Notification notification = new Notification(review.getUser(), review, content,
+            isConfirmed);
 
         Notification saved = notificationRepository.save(notification);
         log.info("[notification] 알림 생성 완료 - user: {}, review: {}", user, review);
