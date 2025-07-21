@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.poweruser.repository;
 
-import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.comment.entity.QComment;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;

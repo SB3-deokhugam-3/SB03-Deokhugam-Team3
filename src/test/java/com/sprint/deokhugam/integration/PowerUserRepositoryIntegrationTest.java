@@ -402,6 +402,7 @@ public class PowerUserRepositoryIntegrationTest {
                 .user(testUser2)
                 .review(testReview1)
                 .content("댓글 내용 " + i)
+                .isDeleted(false)
                 .build();
             entityManager.persistAndFlush(comment);
         }
@@ -411,6 +412,7 @@ public class PowerUserRepositoryIntegrationTest {
             .user(testUser1)
             .review(testReview2)
             .content("좋은 리뷰네요!")
+            .isDeleted(false)
             .build();
         entityManager.persistAndFlush(comment);
     }
