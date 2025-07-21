@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
+import com.sprint.deokhugam.domain.notification.service.NotificationService;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
@@ -16,6 +17,7 @@ import com.sprint.deokhugam.domain.reviewlike.entity.ReviewLike;
 import com.sprint.deokhugam.domain.reviewlike.mapper.ReviewLikeMapper;
 import com.sprint.deokhugam.domain.reviewlike.repository.ReviewLikeRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
+import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +46,9 @@ public class ReviewLikeServiceImplTest {
     private ReviewRepository reviewRepository;
     @Mock
     private ReviewLikeMapper reviewLikeMapper;
+
+    @Mock
+    private NotificationService notificationService;
     @InjectMocks
     private ReviewLikeServiceImpl reviewLikeService;
 
@@ -133,7 +138,7 @@ public class ReviewLikeServiceImplTest {
 
         // then
         assertThat(thrown)
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(UserNotFoundException.class);
         then(reviewRepository).should().findById(reviewId);
         then(userRepository).should().findById(userId);
         then(reviewLikeRepository).shouldHaveNoInteractions();

@@ -3,7 +3,6 @@ package com.sprint.deokhugam.domain.comment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -16,10 +15,11 @@ import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
 import com.sprint.deokhugam.domain.comment.exception.CommentNotFoundException;
 import com.sprint.deokhugam.domain.comment.exception.CommentNotSoftDeletedException;
-import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.exception.CommentUnauthorizedAccessException;
+import com.sprint.deokhugam.domain.comment.exception.InvalidCursorTypeException;
 import com.sprint.deokhugam.domain.comment.mapper.CommentMapper;
 import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
+import com.sprint.deokhugam.domain.notification.service.NotificationService;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
@@ -27,7 +27,6 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import com.sprint.deokhugam.global.exception.UnauthorizedException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -60,6 +59,9 @@ public class CommentServiceImplTest {
 
     @Mock
     private CommentMapper commentMapper;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private CommentServiceImpl commentService;
@@ -286,7 +288,8 @@ public class CommentServiceImplTest {
         Comment comment2 = create(review1, user1, "댓2");
         CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
         CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
-        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2), false);
+        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2),
+            false);
 
         given(reviewRepository.existsById(reviewId)).willReturn(true);
         given(commentRepository.findByReviewId(eq(reviewId), any()))
@@ -318,7 +321,8 @@ public class CommentServiceImplTest {
         Comment comment2 = create(review1, user1, "댓2");
         CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
         CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
-        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2), true);
+        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2),
+            true);
 
         given(reviewRepository.existsById(reviewId)).willReturn(true);
         given(commentRepository.findByReviewIdAndCreatedAtLessThan(eq(reviewId), any(), any()))
@@ -346,7 +350,8 @@ public class CommentServiceImplTest {
         given(reviewRepository.existsById(reviewId)).willReturn(true);
 
         // when
-        Throwable thrown = catchThrowable(() -> commentService.findAll(reviewId, invalidCursor, "DESC", 10));
+        Throwable thrown = catchThrowable(
+            () -> commentService.findAll(reviewId, invalidCursor, "DESC", 10));
 
         // then
         assertThat(thrown)
