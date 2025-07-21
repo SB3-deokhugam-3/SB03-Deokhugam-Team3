@@ -1,3 +1,8 @@
+DELETE FROM popular_book_rankings;
+DELETE FROM reviews;
+DELETE FROM books;
+DELETE FROM users;
+
 -- 유저 삽입
 INSERT INTO users (id, created_at, updated_at, email, nickname, password, is_deleted)
 VALUES
@@ -8,8 +13,8 @@ VALUES
 -- 책 삽입
 INSERT INTO books (id, created_at, updated_at, title, thumbnail_url, author, description, publisher, published_date, rating, review_count, isbn, is_deleted)
 VALUES
-    ('33333333-3333-3333-3333-333333333234', now(), now(), 'Book One', 'url1', 'Author One', 'Desc1', 'Publisher1', '2023-01-01', 4.0, 2, '1234567890123', false),
-    ('55555555-5555-5555-5555-555555555555', now(), now(), 'Book Two', 'url2', 'Author Two', 'Desc2', 'Publisher2', '2023-01-01', 4.5, 1, '1234567890124', false);
+    ('33333333-3333-3333-3333-333333333234', now(), now(), 'Book One', 'url1', 'Author One', 'Desc1', 'Publisher1', '2023-01-01', 4.0, 2, '9876543210333', false),
+    ('55555555-5555-5555-5555-555555555555', now(), now(), 'Book Two', 'url2', 'Author Two', 'Desc2', 'Publisher2', '2023-01-01', 4.5, 1, '9876543210222', false);
 
 -- DAILY 범위 (2025-07-19 00:00:00 ~ 2025-07-20 00:00:00 KST)
 INSERT INTO reviews (id, created_at, updated_at, book_id, user_id, rating, content, like_count, comment_count, is_deleted)
