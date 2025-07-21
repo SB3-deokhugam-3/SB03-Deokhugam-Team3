@@ -1,9 +1,8 @@
-package com.sprint.deokhugam.domain.poweruser.repositroy;
+package com.sprint.deokhugam.domain.poweruser.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
-import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
@@ -148,9 +147,14 @@ public class PowerUserRepositoryCustomTest {
         List<PowerUser> result = powerUserRepository
             .findByPeriodOrderByRankAsc(PeriodType.ALL_TIME, null);
 
-        // 점수가 높은 순으로 순위가 재계산되어야 함
+        // 점수가 높은 user1이 1위, user2가 2위가 되어야 함
         assertThat(result).hasSize(2);
-        // 실제 구현에 따라 결과가 달라질 수 있음
+        assertThat(result.get(0).getUser().getId()).isEqualTo(testUser1.getId());
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
+        assertThat(result.get(0).getScore()).isEqualTo(100.0);
+        assertThat(result.get(1).getUser().getId()).isEqualTo(testUser2.getId());
+        assertThat(result.get(1).getRank()).isEqualTo(2L);
+        assertThat(result.get(1).getScore()).isEqualTo(90.0);
     }
 
     private PowerUser createPowerUser(User user, PeriodType period, Long rank, Double score) {

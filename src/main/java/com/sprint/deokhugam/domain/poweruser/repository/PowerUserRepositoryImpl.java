@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.poweruser.repository;
 
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.comment.entity.QComment;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
@@ -7,12 +8,14 @@ import com.sprint.deokhugam.domain.poweruser.entity.QPowerUser;
 import com.sprint.deokhugam.domain.review.entity.QReview;
 import com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike;
 import com.sprint.deokhugam.domain.user.entity.QUser;
+import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,68 +40,84 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
         QReviewLike reviewLike = QReviewLike.reviewLike;
         QComment comment = QComment.comment;
 
+        // 1. 기본 리뷰 점수 집계
         var baseQuery = queryFactory
             .from(review)
-            .join(review.user, user)
-            .leftJoin(reviewLike).on(reviewLike.review.eq(review))
-            .leftJoin(comment).on(comment.review.eq(review));
+            .join(review.user, user);
 
-        // 기간 조건 추가 ( ALL_TIME이 아닌 경우만 )
         if (startDate != null && endDate != null) {
-            baseQuery = baseQuery
-                .where(review.createdAt.between(startDate, endDate)
-                    .and(reviewLike.createdAt.between(startDate, endDate).or(reviewLike.createdAt.isNull()))
-                    .and(comment.createdAt.between(startDate, endDate).or(comment.createdAt.isNull())));
+            baseQuery = baseQuery.where(review.createdAt.between(startDate, endDate));
         }
 
-        // 활동 점수 계산 결과 조회
-        var resultTuples = baseQuery
+        var reviewData = baseQuery
             .select(
+                user.id,
                 user,
-                // ( 리뷰 점수 합 * 0.5 ) + ( 좋아요 수 * 0.2 ) + ( 댓글 수 * 0.3 )
-                review.rating.sum().castToNum(Double.class).multiply(0.5)
-                    .add(reviewLike.count().multiply(0.2))
-                    .add(comment.count().multiply(0.3)),
-                review.rating.sum(),
-                reviewLike.count(),
-                comment.count()
+                review.rating.sum()
             )
             .groupBy(user.id)
-            .having(review.count().gt(0)) // 리뷰가 있는 사용자만
-            .orderBy(review.rating.sum().castToNum(Double.class).multiply(0.5)
-                .add(reviewLike.count().multiply(0.2))
-                .add(comment.count().multiply(0.3)).desc())
+            .having(review.count().gt(0))
             .fetch();
 
-        // PowerUser 객체 생성
         List<PowerUser> powerUsers = new ArrayList<>();
-        for (int i = 0; i < resultTuples.size(); i++) {
-            var tuple = resultTuples.get(i);
 
-            // Integer를 Double로 안전하게 변환
+        for (var tuple : reviewData) {
+            UUID userId = tuple.get(user.id);
+            User userEntity = tuple.get(user);
             Integer ratingSum = tuple.get(review.rating.sum());
             Double reviewScoreSum = ratingSum != null ? ratingSum.doubleValue() : 0.0;
 
-            // 점수 계산
-            Long likeCount = tuple.get(reviewLike.count());
-            Long commentCount = tuple.get(comment.count());
+            // 2. 해당 사용자의 좋아요 수 조회
+            var likeQuery = queryFactory
+                .select(reviewLike.count())
+                .from(reviewLike)
+                .join(reviewLike.review, review)
+                .where(review.user.id.eq(userId));
+
+            if (startDate != null && endDate != null) {
+                likeQuery = likeQuery.where(reviewLike.createdAt.between(startDate, endDate));
+            }
+
+            Long likeCount = likeQuery.fetchOne();
+            if (likeCount == null) likeCount = 0L;
+
+            // 3. 해당 사용자의 댓글 수 조회
+            var commentQuery = queryFactory
+                .select(comment.count())
+                .from(comment)
+                .join(comment.review, review)
+                .where(review.user.id.eq(userId));
+
+            if (startDate != null && endDate != null) {
+                commentQuery = commentQuery.where(comment.createdAt.between(startDate, endDate));
+            }
+
+            Long commentCount = commentQuery.fetchOne();
+            if (commentCount == null) commentCount = 0L;
+
+            // 4. 최종 점수 계산
             Double score = (reviewScoreSum * 0.5) + (likeCount * 0.2) + (commentCount * 0.3);
 
             PowerUser powerUser = new PowerUser(
-                tuple.get(user),                    // User
-                period,                             // PeriodType
-                (long) (i + 1),                     // Long rank
-                score,                              // Double score
-                reviewScoreSum,                     // Double reviewScoreSum
-                likeCount,                          // Long likeCount
-                commentCount                        // Long commentCount
+                userEntity,
+                period,
+                1L, // 임시 순위, 나중에 재정렬
+                score,
+                reviewScoreSum,
+                likeCount,
+                commentCount
             );
             powerUsers.add(powerUser);
         }
 
+        // 점수 기준으로 정렬하고 순위 재할당
+        powerUsers.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
+        for (int i = 0; i < powerUsers.size(); i++) {
+            powerUsers.get(i).updateRank((long) (i + 1));
+        }
+
         return powerUsers;
     }
-
 
     @Override
     @Transactional
@@ -112,9 +131,8 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             .fetch();
 
         for (int i = 0; i < powerUsers.size(); i++) {
-            powerUsers.get(i).setRank((long) (i + 1));
+            powerUsers.get(i).updateRank((long) (i + 1));
         }
-
 
         // 배치 업데이트
         batchUpsertPowerUsers(powerUsers);
@@ -155,7 +173,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
         for (int i = 0; i < powerUsers.size(); i++) {
             entityManager.merge(powerUsers.get(i));
 
-            if (i % batchSize == 0 && i > 0) {
+            if ((i + 1) % batchSize == 0) {
                 entityManager.flush();
                 entityManager.clear();
             }
@@ -175,7 +193,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             .join(powerUser.user, user).fetchJoin()
             .where(powerUser.period.eq(period));
 
-        // 커서 기반 필터링 (순위 기준)
+        // 커서 기반 필터링 ( 순위 기준)
         if (cursor != null && !cursor.isEmpty()) {
             try {
                 Long cursorRank = Long.parseLong(cursor);
@@ -189,7 +207,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             }
         }
 
-        // after 시간 기준 필터링 (추가 정렬 조건)
+        // after 시간 기준 필터링 ( 추가 정렬 조건 )
         if (after != null && !after.isEmpty()) {
             try {
                 Instant afterTime = Instant.parse(after);
@@ -211,5 +229,35 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
         }
 
         return query.limit(limit).fetch();
+    }
+
+    /**
+     * 기간별 좋아요 수 계산 표현식
+     */
+    private NumberExpression<Long> getLikeCountExpression(
+        QReviewLike reviewLike, Instant startDate, Instant endDate) {
+
+        if (startDate != null && endDate != null) {
+            // 기간 내 좋아요만 카운트
+            return reviewLike.id.countDistinct();
+        } else {
+            // ALL_TIME의 경우 전체 좋아요 수
+            return reviewLike.id.countDistinct();
+        }
+    }
+
+    /**
+     * 기간별 댓글 수 계산 표현식
+     */
+    private NumberExpression<Long> getCommentCountExpression(
+        QComment comment, Instant startDate, Instant endDate) {
+
+        if (startDate != null && endDate != null) {
+            // 기간 내 댓글만 카운트
+            return comment.id.countDistinct();
+        } else {
+            // ALL_TIME의 경우 전체 댓글 수
+            return comment.id.countDistinct();
+        }
     }
 }

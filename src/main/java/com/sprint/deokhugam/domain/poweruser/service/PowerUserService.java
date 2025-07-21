@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -19,32 +20,52 @@ public class PowerUserService {
 
     private final PowerUserRepository powerUserRepository;
 
+    private static final double REVIEW_SCORE_WEIGHT = 0.5;
+    private static final double LIKE_COUNT_WEIGHT = 0.2;
+    private static final double COMMENT_COUNT_WEIGHT = 0.3;
+
     /**
      * 활동 점수 계산
      * 점수 = ( 리뷰 인기 점수 * 0.5 ) + ( 좋아요 수 * 0.2 ) + ( 댓글 수 * 0.3 )
      * */
     public Double calculateActivityScore(Double reviewScoreSum, Long likeCount, Long commentCount) {
-        return (reviewScoreSum * 0.5) + (likeCount * 0.2) + (commentCount * 0.3);
+        return (reviewScoreSum * REVIEW_SCORE_WEIGHT) + (likeCount * LIKE_COUNT_WEIGHT) + (commentCount * COMMENT_COUNT_WEIGHT);
     }
 
     /**
      * 기간별 파워 유저 데이터 저장
      * */
-    public void  savePowerUsers(List<PowerUser> powerUsers) {
-        // 기존 데이터 삭제 후 새로운 데이터 저장
+    public void savePowerUsers(List<PowerUser> powerUsers) {
         if (!powerUsers.isEmpty()) {
             PeriodType period = powerUsers.get(0).getPeriod();
-            powerUserRepository.deleteByPeriod(period);
 
             // 순위 설정
             for (int i = 0; i < powerUsers.size(); i++) {
-                powerUsers.get(i).setRank((long) (i + 1));
+                powerUsers.get(i).updateRank((long) (i + 1));
             }
 
             powerUserRepository.saveAll(powerUsers);
             log.info("파워 유저 데이터 저장 완료: {} 기간, {} 명", period, powerUsers.size());
         }
     }
+
+    /**
+     * 기간별 파워 유저 데이터 저장 (기존 데이터 삭제 후)
+     */
+    @Transactional
+    public void replacePowerUsers(List<PowerUser> powerUsers) {
+        if (!powerUsers.isEmpty()) {
+            PeriodType period = powerUsers.get(0).getPeriod();
+
+            // 기존 데이터 삭제
+            powerUserRepository.deleteByPeriod(period);
+            log.debug("기존 {} 파워 유저 데이터 삭제 완료", period);
+
+            // 새 데이터 저장
+            savePowerUsers(powerUsers);
+        }
+    }
+
     /**
      * 기간별 파워 유저 조회 ( 상위 10 명 )
      * */

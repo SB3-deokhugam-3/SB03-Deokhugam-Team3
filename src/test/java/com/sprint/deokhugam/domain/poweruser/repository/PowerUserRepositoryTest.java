@@ -1,11 +1,9 @@
-package com.sprint.deokhugam.domain.poweruser.repositroy;
+package com.sprint.deokhugam.domain.poweruser.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
-import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
-import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import com.sprint.deokhugam.global.enums.PeriodType;

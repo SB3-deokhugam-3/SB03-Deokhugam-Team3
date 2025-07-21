@@ -76,11 +76,29 @@ public class PowerUserServiceTest {
     void savePowerUsers_정상_저장() {
         // given
         List<PowerUser> powerUsers = createTestPowerUsers(3, PeriodType.DAILY);
-        willDoNothing().given(powerUserRepository).deleteByPeriod(any(PeriodType.class));
         given(powerUserRepository.saveAll(any(List.class))).willReturn(powerUsers);
 
         // when
         powerUserService.savePowerUsers(powerUsers);
+
+        // then
+        verify(powerUserRepository, never()).deleteByPeriod(any()); // deleteByPeriod는 호출되지 않아야 함
+        verify(powerUserRepository).saveAll(powerUsers);
+
+        for (int i = 0; i < powerUsers.size(); i++) {
+            assertThat(powerUsers.get(i).getRank()).isEqualTo(i + 1L);
+        }
+    }
+
+    @Test
+    void replacePowerUsers_정상_저장() {
+        // given
+        List<PowerUser> powerUsers = createTestPowerUsers(3, PeriodType.DAILY);
+        willDoNothing().given(powerUserRepository).deleteByPeriod(any(PeriodType.class));
+        given(powerUserRepository.saveAll(any(List.class))).willReturn(powerUsers);
+
+        // when
+        powerUserService.replacePowerUsers(powerUsers);
 
         // then
         verify(powerUserRepository).deleteByPeriod(PeriodType.DAILY);
@@ -239,7 +257,7 @@ public class PowerUserServiceTest {
 
         Instant testTime = Instant.now();
         ReflectionTestUtils.setField(powerUser, "createdAt", testTime);
-        powerUser.setRank(5L);
+        powerUser.updateRank(5L);
 
         // when
         given(powerUserRepository.findPowerUsersWithCursor(
@@ -269,21 +287,20 @@ public class PowerUserServiceTest {
         // given
         int largeSize = 1000;
         List<PowerUser> largePowerUsers = createTestPowerUsers(largeSize, PeriodType.ALL_TIME);
-
-        willDoNothing().given(powerUserRepository).deleteByPeriod(PeriodType.ALL_TIME);
         given(powerUserRepository.saveAll(any(List.class))).willReturn(largePowerUsers);
 
         // when
         powerUserService.savePowerUsers(largePowerUsers);
 
         // then
-        verify(powerUserRepository).deleteByPeriod(PeriodType.ALL_TIME);
+        verify(powerUserRepository, never()).deleteByPeriod(any()); // deleteByPeriod는 호출되지 않아야 함
         verify(powerUserRepository).saveAll(largePowerUsers);
 
         for (int i = 0; i < largeSize; i++) {
             assertThat(largePowerUsers.get(i).getRank()).isEqualTo(i + 1L);
         }
     }
+
 
     /**
      * 테스트용 PowerUser 리스트 생성
@@ -294,22 +311,28 @@ public class PowerUserServiceTest {
 
         for (int i = 0; i < count; i++) {
             User user = createTestUser();
-            ReflectionTestUtils.setField(user, "id", UUID.randomUUID()); // ✅ 추가
+            ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+
+            // 점수가 음수가 되지 않도록 수정
+            double score = Math.max(1.0, 100.0 - (i % 100) * 0.5); // 최소 1.0, 최대 100.0
+            double reviewScoreSum = Math.max(0.0, score * 0.8); // 점수의 80%
+            long likeCount = Math.max(1L, 50L - (i % 50)); // 최소 1, 최대 50
+            long commentCount = Math.max(1L, 30L - (i % 30)); // 최소 1, 최대 30
 
             PowerUser powerUser = PowerUser.builder()
                 .user(user)
                 .period(period)
                 .rank((long) (i + 1))
-                .score(100.0 - (i * 10))
-                .reviewScoreSum(80.0 - (i * 5))
-                .likeCount((long) (20 - i))
-                .commentCount((long) (15 - i))
+                .score(score)
+                .reviewScoreSum(reviewScoreSum)
+                .likeCount(likeCount)
+                .commentCount(commentCount)
                 .build();
 
             ReflectionTestUtils.setField(powerUser, "createdAt",
                 baseTime.minusSeconds(i * 60));
 
-            powerUser.setRank((long) (i + 1));
+            powerUser.updateRank((long) (i + 1));
             powerUsers.add(powerUser);
         }
 

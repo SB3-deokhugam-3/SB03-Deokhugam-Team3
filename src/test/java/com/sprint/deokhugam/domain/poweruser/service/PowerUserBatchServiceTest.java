@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.poweruser.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -10,6 +11,7 @@ import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,9 +44,9 @@ public class PowerUserBatchServiceTest {
         powerUserBatchService.calculateDailyPowerUsers();
 
         // then
-        verify(powerUserRepository).deleteByPeriod(PeriodType.DAILY);
         verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.DAILY), any(), any());
-        verify(powerUserService).savePowerUsers(mockPowerUsers);
+        verify(powerUserService).replacePowerUsers(mockPowerUsers); // replacePowerUsers 검증
+        // deleteByPeriod는 replacePowerUsers 내부에서 호출되므로 직접 검증하지 않음
     }
 
     @Test
@@ -59,7 +61,7 @@ public class PowerUserBatchServiceTest {
 
         // then
         verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.WEEKLY), any(), any());
-        verify(powerUserService).savePowerUsers(mockPowerUsers);
+        verify(powerUserService).replacePowerUsers(mockPowerUsers);
     }
 
     @Test
@@ -74,7 +76,7 @@ public class PowerUserBatchServiceTest {
 
         // then
         verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.MONTHLY), any(), any());
-        verify(powerUserService).savePowerUsers(mockPowerUsers);
+        verify(powerUserService).replacePowerUsers(mockPowerUsers);
     }
 
     @Test
@@ -89,7 +91,21 @@ public class PowerUserBatchServiceTest {
 
         // then
         verify(powerUserRepository).calculateAndCreatePowerUsers(PeriodType.ALL_TIME, null, null);
-        verify(powerUserService).savePowerUsers(mockPowerUsers);
+        verify(powerUserService).replacePowerUsers(mockPowerUsers);
     }
 
+    @Test
+    void calculateDailyPowerUsers_빈_결과_처리() {
+        // given
+        List<PowerUser> emptyList = Collections.emptyList();
+        when(powerUserRepository.calculateAndCreatePowerUsers(eq(PeriodType.DAILY), any(), any()))
+            .thenReturn(emptyList);
+
+        // when
+        powerUserBatchService.calculateDailyPowerUsers();
+
+        // then
+        verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.DAILY), any(), any());
+        verify(powerUserService, never()).replacePowerUsers(any()); // 빈 리스트일 때는 호출되지 않음
+    }
 }

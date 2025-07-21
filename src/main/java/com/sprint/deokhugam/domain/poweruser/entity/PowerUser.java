@@ -49,6 +49,15 @@ public class PowerUser extends BaseEntity {
     // QueryDSL Projections.constructor를 위한 생성자 추가
     public PowerUser(User user, PeriodType period, Long rank, Double score,
         Double reviewScoreSum, Long likeCount, Long commentCount) {
+        if (user == null || period == null) {
+            throw new IllegalArgumentException("user와 period는 필수입니다.");
+        }
+        if (rank == null || rank < 1) {
+            throw new IllegalArgumentException("순위는 1 이상이어야 합니다.");
+        }
+        if (score == null || score < 0) {
+            throw new IllegalArgumentException("점수는 0 이상이어야 합니다.");
+        }
         this.user = user;
         this.period = period;
         this.rank = rank;
@@ -58,7 +67,10 @@ public class PowerUser extends BaseEntity {
         this.commentCount = commentCount;
     }
 
-    public void setRank(Long rank) {
-        this.rank = rank;
+    public void updateRank(Long newRank) {
+        if (newRank == null || newRank < 1) {
+            throw new IllegalArgumentException("순위는 1 이상이어야 합니다.");
+        }
+        this.rank = newRank;
     }
 }
