@@ -23,22 +23,22 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public CursorPageResponse<NotificationDto> getNotifications(NotificationGetRequest request) {
         CursorPageResponse<Notification> notifications = notificationRepository.findByUserIdWithCursor(
-                request.userId(),
-                request.after(),
-                request.cursor(),
-                request.limit()
+            request.userId(),
+            request.after(),
+            request.cursor(),
+            request.limit()
         );
 
         List<NotificationDto> content = notifications.content().stream()
-                .map(notificationMapper::toDto)
-                .toList();
+            .map(notificationMapper::toDto)
+            .toList();
         return new CursorPageResponse<>(
-                content,
-                notifications.nextCursor(),
-                notifications.nextAfter(),
-                notifications.size(),
-                null,
-                notifications.hasNext()
+            content,
+            notifications.nextCursor(),
+            notifications.nextAfter(),
+            notifications.size(),
+            null,
+            notifications.hasNext()
         );
     }
 

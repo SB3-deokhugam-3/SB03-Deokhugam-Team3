@@ -27,26 +27,27 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<CursorPageResponse<NotificationDto>> getNotifications(
-            @Valid @ModelAttribute NotificationGetRequest request
+        @Valid @ModelAttribute NotificationGetRequest request
     ) {
         // after가 null이면 현재 시각으로 보정
         if (request.after() == null) {
             request = new NotificationGetRequest(
-                    request.userId(),
-                    request.direction(),
-                    request.cursor(),
-                    Instant.now(),
-                    request.limit()
+                request.userId(),
+                request.direction(),
+                request.cursor(),
+                Instant.now(),
+                request.limit()
             );
         }
 
-        CursorPageResponse<NotificationDto> response = notificationService.getNotifications(request);
+        CursorPageResponse<NotificationDto> response = notificationService.getNotifications(
+            request);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/read-all")
     public ResponseEntity<?> readAllNotifications(
-            @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
+        @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
 
         notificationService.markAllAsRead(userId);
         return ResponseEntity.noContent().build();

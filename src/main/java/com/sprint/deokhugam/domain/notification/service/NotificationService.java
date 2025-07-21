@@ -10,4 +10,5 @@ public interface NotificationService {
     CursorPageResponse<NotificationDto> getNotifications(NotificationGetRequest requestDto);
 
     void markAllAsRead(UUID userId);
+
 }
