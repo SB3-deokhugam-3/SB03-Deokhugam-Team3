@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.reviewlike.service;
 
+import com.sprint.deokhugam.domain.notification.service.NotificationService;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
@@ -8,6 +9,7 @@ import com.sprint.deokhugam.domain.reviewlike.entity.ReviewLike;
 import com.sprint.deokhugam.domain.reviewlike.mapper.ReviewLikeMapper;
 import com.sprint.deokhugam.domain.reviewlike.repository.ReviewLikeRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
+import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final ReviewLikeMapper reviewLikeMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     @Override
@@ -40,8 +43,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> {
                 log.warn("[reviewLike] 생성/삭제 실패 - 존재하지 않는 userId: {}", userId);
-                throw new IllegalArgumentException();
-//                throw new UserNotFoundException();
+//                    throw new IllegalArgumentException();
+                throw new UserNotFoundException(userId, "존재하지 않은 사용자입니다.");
             });
 
         boolean alreadyLiked = reviewLikeRepository.existsByReviewIdAndUserId(reviewId,
@@ -60,7 +63,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
             ReviewLike savedReviewLike = reviewLikeRepository.save(reviewLike);
             log.info("[reviewLike] 생성 완료 - reviewLikeId: {}, reviewId: {}, userId: {}, isLiked: {}",
                 savedReviewLike.getId(), reviewId, userId, true);
-
+            notificationService.create(user, review, user.getNickname() + "님이 나의 리뷰를 좋아합니다.",
+                false);
             review.increaseLikeCount();
 
             return reviewLikeMapper.toDto(savedReviewLike);
