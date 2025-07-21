@@ -35,6 +35,8 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
         BooleanBuilder whereCondition = new BooleanBuilder();
         BooleanBuilder cursorCondition = new BooleanBuilder();
 
+        whereCondition.and(review.book.isDeleted.eq(false));
+
         if (params.userId() != null || params.bookId() != null
             || params.keyword() != null) {
             whereCondition.and(filterByIdAndKeyword(review, params));
@@ -59,6 +61,8 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
         QReview review = QReview.review;
 
         BooleanBuilder whereCondition = new BooleanBuilder();
+
+        whereCondition.and(review.book.isDeleted.eq(false));
 
         if (params.userId() != null || params.bookId() != null || params.keyword() != null) {
             whereCondition.and(filterByIdAndKeyword(review, params));

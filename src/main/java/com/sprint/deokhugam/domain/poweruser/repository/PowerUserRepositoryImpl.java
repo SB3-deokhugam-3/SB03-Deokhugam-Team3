@@ -193,7 +193,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             .join(powerUser.user, user).fetchJoin()
             .where(powerUser.period.eq(period));
 
-        // 커서 기반 필터링 ( 순위 기준)
+        // 커서 기반 필터링 ( 순위 기준 )
         if (cursor != null && !cursor.isEmpty()) {
             try {
                 Long cursorRank = Long.parseLong(cursor);

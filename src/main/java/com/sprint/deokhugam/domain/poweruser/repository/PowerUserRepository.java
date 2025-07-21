@@ -51,5 +51,4 @@ public interface PowerUserRepository extends JpaRepository<PowerUser, UUID>, Pow
      *  기간별 삭제
      *  */
     void deleteByPeriod(PeriodType period);
-
 }

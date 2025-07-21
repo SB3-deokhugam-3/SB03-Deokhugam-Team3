@@ -37,5 +37,4 @@ public interface PowerUserRepositoryCustom {
      * 커서 기반 파워유저 조회
      */
     List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit, String cursor, String after);
-
 }
