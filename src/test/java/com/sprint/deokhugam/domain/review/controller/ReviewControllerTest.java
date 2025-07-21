@@ -272,7 +272,7 @@ class ReviewControllerTest {
         );
 
         //then
-        result.andExpect(status().is5xxServerError());
+        result.andExpect(status().isBadRequest());
     }
 
     @Test
