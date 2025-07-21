@@ -35,6 +35,9 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
         BooleanBuilder whereCondition = new BooleanBuilder();
         BooleanBuilder cursorCondition = new BooleanBuilder();
 
+        // 논리 삭제된 책의 리뷰는 가져오지 않음
+        whereCondition.and(review.book.isDeleted.eq(false));
+
         if (params.userId() != null || params.bookId() != null
             || params.keyword() != null) {
             whereCondition.and(filterByIdAndKeyword(review, params));
@@ -59,6 +62,9 @@ public class CustomReviewRepositoryImpl implements CustomReviewRepository {
         QReview review = QReview.review;
 
         BooleanBuilder whereCondition = new BooleanBuilder();
+
+        // 논리 삭제된 책의 리뷰는 가져오지 않음
+        whereCondition.and(review.book.isDeleted.eq(false));
 
         if (params.userId() != null || params.bookId() != null || params.keyword() != null) {
             whereCondition.and(filterByIdAndKeyword(review, params));
