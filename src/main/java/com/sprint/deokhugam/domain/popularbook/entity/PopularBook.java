@@ -2,8 +2,11 @@ package com.sprint.deokhugam.domain.popularbook.entity;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.global.base.BaseEntity;
+import com.sprint.deokhugam.global.period.PeriodType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -24,7 +27,8 @@ public class PopularBook extends BaseEntity {
 
     // ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')
     @Column(name = "period", length = 10, nullable = false)
-    private String period = "DAILY";
+    @Enumerated(EnumType.STRING)
+    private PeriodType period = PeriodType.DAILY;
 
     @Column(name = "rank", nullable = false)
     private Long rank = 0L;
@@ -43,4 +47,7 @@ public class PopularBook extends BaseEntity {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
+    public void updateRank(Long rank) {
+        this.rank = rank;
+    }
 }

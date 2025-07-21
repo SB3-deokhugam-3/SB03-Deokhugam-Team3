@@ -22,30 +22,26 @@ public enum PeriodType {
     WEEKLY {
         @Override
         public Instant getStartInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone)
-                .with(DayOfWeek.MONDAY);
+            LocalDate date = LocalDate.ofInstant(today, zone).minusDays(7);
             return date.atStartOfDay(zone).toInstant();
         }
 
         @Override
         public Instant getEndInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone)
-                .with(DayOfWeek.MONDAY).plusWeeks(1);
+            LocalDate date = LocalDate.ofInstant(today, zone).plusDays(1);
             return date.atStartOfDay(zone).toInstant();
         }
     },
     MONTHLY {
         @Override
         public Instant getStartInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone)
-                .withDayOfMonth(1);
+            LocalDate date = LocalDate.ofInstant(today, zone).minusMonths(1);
             return date.atStartOfDay(zone).toInstant();
         }
 
         @Override
         public Instant getEndInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone)
-                .withDayOfMonth(1).plusMonths(1);
+            LocalDate date = LocalDate.ofInstant(today, zone).plusDays(1);
             return date.atStartOfDay(zone).toInstant();
         }
     },
