@@ -835,14 +835,17 @@ class BookControllerTest {
         given(popularBookService.getPopularBooks(request)).willReturn(response);
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/books/popular?period=DAILY&direction=ASC&limit=10"));
+        ResultActions result = mockMvc.perform(get("/api/books/popular")
+            .param("period", "DAILY")
+            .param("direction", "ASC")
+            .param("limit", "3"));
 
         // then
         result.andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
             .andExpect(jsonPath("$.content.length()").value(3))
-            .andExpect(jsonPath("$.data[1].title").value("test book3"))
-            .andExpect(jsonPath("$.data[2].title").value("test book2"))
+            .andExpect(jsonPath("$.content[1].title").value("test book3"))
+            .andExpect(jsonPath("$.content[2].title").value("test book2"))
             .andExpect(jsonPath("$.totalElements").value(3))
             .andExpect(jsonPath("$.hasNext").value(false));
     }
