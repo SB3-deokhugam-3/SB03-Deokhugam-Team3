@@ -5,6 +5,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.comment.entity.QComment;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.entity.QPowerUser;
+import com.sprint.deokhugam.domain.poweruser.service.PowerUserService;
 import com.sprint.deokhugam.domain.review.entity.QReview;
 import com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike;
 import com.sprint.deokhugam.domain.user.entity.QUser;
@@ -96,7 +97,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             if (commentCount == null) commentCount = 0L;
 
             // 4. 최종 점수 계산
-            Double score = (reviewScoreSum * 0.5) + (likeCount * 0.2) + (commentCount * 0.3);
+            Double score = PowerUserService.calculateActivityScore(reviewScoreSum, likeCount, commentCount);
 
             PowerUser powerUser = new PowerUser(
                 userEntity,

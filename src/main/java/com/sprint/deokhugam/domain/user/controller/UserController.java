@@ -142,11 +142,6 @@ public class UserController {
         log.info("[UserController] 파워유저 목록 조회 요청: period: {}, direction: {}, limit: {}, cursor: {}, after: {}",
             period, direction, limit, cursor, after);
 
-        // 입력 검증
-        if (limit < 1 || limit > 100) {
-            throw new IllegalArgumentException("limit은 1 이상 100 이하여야 합니다.");
-        }
-
         PeriodType periodType = PeriodType.valueOf(period.toUpperCase());
         CursorPageResponse<PowerUserDto> response = powerUserService.getPowerUsersWithCursor(
             periodType, direction, limit, cursor, after);
@@ -155,6 +150,4 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-
-
 }

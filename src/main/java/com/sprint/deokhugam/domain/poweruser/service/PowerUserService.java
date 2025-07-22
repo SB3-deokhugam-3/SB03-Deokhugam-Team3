@@ -20,16 +20,22 @@ public class PowerUserService {
 
     private final PowerUserRepository powerUserRepository;
 
-    private static final double REVIEW_SCORE_WEIGHT = 0.5;
-    private static final double LIKE_COUNT_WEIGHT = 0.2;
-    private static final double COMMENT_COUNT_WEIGHT = 0.3;
+    public static final double REVIEW_SCORE_WEIGHT = 0.5;
+    public static final double LIKE_COUNT_WEIGHT = 0.2;
+    public static final double COMMENT_COUNT_WEIGHT = 0.3;
 
     /**
      * 활동 점수 계산
      * 점수 = ( 리뷰 인기 점수 * 0.5 ) + ( 좋아요 수 * 0.2 ) + ( 댓글 수 * 0.3 )
      * */
-    public Double calculateActivityScore(Double reviewScoreSum, Long likeCount, Long commentCount) {
-        return (reviewScoreSum * REVIEW_SCORE_WEIGHT) + (likeCount * LIKE_COUNT_WEIGHT) + (commentCount * COMMENT_COUNT_WEIGHT);
+    public static Double calculateActivityScore(Double reviewScoreSum, Long likeCount, Long commentCount) {
+        if (reviewScoreSum == null) reviewScoreSum = 0.0;
+        if (likeCount == null) likeCount = 0L;
+        if (commentCount == null) commentCount = 0L;
+
+        return (reviewScoreSum * REVIEW_SCORE_WEIGHT) +
+            (likeCount * LIKE_COUNT_WEIGHT) +
+            (commentCount * COMMENT_COUNT_WEIGHT);
     }
 
     /**
@@ -80,6 +86,9 @@ public class PowerUserService {
     public CursorPageResponse<PowerUserDto> getPowerUsersWithCursor(
         PeriodType period, String direction, int size, String cursor, String after) {
 
+        // 입력값 검증
+        validateGetPowerUserInput(size, direction, period);
+
         // 커서 기반 조회 (size + 1로 다음 페이지 존재 여부 확인)
         List<PowerUser> powerUsers = powerUserRepository.findPowerUsersWithCursor(
             period, direction, size + 1, cursor, after);
@@ -115,6 +124,23 @@ public class PowerUserService {
             totalElements,
             hasNext
         );
+    }
+
+    /**
+     * 파워 유저 조회 입력값 검증
+     * */
+    private void validateGetPowerUserInput(int limit, String direction, PeriodType period) {
+        if (limit < 1 || limit > 100) {
+            throw new IllegalArgumentException("limit은 1 이상 100 이하여야 합니다.");
+        }
+
+        if (!direction.equalsIgnoreCase("ASC") && !direction.equalsIgnoreCase("DESC")) {
+            throw new IllegalArgumentException("direction은 ASC 또는 DESC여야 합니다.");
+        }
+
+        if (period == null) {
+            throw new IllegalArgumentException("period는 필수값입니다.");
+        }
     }
 
     /**

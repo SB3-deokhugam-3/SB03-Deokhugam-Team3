@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.poweruser.scheduler;
 
-import com.sprint.deokhugam.domain.poweruser.service.PowerUserBatchService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.time.DayOfWeek;
@@ -8,6 +7,10 @@ import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,7 +21,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PowerUserScheduler {
 
-    private final PowerUserBatchService powerUserBatchService;
+    private final JobLauncher jobLauncher;
+    private final Job powerUserJob;
     private final MeterRegistry meterRegistry;
 
     // 중복 실행 방지를 위한 플래그
@@ -27,8 +31,7 @@ public class PowerUserScheduler {
     /**
      * 매일 새벽 2시에 파워 유저 데이터 계산
      */
-//    @Scheduled(cron = "0 * * * * *")
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 0/2 * * * *")
     public void schedulePowerUserCalculation() {
         // 중복 실행 체크
         if (!isRunning.compareAndSet(false, true)) {
@@ -46,7 +49,7 @@ public class PowerUserScheduler {
 
             // 1. 일간 파워 유저 계산
             try {
-                powerUserBatchService.calculateDailyPowerUsers();
+                runBatchJob("DAILY");
                 successCount++;
                 log.info("일간 파워 유저 계산 완료");
             } catch (Exception e) {
@@ -58,7 +61,7 @@ public class PowerUserScheduler {
             // 2. 주간 파워 유저 계산 ( 일요일에만 )
             if (isWeeklyCalculationDay()) {
                 try {
-                    powerUserBatchService.calculateWeeklyPowerUsers();
+                    runBatchJob("WEEKLY");
                     successCount++;
                     log.info("주간 파워 유저 계산 완료");
                 } catch (Exception e) {
@@ -71,7 +74,7 @@ public class PowerUserScheduler {
             // 3. 월간 파워 유저 계산 ( 매월 1일에만 )
             if (isMonthlyCalculationDay()) {
                 try {
-                    powerUserBatchService.calculateMonthlyPowerUsers();
+                    runBatchJob("MONTHLY");
                     successCount++;
                     log.info("월간 파워 유저 계산 완료");
                 } catch (Exception e) {
@@ -83,7 +86,7 @@ public class PowerUserScheduler {
 
             // 4. 역대 파워 유저 계산 ( 매일 )
             try {
-                powerUserBatchService.calculateAllTimePowerUsers();
+                runBatchJob("ALL_TIME");
                 successCount++;
                 log.info("역대 파워 유저 계산 완료");
             } catch (Exception e) {
@@ -113,6 +116,18 @@ public class PowerUserScheduler {
     }
 
     /**
+     * 배치 Job 실행
+     */
+    private void runBatchJob(String period) throws Exception {
+        JobParameters jobParameters = new JobParametersBuilder()
+            .addString("period", period)
+            .addLong("timestamp", System.currentTimeMillis()) // 중복 실행 방지용
+            .toJobParameters();
+
+        jobLauncher.run(powerUserJob, jobParameters);
+    }
+
+    /**
      * 주간 계산 실행일인지 확인 ( 일요일 )
      */
     private boolean isWeeklyCalculationDay() {
@@ -124,12 +139,5 @@ public class PowerUserScheduler {
      */
     private boolean isMonthlyCalculationDay() {
         return LocalDate.now().getDayOfMonth() == 1;
-    }
-
-    /**
-     * 현재 배치 작업 실행 상태 확인
-     */
-    public boolean isBatchRunning() {
-        return isRunning.get();
     }
 }

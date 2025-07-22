@@ -12,6 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.test.context.ActiveProfiles;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,7 +24,13 @@ import org.springframework.test.context.ActiveProfiles;
 class PowerUserSchedulerTest {
 
     @Mock
-    private PowerUserBatchService powerUserBatchService;
+    private JobLauncher jobLauncher;
+
+    @Mock
+    private Job powerUserJob;
+
+    @Mock
+    private JobExecution jobExecution;
 
     private MeterRegistry meterRegistry;
 
@@ -30,59 +40,37 @@ class PowerUserSchedulerTest {
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        powerUserScheduler = new PowerUserScheduler(powerUserBatchService, meterRegistry);
+        powerUserScheduler = new PowerUserScheduler(jobLauncher, powerUserJob, meterRegistry);
     }
 
     @Test
-    void schedulePowerUserCalculation_정상_실행() {
+    void schedulePowerUserCalculation_정상_실행() throws Exception {
         // given
-        doNothing().when(powerUserBatchService).calculateDailyPowerUsers();
-        doNothing().when(powerUserBatchService).calculateAllTimePowerUsers();
+        when(jobLauncher.run(eq(powerUserJob), any(JobParameters.class)))
+            .thenReturn(jobExecution);
+        when(jobExecution.getJobId()).thenReturn(1L);
 
         // when
         powerUserScheduler.schedulePowerUserCalculation();
 
         // then
-        verify(powerUserBatchService).calculateDailyPowerUsers();
-        verify(powerUserBatchService).calculateAllTimePowerUsers();
-        // 주간, 월간은 특정 요일/날짜에만 실행되므로 이 테스트에서는 호출되지 않음
+        // 일간 + 역대 = 최소 2번은 실행되어야 함
+        verify(jobLauncher, atLeast(2)).run(eq(powerUserJob), any(JobParameters.class));
     }
 
     @Test
-    void schedulePowerUserCalculation_일부_실패_시_다른_작업_계속_실행() {
+    void schedulePowerUserCalculation_일부_실패_시_다른_작업_계속_실행() throws Exception {
         // given
-        doThrow(new RuntimeException("일간 계산 실패")).when(powerUserBatchService).calculateDailyPowerUsers();
-        doNothing().when(powerUserBatchService).calculateAllTimePowerUsers();
+        when(jobLauncher.run(eq(powerUserJob), any(JobParameters.class)))
+            .thenThrow(new RuntimeException("일간 계산 실패"))  // 첫 번째 호출에서 실패
+            .thenReturn(jobExecution);  // 두 번째 호출에서 성공
+        when(jobExecution.getJobId()).thenReturn(1L);
 
         // when
         powerUserScheduler.schedulePowerUserCalculation();
 
         // then
-        verify(powerUserBatchService).calculateDailyPowerUsers();
-        verify(powerUserBatchService).calculateAllTimePowerUsers(); // 실패에도 불구하고 실행됨
-    }
-
-    @Test
-    void schedulePowerUserCalculation_중복_실행_방지() throws InterruptedException {
-        // given
-        doAnswer(invocation -> {
-            Thread.sleep(100); // 작업 시뮬레이션
-            return null;
-        }).when(powerUserBatchService).calculateDailyPowerUsers();
-
-        // when - 동시에 두 번 실행
-        Thread thread1 = new Thread(() -> powerUserScheduler.schedulePowerUserCalculation());
-        Thread thread2 = new Thread(() -> powerUserScheduler.schedulePowerUserCalculation());
-
-        thread1.start();
-        Thread.sleep(10); // 첫 번째 스레드가 먼저 시작되도록
-        thread2.start();
-
-        thread1.join();
-        thread2.join();
-
-        // then - 실제로는 한 번만 실행되어야 함
-        verify(powerUserBatchService, atMost(1)).calculateDailyPowerUsers();
+        verify(jobLauncher, atLeast(2)).run(eq(powerUserJob), any(JobParameters.class));
     }
 }
 

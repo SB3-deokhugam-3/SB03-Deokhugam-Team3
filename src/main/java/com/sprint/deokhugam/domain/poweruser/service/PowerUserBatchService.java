@@ -25,7 +25,7 @@ public class PowerUserBatchService {
     /**
      * 일간 파워 유저 계산 및 저장
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public void calculateDailyPowerUsers() {
         log.info("일간 파워 유저 계산 시작");
 
