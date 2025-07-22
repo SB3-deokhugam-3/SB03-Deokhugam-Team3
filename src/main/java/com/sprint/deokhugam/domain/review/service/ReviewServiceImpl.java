@@ -178,12 +178,6 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.toDto(review, s3Storage);
     }
 
-    /* 배치에서 사용 */
-    @Override
-    public List<Review> findPopularReviewCandidates() {
-        return reviewRepository.findByCommentCountAndLikeCountWithSorting();
-    }
-
     // 검증 메서드
     private Book findByBookId(UUID bookId) {
         return bookRepository.findById(bookId)

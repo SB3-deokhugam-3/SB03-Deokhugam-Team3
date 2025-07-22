@@ -24,10 +24,10 @@ public class PopularReviewService {
     private final PopularReviewRepository popularReviewRepository;
 
     /* 배치에서 사용 - 오늘 이미 실행한 배치인지 검증 */
-    public void validateTodayJobNotDuplicated()
+    public void validateJobNotDuplicated(Instant currentTime)
         throws DuplicateRequestException {
         ZoneId zoneId = ZoneId.systemDefault(); // 예: Asia/Seoul
-        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        ZonedDateTime now = currentTime.atZone(zoneId);
 
         // 오늘 시작 시간(00:00)
         ZonedDateTime startOfDayZdt = now.toLocalDate().atStartOfDay(zoneId);
@@ -45,7 +45,7 @@ public class PopularReviewService {
 
     /* 배치에서 사용 */
     @Transactional
-    public void savePopularReviewsByPeriod(List<Review> totalReviews,
+    public List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
         PeriodType period, StepContribution contribution) {
         List<PopularReview> popularReviews = new ArrayList<>();
         List<Review> slicedReview;
@@ -111,15 +111,15 @@ public class PopularReviewService {
             rank++;
         }
 
-        System.out.println("createMonthlyPopularReviews.size= " + popularReviews.size());
-
         for (PopularReview popularReview : popularReviews) {
             System.out.println(period + "->popularReview.toString() = " + popularReview.toString());
         }
 
         popularReviewRepository.saveAll(popularReviews);
-        // batch meda 테이블에 결과 저장
+//         batch meda 테이블에 결과 저장
         contribution.incrementWriteCount(popularReviews.size());
+
+        return popularReviews;
     }
 
 

@@ -2,8 +2,9 @@ package com.sprint.deokhugam.global.batch;
 
 import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.review.entity.Review;
-import com.sprint.deokhugam.domain.review.service.ReviewService;
+import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.global.enums.PeriodType;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +23,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Slf4j
 @RequiredArgsConstructor
 @Configuration
-public class ReviewJobConfig {
+public class ReviewBatch {
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final BatchListener listener;
 
     private final PopularReviewService popularReviewService;
-    private final ReviewService reviewService;
+    private final ReviewRepository reviewRepository;
 
     private final String REVIEW_BATCH_NAME = "POPULAR_REVIEW_RANKING";
 
@@ -55,9 +56,9 @@ public class ReviewJobConfig {
 
             try {
                 /* 오늘 이미 실행한 배치인지 검증 */
-                popularReviewService.validateTodayJobNotDuplicated();
+                popularReviewService.validateJobNotDuplicated(Instant.now());
 
-                List<Review> totalReviews = reviewService.findPopularReviewCandidates();
+                List<Review> totalReviews = reviewRepository.findAllByCommentCountAndLikeCountWithSorting();
 
                 popularReviewService.savePopularReviewsByPeriod(totalReviews,
                     PeriodType.ALL_TIME, stepContribution);
