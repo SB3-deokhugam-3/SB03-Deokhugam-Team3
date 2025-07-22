@@ -24,7 +24,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
@@ -312,5 +311,16 @@ public class CustomReviewRepositoryTest {
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void 코멘트_또는_좋아요가_있는_리뷰중에_점수를_계산해서_DESC_정렬로_가져온다() {
+        // when
+        List<Review> result = reviewRepository.findAllByCommentCountAndLikeCountWithSorting();
+
+        // then
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0).getContent()).isEqualTo("리뷰2"); // 가장 높은 점수 리뷰
+        assertThat(result.get(2).getContent()).isEqualTo("리뷰1"); // 가장 낮은 점수 리뷰
     }
 }
