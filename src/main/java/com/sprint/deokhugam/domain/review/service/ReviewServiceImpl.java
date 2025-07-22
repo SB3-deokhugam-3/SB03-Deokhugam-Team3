@@ -25,7 +25,6 @@ import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -177,6 +176,12 @@ public class ReviewServiceImpl implements ReviewService {
             userId, request.content(), request.rating());
 
         return reviewMapper.toDto(review, s3Storage);
+    }
+
+    /* 배치에서 사용 */
+    @Override
+    public List<Review> findPopularReviewCandidates() {
+        return reviewRepository.findByCommentCountAndLikeCountWithSorting();
     }
 
     // 검증 메서드
