@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.popularbook.service;
 
-import static com.sprint.deokhugam.fixture.BookFixture.createBookEntity;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,17 +10,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.popularbook.dto.data.PopularBookDto;
 import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest;
-import com.sprint.deokhugam.domain.popularbook.entity.PopularBook;
 import com.sprint.deokhugam.domain.popularbook.exception.InvalidSortDirectionException;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.period.PeriodType;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +27,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PopularBookService 단위 테스트")
@@ -52,43 +47,6 @@ class PopularBookServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        Book book1 = createBookEntity("test book1", "test author1", "description1",
-            "test publisher", LocalDate.of(2022, 2, 2), "6789123450432",
-            "test.jpg", 4.5, 10L);
-        Book book2 = createBookEntity("test book2", "test author2", "description2",
-            "test publisher", LocalDate.of(2023, 3, 3), "8413245600321", null,
-            3.5, 5L);
-        Book book3 = createBookEntity("test book3", "test author3", "description3",
-            "test publisher", LocalDate.of(2024, 4, 4), "3567134565431", null,
-            4.0, 7L);
-
-        PopularBook pb1 = PopularBook.builder()
-            .book(book1)
-            .period(PeriodType.DAILY)
-            .rank(1L)
-            .score(4.4)
-            .reviewCount(5L)
-            .rating(4.0)
-            .build();
-
-        PopularBook pb2 = PopularBook.builder()
-            .book(book2)
-            .period(PeriodType.DAILY)
-            .rank(3L)
-            .score(3.6)
-            .reviewCount(2L)
-            .rating(4.0)
-            .build();
-
-        PopularBook pb3 = PopularBook.builder()
-            .book(book3)
-            .period(PeriodType.DAILY)
-            .rank(2L)
-            .score(4.0)
-            .reviewCount(4L)
-            .rating(4.0)
-            .build();
-
         UUID book1Id = UUID.randomUUID();
         UUID book2Id = UUID.randomUUID();
         UUID book3Id = UUID.randomUUID();
@@ -96,19 +54,12 @@ class PopularBookServiceImplTest {
         UUID pb2Id = UUID.randomUUID();
         UUID pb3Id = UUID.randomUUID();
 
-        ReflectionTestUtils.setField(book1, "id", book1Id);
-        ReflectionTestUtils.setField(book2, "id", book2Id);
-        ReflectionTestUtils.setField(book3, "id", book3Id);
-        ReflectionTestUtils.setField(pb1, "id", pb1Id);
-        ReflectionTestUtils.setField(pb2, "id", pb2Id);
-        ReflectionTestUtils.setField(pb3, "id", pb3Id);
-
         dto1 = new PopularBookDto(pb1Id, book1Id, "test book1", "test author1",
             "test.jpg", PeriodType.DAILY, 1L,
             4.4, 5L, 4.0, Instant.now());
-        dto2 = new PopularBookDto(pb1Id, book1Id, "test book2", "test author2", null,
+        dto2 = new PopularBookDto(pb2Id, book2Id, "test book2", "test author2", null,
             PeriodType.DAILY, 3L, 3.6, 2L, 4.0, Instant.now());
-        dto3 = new PopularBookDto(pb1Id, book1Id, "test book3", "test author3", null,
+        dto3 = new PopularBookDto(pb3Id, book3Id, "test book3", "test author3", null,
             PeriodType.DAILY, 2L, 4.0, 4L, 4.0, Instant.now());
     }
 
