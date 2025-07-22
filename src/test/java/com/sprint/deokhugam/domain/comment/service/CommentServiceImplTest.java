@@ -374,7 +374,6 @@ public class CommentServiceImplTest {
     }
 
     @Test
-    @DisplayName("존재하지_않는_댓글_논리삭제시_예외가_발생한다")
     void 존재하지_않는_댓글_논리삭제시_예외가_발생한다() {
         // Given
         UUID nonExistentId = UUID.randomUUID();
@@ -390,7 +389,6 @@ public class CommentServiceImplTest {
     }
 
     @Test
-    @DisplayName("권한없는_사용자가_댓글_논리삭제시_예외가_발생한다")
     void 권한없는_사용자가_댓글_논리삭제시_예외가_발생한다() {
         // Given
         UUID reviewId = UUID.randomUUID();
@@ -407,7 +405,6 @@ public class CommentServiceImplTest {
     }
 
     @Test
-    @DisplayName("논리삭제된_댓글을_물리삭제하면_DB에서_완전히_삭제된다")
     void 논리삭제된_댓글을_물리삭제하면_DB에서_완전히_삭제된다() {
         // Given
         UUID reviewId = UUID.randomUUID();
@@ -424,7 +421,6 @@ public class CommentServiceImplTest {
     }
 
     @Test
-    @DisplayName("존재하지_않는_댓글_물리삭제시_예외가_발생한다")
     void 존재하지_않는_댓글_물리삭제시_예외가_발생한다() {
         // Given
         UUID nonExistentId = UUID.randomUUID();
@@ -440,7 +436,6 @@ public class CommentServiceImplTest {
     }
 
     @Test
-    @DisplayName("논리삭제되지_않은_댓글_물리삭제시_예외가_발생한다")
     void 논리삭제되지_않은_댓글_물리삭제시_예외가_발생한다() {
         // Given
         given(commentRepository.findByIdIncludingDeleted(comment1.getId()))
@@ -455,7 +450,6 @@ public class CommentServiceImplTest {
     }
 
     @Test
-    @DisplayName("권한없는_사용자가_댓글_물리삭제시_예외가_발생한다")
     void 권한없는_사용자가_댓글_물리삭제시_예외가_발생한다() {
         // Given
         UUID unauthorizedUserId = UUID.randomUUID();
