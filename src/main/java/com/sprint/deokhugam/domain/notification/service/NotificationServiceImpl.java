@@ -75,9 +75,6 @@ public class NotificationServiceImpl implements NotificationService {
             .orElseThrow(() -> new InvalidNotificationRequestException("id", "해당 알림은 존재하지 않습니다."));
 
         notification.update();
-
-        notificationMapper.toDto(notification);
-
     }
 
 }
