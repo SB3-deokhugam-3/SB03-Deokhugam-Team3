@@ -9,7 +9,7 @@ public record PopularBookGetRequest(
     PeriodType period,
     String direction,
     String cursor,
-    Instant after,
+    String after,
     Integer limit
 ) {
     public PopularBookGetRequest {
