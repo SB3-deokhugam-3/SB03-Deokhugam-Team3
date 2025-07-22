@@ -394,7 +394,6 @@ class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("댓글을_논리삭제하면_204가_반환된다")
     void 댓글을_논리삭제하면_204가_반환된다() throws Exception {
         // given
         UUID commentId = UUID.randomUUID();
@@ -411,7 +410,6 @@ class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("논리삭제된_댓글을_물리삭제하면_204가_반환된다")
     void 논리삭제된_댓글을_물리삭제하면_204가_반환된다() throws Exception {
         // Given
         UUID commentId = UUID.randomUUID();
@@ -429,7 +427,6 @@ class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("삭제시_요청자_ID가_없으면_400이_반환된다")
     void 삭제시_요청자_ID가_없으면_400이_반환된다() throws Exception {
         // given
         UUID commentId = UUID.randomUUID();
@@ -443,7 +440,6 @@ class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("물리삭제시_요청자_ID가_없으면_400이_반환된다")
     void 물리삭제시_요청자_ID가_없으면_400이_반환된다() throws Exception {
         // given
         UUID commentId = UUID.randomUUID();
