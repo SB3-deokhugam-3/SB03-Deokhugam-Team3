@@ -53,7 +53,6 @@ public class ReviewBatch {
 
     protected Tasklet reviewTasklet() {
         return (stepContribution, chunkContext) -> {
-
             try {
                 /* 오늘 이미 실행한 배치인지 검증 */
                 popularReviewService.validateJobNotDuplicated(Instant.now());

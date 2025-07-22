@@ -21,12 +21,12 @@ public class BatchListener implements StepExecutionListener {
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = stepExecution.getExitStatus();
         if (status.equals(ExitStatus.COMPLETED)) {
-            log.info("✅ Step '{}' 완료 - Read: {}, Write: {}",
+            log.info("Step '{}' 완료 - Read: {}, Write: {}",
                 stepExecution.getStepName(),
                 stepExecution.getReadCount(),
                 stepExecution.getWriteCount());
         } else {
-            log.warn("❌ Step '{}' 실패 - Status: {}",
+            log.warn("Step '{}' 실패 - Status: {}",
                 stepExecution.getStepName(), status.getExitCode());
         }
         return status;

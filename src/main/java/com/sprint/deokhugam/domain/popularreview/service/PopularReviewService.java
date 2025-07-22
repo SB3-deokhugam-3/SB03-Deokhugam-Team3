@@ -54,19 +54,6 @@ public class PopularReviewService {
         Instant endDate = Instant.now();
         Instant startDate;
 
-        // 테스트코드에서 쓸것임
-//        // create an Instant object
-////        Instant instant
-////            = Instant.parse(&quot;2018-12-30T19:34:50.63Z&quot;);
-////
-////        // subtract 20 DAYS to Instant
-////        Instant value
-////            = instant.minus(20, ChronoUnit.DAYS);
-////
-////        // print result
-////        System.out.println(&quot;Instant after subtracting DAYS: &quot;
-////        + value);
-
         switch (period) {
             case DAILY:
                 startDate = ZonedDateTime.ofInstant(endDate, ZoneId.systemDefault())
@@ -110,13 +97,8 @@ public class PopularReviewService {
             popularReviews.add(popularReview);
             rank++;
         }
-
-        for (PopularReview popularReview : popularReviews) {
-            System.out.println(period + "->popularReview.toString() = " + popularReview.toString());
-        }
-
         popularReviewRepository.saveAll(popularReviews);
-//         batch meda 테이블에 결과 저장
+        //batch meda 테이블에 결과 저장
         contribution.incrementWriteCount(popularReviews.size());
 
         return popularReviews;
