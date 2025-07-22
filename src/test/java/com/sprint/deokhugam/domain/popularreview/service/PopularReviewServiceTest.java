@@ -8,22 +8,16 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
-import com.sprint.deokhugam.domain.book.repository.BookRepository;
-import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
-import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
-import com.sprint.deokhugam.domain.reviewlike.repository.ReviewLikeRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
-import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sun.jdi.request.DuplicateRequestException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,59 +36,10 @@ public class PopularReviewServiceTest {
     private PopularReviewRepository popularReviewRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private BookRepository bookRepository;
-
-    @Mock
-    private ReviewLikeRepository reviewLikeRepository;
-
-    @Mock
-    private ReviewMapper reviewMapper;
-
-    @Mock
-    private S3Storage s3Storage;
-
-    @Mock
     private StepContribution contribution;
 
     @InjectMocks
     private PopularReviewService popularReviewService;
-    private List<Review> mockReviews;
-
-    @BeforeEach
-    void 초기_설정() {
-
-//
-//        Review review2 = Review.builder()
-//            .content("리뷰2")
-//            .rating(0)
-//            .likeCount(382L)
-//            .commentCount(2L)
-//            .isDeleted(false)
-//            .user(user)
-//            .book(book)
-//            .build();
-//        ReflectionTestUtils.setField(review2, "id",
-//            UUID.fromString("044458f4-72a3-49aa-96f8-1a5160f444e2"));
-//        ReflectionTestUtils.setField(review2, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
-//
-//        Review review3 = Review.builder()
-//            .content("리뷰3")
-//            .rating(0)
-//            .likeCount(77L)
-//            .commentCount(6L)
-//            .isDeleted(false)
-//            .user(user)
-//            .book(book)
-//            .build();
-//        ReflectionTestUtils.setField(review3, "id",
-//            UUID.fromString("b99bc315-2400-4ff6-8891-9a42f4c31bc4"));
-//        ReflectionTestUtils.setField(review3, "createdAt", Instant.parse("2025-01-04T00:00:00Z"));
-//
-//        mockReviews = List.of(review1, review2, review3);
-    }
 
     private PopularReview createPopularReview(Review review, String period, Long rank,
         double score) {
