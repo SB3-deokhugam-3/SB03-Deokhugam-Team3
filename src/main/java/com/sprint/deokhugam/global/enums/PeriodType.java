@@ -1,6 +1,5 @@
-package com.sprint.deokhugam.global.period;
+package com.sprint.deokhugam.global.enums;
 
-import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;

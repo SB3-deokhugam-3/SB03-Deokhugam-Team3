@@ -16,7 +16,7 @@ import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest
 import com.sprint.deokhugam.domain.popularbook.exception.InvalidSortDirectionException;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

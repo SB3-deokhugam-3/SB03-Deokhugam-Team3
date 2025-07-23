@@ -36,7 +36,7 @@ import com.sprint.deokhugam.domain.popularbook.dto.data.PopularBookDto;
 import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest;
 import com.sprint.deokhugam.domain.popularbook.service.PopularBookServiceImpl;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;

@@ -1,7 +1,6 @@
 package com.sprint.deokhugam.domain.popularbook.dto.request;
 
-import com.sprint.deokhugam.global.period.PeriodType;
-import java.time.Instant;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import lombok.Builder;
 
 @Builder

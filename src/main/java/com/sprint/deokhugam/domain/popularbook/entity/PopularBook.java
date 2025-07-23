@@ -2,7 +2,7 @@ package com.sprint.deokhugam.domain.popularbook.entity;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.global.base.BaseEntity;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,7 +1,7 @@
 package com.sprint.deokhugam.domain.popularbook.tasklet;
 
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;

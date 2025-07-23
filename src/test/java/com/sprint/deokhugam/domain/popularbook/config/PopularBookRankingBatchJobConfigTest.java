@@ -4,12 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.sprint.deokhugam.domain.popularbook.entity.PopularBook;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.batch.core.BatchStatus;

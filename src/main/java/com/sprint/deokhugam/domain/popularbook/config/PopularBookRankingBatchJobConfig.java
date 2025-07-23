@@ -8,7 +8,7 @@ import com.sprint.deokhugam.domain.popularbook.reader.JpaBookScoreReader;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
 import com.sprint.deokhugam.domain.popularbook.tasklet.DeletePopularBooksTasklet;
 import com.sprint.deokhugam.domain.popularbook.writer.PopularBookRankingWriter;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;

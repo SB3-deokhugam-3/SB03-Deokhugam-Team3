@@ -3,7 +3,7 @@ package com.sprint.deokhugam.domain.popularbook.processor;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.popularbook.dto.data.BookScoreDto;
 import com.sprint.deokhugam.domain.popularbook.entity.PopularBook;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import org.springframework.batch.item.ItemProcessor;
 

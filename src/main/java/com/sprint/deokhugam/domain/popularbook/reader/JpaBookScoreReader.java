@@ -4,7 +4,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.popularbook.dto.data.BookScoreDto;
 import com.sprint.deokhugam.domain.review.entity.QReview;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.ZoneId;

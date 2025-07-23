@@ -1,6 +1,6 @@
 package com.sprint.deokhugam.domain.popularbook.scheduler;
 
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ public class PopularBookRankingScheduler {
     private final JobLauncher jobLauncher;
     private final Job popularBookRankingJob;
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 5 0 * * *")
     public void runJob() {
         Instant today = Instant.now();
 

@@ -11,7 +11,7 @@ import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest
 import com.sprint.deokhugam.domain.popularbook.entity.PopularBook;
 import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
-import com.sprint.deokhugam.global.period.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
