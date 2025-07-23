@@ -14,4 +14,6 @@ public interface NotificationService {
     void markAllAsRead(UUID userId);
 
     NotificationDto create(User user, Review review, String content, boolean isConfirmed);
+
+    void updateNotification(UUID id);
 }
