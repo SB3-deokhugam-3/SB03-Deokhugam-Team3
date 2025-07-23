@@ -34,6 +34,7 @@ public class PopularBookRepositoryCustomImpl implements PopularBookRepositoryCus
         BooleanBuilder builder = new BooleanBuilder();
 
         builder.and(pb.period.eq(period));
+        builder.and(b.isDeleted.eq(false));
 
         if (cursor != null && after != null) {
             try {

@@ -40,8 +40,8 @@ public class PopularBookRankingBatchJobConfig {
         PlatformTransactionManager transactionManager) {
 
         return new JobBuilder("popularBookRankingJob", jobRepository)
-            .start(deletePopularBookStep(jobRepository, transactionManager, null))
-            .next(popularBookRankingStep(jobRepository, transactionManager, null, null))
+            .start(deletePopularBookStep(jobRepository, transactionManager, ""))
+            .next(popularBookRankingStep(jobRepository, transactionManager, "", ""))
             .build();
     }
 

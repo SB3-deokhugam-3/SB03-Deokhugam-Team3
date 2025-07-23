@@ -19,7 +19,7 @@ public class PopularBookRankingScheduler {
     private final JobLauncher jobLauncher;
     private final Job popularBookRankingJob;
 
-    @Scheduled(cron = "0 5 0 * * *")
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
     public void runJob() {
         Instant today = Instant.now();
 
