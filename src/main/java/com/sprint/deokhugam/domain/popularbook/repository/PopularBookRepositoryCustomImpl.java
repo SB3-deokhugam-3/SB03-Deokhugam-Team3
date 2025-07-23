@@ -10,6 +10,7 @@ import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest
 import com.sprint.deokhugam.domain.popularbook.entity.QPopularBook;
 import com.sprint.deokhugam.global.period.PeriodType;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,31 +35,23 @@ public class PopularBookRepositoryCustomImpl implements PopularBookRepositoryCus
 
         builder.and(pb.period.eq(period));
 
-        if (cursor != null) {
+        if (cursor != null && after != null) {
             try {
                 Long cursorRank = Long.parseLong(cursor);
+                Instant afterTime = Instant.parse(after);
                 if (direction.equalsIgnoreCase("asc")) {
-                    builder.and(pb.rank.gt(cursorRank));
+                    builder.and(pb.rank.gt(cursorRank)
+                        .or(pb.rank.eq(cursorRank).and(pb.createdAt.gt(afterTime)))
+                    );
                 } else {
-                    builder.and(pb.rank.lt(cursorRank));
+                    builder.and(pb.rank.lt(cursorRank)
+                        .or(pb.rank.eq(cursorRank).and(pb.createdAt.lt(afterTime)))
+                    );
                 }
             } catch (NumberFormatException e) {
                 log.warn("[PopularBookRepository] Invalid cursor format: {} ", cursor);
                 throw e;
-            }
-
-        }
-
-        // 추가 정렬 조건
-        if (after != null) {
-            try {
-                Instant afterTime = Instant.parse(after);
-                if (direction.equalsIgnoreCase("asc")) {
-                    builder.and(pb.createdAt.gt(afterTime));
-                } else {
-                    builder.and(pb.createdAt.lt(afterTime));
-                }
-            } catch (Exception e) {
+            } catch (DateTimeParseException e) {
                 log.warn("[PopularBookRepository] Invalid after format: {}", after);
                 throw e;
             }

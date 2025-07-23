@@ -39,7 +39,7 @@ class PopularBookRepositoryTest {
     @Autowired
     private TestEntityManager em;
 
-    private Book book2;
+    private PopularBook pb1;
 
     @BeforeEach
     void setUp() {
@@ -48,7 +48,7 @@ class PopularBookRepositoryTest {
             "test publisher", LocalDate.of(2022, 2, 2), "1234565432177",
             null, 4.5, 10L);
 
-        book2 = createBookEntity("test book2", "test author2", "description2",
+        Book book2 = createBookEntity("test book2", "test author2", "description2",
             "test publisher2", LocalDate.of(2023, 3, 3), "1234565432188",
             null, 4.0, 5L);
 
@@ -60,7 +60,7 @@ class PopularBookRepositoryTest {
         book2 = em.persistAndFlush(book2);
         book3 = em.persistAndFlush(book3);
 
-        PopularBook pb1 = PopularBook.builder()
+        pb1 = PopularBook.builder()
             .period(PeriodType.DAILY)
             .rank(2L)
             .score(3.0)
@@ -127,7 +127,7 @@ class PopularBookRepositoryTest {
             .period(PeriodType.DAILY)
             .direction("ASC")
             .cursor("2")
-            .after(book2.getCreatedAt().toString())
+            .after(pb1.getCreatedAt().toString())
             .limit(2)
             .build();
 
@@ -147,7 +147,7 @@ class PopularBookRepositoryTest {
             .period(PeriodType.DAILY)
             .direction("ASC")
             .cursor("2L")
-            .after(book2.getCreatedAt().toString())
+            .after(pb1.getCreatedAt().toString())
             .limit(2)
             .build();
 
