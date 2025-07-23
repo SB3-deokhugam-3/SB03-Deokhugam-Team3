@@ -1,6 +1,8 @@
 package com.sprint.deokhugam.domain.review.repository;
 
+import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +17,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomRev
 
     @Query(value = "SELECT * FROM reviews WHERE id = :id AND is_deleted = true", nativeQuery = true)
     Optional<Review> findDeletedById(@Param("id") UUID reviewId);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.book = :book")
+    Double findAverageRatingByBook(@Param("book") Book book);
 }
