@@ -1,7 +1,10 @@
 package com.sprint.deokhugam.domain.popularreview.service;
 
+import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.PeriodType;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
+import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
+import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
 import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PopularReviewServiceImpl implements PopularReviewService {
 
     private final PopularReviewRepository popularReviewRepository;
+    private final S3Storage s3Storage;
+    private final PopularReviewMapper popularReviewMapper;
 
     @Override
     public CursorPageResponse<PopularReviewDto> getPopularReviews(
@@ -31,7 +36,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         int limit
     ) {
 
-        List<PopularReviewDto> dtos = popularReviewRepository.findByPeriodWithCursor(
+        List<PopularReview> entities = popularReviewRepository.findByPeriodWithCursor(
             period,
             direction,
             cursor,
@@ -39,10 +44,14 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             limit + 1
         );
 
-        boolean hasNext = dtos.size() > limit;
+        boolean hasNext = entities.size() > limit;
         if (hasNext) {
-            dtos = dtos.subList(0, limit);
+            entities = entities.subList(0, limit);
         }
+
+        List<PopularReviewDto> dtos = entities.stream()
+            .map(entity -> popularReviewMapper.toDto(entity, s3Storage))
+            .toList();
 
         // 커서 생성
         String nextCursor = hasNext && !dtos.isEmpty()

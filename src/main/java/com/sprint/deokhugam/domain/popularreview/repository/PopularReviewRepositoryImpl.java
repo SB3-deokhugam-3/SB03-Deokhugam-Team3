@@ -25,8 +25,6 @@ import org.springframework.stereotype.Repository;
 public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-    private final S3Storage s3Storage;
-    private final PopularReviewMapper popularReviewMapper;
     private static final QPopularReview pr = QPopularReview.popularReview;
     private static final QReview r = QReview.review;
 
@@ -57,7 +55,7 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
 //    }
 
     @Override
-    public List<PopularReviewDto> findByPeriodWithCursor(
+    public List<PopularReview> findByPeriodWithCursor(
         PeriodType period,
         Sort.Direction direction,
         String cursor,
@@ -99,19 +97,14 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
             ? List.of(pr.rank.asc(), pr.createdAt.asc())
             : List.of(pr.rank.desc(), pr.createdAt.desc());
 
-        List<PopularReview> entities = queryFactory
+        return queryFactory
             .selectFrom(pr)
             .join(pr.review, r).fetchJoin()
             .join(r.book, QBook.book).fetchJoin()
+            .join(r.user).fetchJoin()
             .where(builder)
-            .orderBy(orderSpecifiers.toArray(new com.querydsl.core.types.OrderSpecifier[0]))
+            .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
             .limit(limit + 1)
             .fetch();
-
-        List<PopularReviewDto> dtos = entities.stream()
-            .map(popularReview -> popularReviewMapper.toDto(popularReview, s3Storage))
-            .toList();
-
-        return dtos;
     }
 }
