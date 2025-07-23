@@ -52,10 +52,6 @@ class PopularBookRepositoryTest {
             "test publisher2", LocalDate.of(2023, 3, 3), "1234565432188",
             null, 4.0, 5L);
 
-        book2 = createBookEntity("test book2", "test author2", "description2",
-            "test publisher2", LocalDate.of(2023, 3, 3), "1234565432188",
-            null, 4.0, 5L);
-
         Book book3 = createBookEntity("test book3", "test author3", "description3",
             "test publisher2", LocalDate.of(2024, 4, 4), "1234565432199",
             null, 3.0, 3L);
@@ -97,7 +93,7 @@ class PopularBookRepositoryTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"ASC, DESC"})
+    @ValueSource(strings = {"ASC", "DESC"})
     void 인기_도서_목록_조회_테스트(String direction) {
 
         // given
