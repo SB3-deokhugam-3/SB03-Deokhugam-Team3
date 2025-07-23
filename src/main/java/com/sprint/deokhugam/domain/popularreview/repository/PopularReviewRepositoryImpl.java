@@ -30,7 +30,6 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
     private static final QPopularReview pr = QPopularReview.popularReview;
     private static final QReview r = QReview.review;
 
-
 //
 //    @Override
 //    public List<PopularReviewStats> calculatePopularReviews(Instant from, Instant to) {
@@ -65,7 +64,6 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
         Instant after,
         int limit
     ) {
-        QPopularReview pr = QPopularReview.popularReview;
 
         BooleanBuilder builder = new BooleanBuilder();
 
