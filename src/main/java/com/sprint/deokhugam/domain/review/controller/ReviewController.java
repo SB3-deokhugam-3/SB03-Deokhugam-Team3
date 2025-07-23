@@ -1,5 +1,8 @@
 package com.sprint.deokhugam.domain.review.controller;
 
+import com.sprint.deokhugam.domain.popularreview.PeriodType;
+import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
+import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
@@ -7,10 +10,14 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -32,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final PopularReviewService popularReviewService;
 
     /* 리뷰 목록 조회 */
     @GetMapping
@@ -107,4 +116,24 @@ public class ReviewController {
             .status(HttpStatus.OK)
             .body(reviewDto);
     }
+
+    @GetMapping("/popular")
+    public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularReviews(
+        @RequestParam(defaultValue = "DAILY") PeriodType period,
+        @RequestParam(defaultValue = "ASC") String direction,
+        @RequestParam(required = false) String cursor,
+        @RequestParam(required = false) Instant after,
+        @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit
+    ) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction);
+
+        CursorPageResponse<PopularReviewDto> response = popularReviewService.getPopularReviews(
+            period, sortDirection, cursor, after, limit
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(response);
+    }
+
 }
