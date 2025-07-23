@@ -55,8 +55,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // OCR
-    implementation 'com.google.zxing:core:3.5.2'
-    implementation 'com.google.zxing:javase:3.5.2'
     implementation 'net.sourceforge.tess4j:tess4j:5.11.0'
 
     // aop
