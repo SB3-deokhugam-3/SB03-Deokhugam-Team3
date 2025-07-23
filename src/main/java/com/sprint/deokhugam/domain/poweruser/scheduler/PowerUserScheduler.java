@@ -7,7 +7,9 @@ import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -31,7 +33,7 @@ public class PowerUserScheduler {
     /**
      * 매일 새벽 2시에 파워 유저 데이터 계산
      */
-    @Scheduled(cron = "0 0/2 * * * *")
+    @Scheduled(cron = "0 0 2 * * *")
     public void schedulePowerUserCalculation() {
         // 중복 실행 체크
         if (!isRunning.compareAndSet(false, true)) {
@@ -44,64 +46,22 @@ public class PowerUserScheduler {
 
         try {
             log.info("파워 유저 배치 작업 시작");
-            int successCount = 0;
-            int failureCount = 0;
 
-            // 1. 일간 파워 유저 계산
-            try {
-                runBatchJob("DAILY");
-                successCount++;
-                log.info("일간 파워 유저 계산 완료");
-            } catch (Exception e) {
-                failureCount++;
-                log.error("일간 파워 유저 계산 실패", e);
-                meterRegistry.counter("poweruser.batch.daily.failure").increment();
-            }
+            // Spring Batch Job 실행 ( 모든 기간 처리 )
+            JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("timestamp", System.currentTimeMillis())
+                .addString("executionDate", LocalDate.now().toString())
+                .toJobParameters();
 
-            // 2. 주간 파워 유저 계산 ( 일요일에만 )
-            if (isWeeklyCalculationDay()) {
-                try {
-                    runBatchJob("WEEKLY");
-                    successCount++;
-                    log.info("주간 파워 유저 계산 완료");
-                } catch (Exception e) {
-                    failureCount++;
-                    log.error("주간 파워 유저 계산 실패", e);
-                    meterRegistry.counter("poweruser.batch.weekly.failure").increment();
-                }
-            }
+            JobExecution jobExecution = jobLauncher.run(powerUserJob, jobParameters);
 
-            // 3. 월간 파워 유저 계산 ( 매월 1일에만 )
-            if (isMonthlyCalculationDay()) {
-                try {
-                    runBatchJob("MONTHLY");
-                    successCount++;
-                    log.info("월간 파워 유저 계산 완료");
-                } catch (Exception e) {
-                    failureCount++;
-                    log.error("월간 파워 유저 계산 실패", e);
-                    meterRegistry.counter("poweruser.batch.monthly.failure").increment();
-                }
-            }
-
-            // 4. 역대 파워 유저 계산 ( 매일 )
-            try {
-                runBatchJob("ALL_TIME");
-                successCount++;
-                log.info("역대 파워 유저 계산 완료");
-            } catch (Exception e) {
-                failureCount++;
-                log.error("역대 파워 유저 계산 실패", e);
-                meterRegistry.counter("poweruser.batch.alltime.failure").increment();
-            }
-
-            // 전체 결과 기록
-            if (failureCount == 0) {
+            if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
                 meterRegistry.counter("poweruser.batch.success").increment();
-                log.info("파워 유저 배치 작업 완료 - 성공: {}, 실패: {}", successCount, failureCount);
+                log.info("파워 유저 배치 작업 완료 - Status: {}", jobExecution.getStatus());
             } else {
-                meterRegistry.counter("poweruser.batch.partial_failure").increment();
-                log.warn("파워 유저 배치 작업 부분 완료 - 성공: {}, 실패: {}", successCount, failureCount);
+                meterRegistry.counter("poweruser.batch.failure").increment();
+                log.error("파워 유저 배치 작업 실패 - Status: {}, Exit Code: {}",
+                    jobExecution.getStatus(), jobExecution.getExitStatus());
             }
 
         } catch (Exception e) {
@@ -113,18 +73,6 @@ public class PowerUserScheduler {
                 .description("PowerUser batch processing time")
                 .register(meterRegistry));
         }
-    }
-
-    /**
-     * 배치 Job 실행
-     */
-    private void runBatchJob(String period) throws Exception {
-        JobParameters jobParameters = new JobParametersBuilder()
-            .addString("period", period)
-            .addLong("timestamp", System.currentTimeMillis()) // 중복 실행 방지용
-            .toJobParameters();
-
-        jobLauncher.run(powerUserJob, jobParameters);
     }
 
     /**

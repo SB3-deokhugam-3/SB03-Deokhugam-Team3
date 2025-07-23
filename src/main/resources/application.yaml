@@ -7,14 +7,14 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-  task:
-    scheduling:
-      pool:
-        size: 5
-    execution:
-      pool:
-        core-size: 5
-        max-size: 10
+  batch:
+    jdbc:
+      initialize-schema: always
+    logging:
+      level:
+        com.sprint.deokhugam.domain.poweruser: DEBUG
+        org.springframework.batch: INFO
+        org.springframework.batch.core.job: DEBUG
 
 # OCR 구현체 설정
 ocr:

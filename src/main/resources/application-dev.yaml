@@ -1,8 +1,10 @@
 server:
   port: 8081
 spring:
+  # DB config
+
   datasource:
-    url: jdbc:h2:~/test;MODE=POSTGRESQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    url: jdbc:h2:~/test;MODE=POSTGRESQL;DB_CLOSE_DELAY=-1
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -13,18 +15,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-        format_sql: true
-        highlight_sql: true
-        show_sql: true
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath:schema.sql
-      continue-on-error: true
+        format_sql: true     # 쿼리 로그 포맷 (정렬)
+        highlight_sql: true  # 쿼리 로그 출력
+  # H2 Console 설정
   h2:
     console:
-      enabled: true
-      path: /h2-console
-  batch:
-    jdbc:
-      initialize-schema: never  # schema.sql로 관리하므로 자동 생성 비활성화
+      enabled: true      # H2 Console 사용 여부
+      path: /h2-console  # H2 Console 접속 주소

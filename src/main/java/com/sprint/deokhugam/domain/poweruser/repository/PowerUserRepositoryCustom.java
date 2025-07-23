@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.poweruser.repository;
 
+import com.sprint.deokhugam.domain.poweruser.dto.batch.PowerUserData;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
@@ -12,6 +13,11 @@ public interface PowerUserRepositoryCustom {
      * 배치 작업을 위한 사용자 활동 점수 계산 및 파워유저 생성
      * */
     List<PowerUser> calculateAndCreatePowerUsers(PeriodType period, Instant startDate, Instant endDate);
+
+    /**
+     * 배치 처리를 위한 사용자별 활동 데이터 조회
+     */
+    List<PowerUserData> findUserActivityData(PeriodType period, Instant startDate, Instant endDate);
 
     /**
      *  파워유저 순위 재계산 ( 점수 기준으로 순위 업데이트 )
