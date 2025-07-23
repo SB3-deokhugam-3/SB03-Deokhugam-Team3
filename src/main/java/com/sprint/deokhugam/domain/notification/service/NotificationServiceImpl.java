@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.notification.service;
 import com.sprint.deokhugam.domain.notification.dto.data.NotificationDto;
 import com.sprint.deokhugam.domain.notification.dto.request.NotificationGetRequest;
 import com.sprint.deokhugam.domain.notification.entity.Notification;
+import com.sprint.deokhugam.domain.notification.exception.InvalidNotificationRequestException;
 import com.sprint.deokhugam.domain.notification.mapper.NotificationMapper;
 import com.sprint.deokhugam.domain.notification.repository.NotificationRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
@@ -30,7 +31,8 @@ public class NotificationServiceImpl implements NotificationService {
             log.warn("[notification] 알림 생성 실패 - user: {}, review: {}", user, review);
             throw new InvalidUserRequestException("error", "null 값이 들어왔습니다.");
         }
-        Notification notification = new Notification(user, review, content, isConfirmed);
+        Notification notification = new Notification(review.getUser(), review, content,
+            isConfirmed);
 
         Notification saved = notificationRepository.save(notification);
         log.info("[notification] 알림 생성 완료 - user: {}, review: {}", user, review);
@@ -65,4 +67,14 @@ public class NotificationServiceImpl implements NotificationService {
     public void markAllAsRead(UUID userId) {
         notificationRepository.markAllAsReadByUserId(userId);
     }
+
+    @Transactional
+    @Override
+    public void updateNotification(UUID id) {
+        Notification notification = notificationRepository.findById(id)
+            .orElseThrow(() -> new InvalidNotificationRequestException("id", "해당 알림은 존재하지 않습니다."));
+
+        notification.update();
+    }
+
 }

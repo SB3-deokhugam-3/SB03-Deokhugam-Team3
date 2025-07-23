@@ -11,6 +11,7 @@ import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.notification.dto.data.NotificationDto;
 import com.sprint.deokhugam.domain.notification.dto.request.NotificationGetRequest;
 import com.sprint.deokhugam.domain.notification.entity.Notification;
+import com.sprint.deokhugam.domain.notification.exception.InvalidNotificationRequestException;
 import com.sprint.deokhugam.domain.notification.mapper.NotificationMapper;
 import com.sprint.deokhugam.domain.notification.repository.NotificationRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
@@ -19,6 +20,7 @@ import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -202,5 +204,51 @@ class NotificationServiceImplTest {
         assertThatThrownBy(() -> notificationService.create(mockUser, mockReview, null, false))
             .isInstanceOf(InvalidUserRequestException.class)
             .hasMessageContaining("null 값이 들어왔습니다.");
+    }
+
+    @Test
+    void 알림_ID로_확인여부를_업데이트한다() {
+        // given
+        UUID notificationId = UUID.randomUUID();
+
+        Notification mockNotification = Notification.builder()
+            .user(mockUser)
+            .review(mockReview)
+            .content("알림 내용")
+            .isConfirmed(false)
+            .build();
+
+        NotificationDto expectedDto = NotificationDto.builder()
+            .id(notificationId)
+            .userId(mockUser.getId())
+            .reviewId(mockReview.getId())
+            .content("알림 내용")
+            .confirmed(true)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+
+        when(notificationRepository.findById(notificationId)).thenReturn(
+            Optional.of(mockNotification));
+        when(notificationMapper.toDto(mockNotification)).thenReturn(expectedDto);
+
+        // when
+        notificationService.updateNotification(notificationId);
+
+        // then
+        verify(notificationRepository).findById(notificationId);
+        verify(notificationMapper).toDto(mockNotification);
+    }
+
+    @Test
+    void 존재하지_않는_알림ID면_예외를_던진다() {
+        // given
+        UUID fakeId = UUID.randomUUID();
+        when(notificationRepository.findById(fakeId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> notificationService.updateNotification(fakeId))
+            .isInstanceOf(InvalidNotificationRequestException.class)
+            .hasMessageContaining("해당 알림은 존재하지 않습니다.");
     }
 }
