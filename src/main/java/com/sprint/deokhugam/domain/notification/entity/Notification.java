@@ -34,5 +34,9 @@ public class Notification extends BaseUpdatableEntity {
 
     @Column(name = "confirmed", nullable = false)
     private boolean isConfirmed = false;
-    
+
+    public void update() {
+        this.isConfirmed = true;
+    }
+
 }
