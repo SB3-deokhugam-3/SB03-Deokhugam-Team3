@@ -131,7 +131,6 @@ public class PowerUserRepositoryIntegrationTest {
         assertThat(result.get(0).getPeriod()).isEqualTo(PeriodType.ALL_TIME);
         assertThat(result.get(0).getRank()).isEqualTo(1L);
 
-        // 활동 점수 계산 검증: ( 리뷰점수*0.5 ) + ( 좋아요*0.2 ) + ( 댓글*0.3 )
         PowerUser topUser = result.get(0);
         Double expectedScore = (topUser.getReviewScoreSum() * 0.5) +
             (topUser.getLikeCount() * 0.2) +
@@ -144,7 +143,6 @@ public class PowerUserRepositoryIntegrationTest {
         // given
         createTestReviewLikes();
         createTestComments();
-
         LocalDateTime endTime = LocalDateTime.now();
         LocalDateTime startTime = endTime.minusDays(1);
 
@@ -183,7 +181,6 @@ public class PowerUserRepositoryIntegrationTest {
             p.getUser().getId().equals(testUser1.getId()) ||
                 p.getUser().getId().equals(testUser2.getId())
         );
-        // 리뷰 없는 사용자는 제외
         assertThat(result).noneMatch(p -> p.getUser().getId().equals(userWithoutReview.getId()));
     }
 
@@ -248,8 +245,6 @@ public class PowerUserRepositoryIntegrationTest {
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getRank()).isEqualTo(1L);
         assertThat(result.get(1).getRank()).isEqualTo(2L);
-
-        // fetchJoin으로 User가 이미 로드되어 있어야 함
         assertThat(result.get(0).getUser().getNickname()).isEqualTo("김현기");
         assertThat(result.get(1).getUser().getNickname()).isEqualTo("아이스티");
     }
@@ -291,40 +286,59 @@ public class PowerUserRepositoryIntegrationTest {
             .findPowerUsersWithCursor(PeriodType.DAILY, "ASC", 2, "2", null);
 
         // then
-        assertThat(result).hasSize(1); // rank > 2인 데이터만
+        assertThat(result).hasSize(1);
         assertThat(result.get(0).getRank()).isEqualTo(3L);
+    }
 
-        // DESC 테스트
+    @Test
+    void findPowerUsersWithCursor_DESC_정렬_통합_테스트() {
+        // given
+        List<PowerUser> powerUsers = List.of(
+            createPowerUser(testUser1, PeriodType.DAILY, 1L, 100.0),
+            createPowerUser(testUser2, PeriodType.DAILY, 2L, 90.0),
+            createPowerUser(testUser1, PeriodType.DAILY, 3L, 80.0)
+        );
+        powerUserRepository.saveAll(powerUsers);
+
+        // when
         List<PowerUser> descResult = powerUserRepository
             .findPowerUsersWithCursor(PeriodType.DAILY, "DESC", 2, "3", null);
 
+        // then
         assertThat(descResult).hasSize(2);
         assertThat(descResult.get(0).getRank()).isEqualTo(2L);
         assertThat(descResult.get(1).getRank()).isEqualTo(1L);
     }
 
     @Test
-    void findPowerUsersWithCursor_시간기반필터링_통합_테스트() {
+    void findPowerUsersWithCursor_시간기반필터링_미래시간_통합_테스트() {
         // given
         PowerUser powerUser = createPowerUser(testUser1, PeriodType.WEEKLY, 1L, 100.0);
         powerUserRepository.save(powerUser);
         entityManager.flush();
-
-        // 미래 시간으로 after 설정
         String futureTime = Instant.now().plusSeconds(3600).toString();
 
-        // when - 미래 시간 이후의 데이터 조회 (ASC)
+        // when
         List<PowerUser> result = powerUserRepository
             .findPowerUsersWithCursor(PeriodType.WEEKLY, "ASC", 10, null, futureTime);
 
-        // then - 현재 데이터는 미래 시간 이전이므로 조회되지 않아야 함
+        // then
         assertThat(result).isEmpty();
+    }
 
-        // 과거 시간으로 설정하면 조회되어야 함
+    @Test
+    void findPowerUsersWithCursor_시간기반필터링_과거시간_통합_테스트() {
+        // given
+        PowerUser powerUser = createPowerUser(testUser1, PeriodType.WEEKLY, 1L, 100.0);
+        powerUserRepository.save(powerUser);
+        entityManager.flush();
         String pastTime = Instant.now().minusSeconds(3600).toString();
+
+        // when
         List<PowerUser> pastResult = powerUserRepository
             .findPowerUsersWithCursor(PeriodType.WEEKLY, "ASC", 10, null, pastTime);
 
+        // then
         assertThat(pastResult).hasSize(1);
     }
 
@@ -337,11 +351,11 @@ public class PowerUserRepositoryIntegrationTest {
         );
         powerUserRepository.saveAll(powerUsers);
 
-        // when - 잘못된 커서 형식
+        // when
         List<PowerUser> result = powerUserRepository
             .findPowerUsersWithCursor(PeriodType.MONTHLY, "ASC", 10, "invalid_cursor", null);
 
-        // then - 커서가 무시되고 전체 데이터 조회
+        // then
         assertThat(result).hasSize(2);
     }
 
@@ -352,7 +366,7 @@ public class PowerUserRepositoryIntegrationTest {
             createPowerUser(testUser1, PeriodType.DAILY, 1L, 100.0),
             createPowerUser(testUser1, PeriodType.WEEKLY, 2L, 95.0),
             createPowerUser(testUser1, PeriodType.MONTHLY, 3L, 90.0),
-            createPowerUser(testUser2, PeriodType.DAILY, 4L, 85.0) // 다른 사용자
+            createPowerUser(testUser2, PeriodType.DAILY, 4L, 85.0)
         );
         powerUserRepository.saveAll(powerUsers);
 
@@ -363,8 +377,6 @@ public class PowerUserRepositoryIntegrationTest {
         // then
         assertThat(result).hasSize(3);
         assertThat(result).allMatch(p -> p.getUser().getId().equals(testUser1.getId()));
-
-        // period 기준으로 정렬
         assertThat(result.get(0).getPeriod()).isEqualTo(PeriodType.DAILY);
     }
 
@@ -390,7 +402,6 @@ public class PowerUserRepositoryIntegrationTest {
             .build();
         likeUser = entityManager.persistAndFlush(likeUser);
 
-        // ReviewLike 생성 - 올바른 매개변수 순서: (Review, User)
         ReviewLike reviewLike = new ReviewLike(testReview2, likeUser);
         entityManager.persistAndFlush(reviewLike);
     }
