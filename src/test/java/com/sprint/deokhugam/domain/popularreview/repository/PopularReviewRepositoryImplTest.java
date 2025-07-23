@@ -1,20 +1,14 @@
-package com.sprint.deokhugam.popularreview.repository;
+package com.sprint.deokhugam.domain.popularreview.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
-import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.PeriodType;
-import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
-import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
-import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
-import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepositoryImpl;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
@@ -33,7 +27,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @DataJpaTest
 @Import({QueryDslConfig.class, JpaAuditingConfig.class})
@@ -54,12 +47,6 @@ public class PopularReviewRepositoryImplTest {
 
     @Autowired
     private BookRepository bookRepository;
-
-    @MockitoBean
-    private S3Storage s3Storage;
-
-    @MockitoBean
-    private PopularReviewMapper popularReviewMapper;
 
     @Autowired
     private EntityManager em;
@@ -109,6 +96,7 @@ public class PopularReviewRepositoryImplTest {
             .reviewCount(0L)
             .isDeleted(false)
             .build());
+
         review1 = reviewRepository.save(Review.builder()
             .user(user1)
             .book(book1)
@@ -167,37 +155,14 @@ public class PopularReviewRepositoryImplTest {
             .likeCount(1L)
             .commentCount(1L)
             .build());
-
-        // Mapper Mock 설정
-        when(popularReviewMapper.toDto(any(PopularReview.class), any(S3Storage.class)))
-            .thenAnswer(invocation -> {
-                PopularReview pr = invocation.getArgument(0);
-                return new PopularReviewDto(
-                    pr.getId(),
-                    pr.getReview().getId(),
-                    pr.getReview().getBook().getId(),
-                    pr.getReview().getBook().getTitle(),
-                    pr.getReview().getBook().getThumbnailUrl(),
-                    pr.getReview().getUser().getId(),
-                    pr.getReview().getUser().getNickname(),
-                    pr.getReview().getContent(),
-                    pr.getReview().getRating(),
-                    pr.getPeriod(),
-                    pr.getCreatedAt(),
-                    pr.getRank(),
-                    pr.getScore(),
-                    pr.getLikeCount(),
-                    pr.getCommentCount()
-                );
-            });
-
         em.flush();
         em.clear();
     }
+
     @Test
     void cursor와_after가_모두_null_일때_기본조회에_성공한다() {
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.ASC,
             null,
@@ -207,16 +172,16 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result).hasSize(2); // review1, review2 (삭제된 리뷰 제외)
-        assertThat(result.get(0).rank()).isEqualTo(1L);
-        assertThat(result.get(1).rank()).isEqualTo(2L);
-        assertThat(result.get(0).userNickname()).isEqualTo("유저1");
-        assertThat(result.get(1).userNickname()).isEqualTo("유저2");
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
+        assertThat(result.get(1).getRank()).isEqualTo(2L);
+        assertThat(result.get(0).getReview().getUser().getNickname()).isEqualTo("유저1");
+        assertThat(result.get(1).getReview().getUser().getNickname()).isEqualTo("유저2");
     }
 
     @Test
     void 빈_cursor_일때_기본조회에_성공한다() {
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.ASC,
             "",
@@ -226,14 +191,14 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).rank()).isEqualTo(1L);
-        assertThat(result.get(1).rank()).isEqualTo(2L);
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
+        assertThat(result.get(1).getRank()).isEqualTo(2L);
     }
 
     @Test
     void cursor가_존재하고_after가_null_일때_순위대로_조회된다() {
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.ASC,
             "1",
@@ -252,7 +217,7 @@ public class PopularReviewRepositoryImplTest {
         Instant after = popularReview1.getCreatedAt().plusSeconds(1);
 
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.ASC,
             cursor,
@@ -262,7 +227,7 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).rank()).isEqualTo(2L);
+        assertThat(result.get(0).getRank()).isEqualTo(2L);
     }
 
     @Test
@@ -272,7 +237,7 @@ public class PopularReviewRepositoryImplTest {
         Instant after = popularReview2.getCreatedAt().minusSeconds(1);
 
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.DESC,
             cursor,
@@ -282,13 +247,13 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).rank()).isEqualTo(1L);
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
     }
 
     @Test
     void 기간별_조회에_성공한다_DAILY() {
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.ASC,
             null,
@@ -298,13 +263,13 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).period()).isEqualTo(PeriodType.DAILY);
+        assertThat(result.get(0).getPeriod()).isEqualTo(PeriodType.DAILY);
     }
 
     @Test
     void 삭제된_리뷰는_조회되지_않는다() {
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.WEEKLY,
             Sort.Direction.ASC,
             null,
@@ -319,7 +284,7 @@ public class PopularReviewRepositoryImplTest {
     @Test
     void 오름차순_순위로_조회할_수_있다() {
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.ASC,
             null,
@@ -329,15 +294,15 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).rank()).isLessThan(result.get(1).rank());
-        assertThat(result.get(0).rank()).isEqualTo(1L);
-        assertThat(result.get(1).rank()).isEqualTo(2L);
+        assertThat(result.get(0).getRank()).isLessThan(result.get(1).getRank());
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
+        assertThat(result.get(1).getRank()).isEqualTo(2L);
     }
 
     @Test
     void 내림차순_순위로_조회할_수_있다() {
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.DESC,
             null,
@@ -347,9 +312,9 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).rank()).isGreaterThan(result.get(1).rank());
-        assertThat(result.get(0).rank()).isEqualTo(2L);
-        assertThat(result.get(1).rank()).isEqualTo(1L);
+        assertThat(result.get(0).getRank()).isGreaterThan(result.get(1).getRank());
+        assertThat(result.get(0).getRank()).isEqualTo(2L);
+        assertThat(result.get(1).getRank()).isEqualTo(1L);
     }
 
     @Test
@@ -395,7 +360,7 @@ public class PopularReviewRepositoryImplTest {
     }
 
     @Test
-    void  rank가_같으면_createdAt_기준으로_정렬된다()  {
+    void rank가_같으면_createdAt_기준으로_정렬된다() {
         // given
         popularReviewRepository.save(PopularReview.builder()
             .review(review2)
@@ -411,7 +376,7 @@ public class PopularReviewRepositoryImplTest {
         Instant after = popularReview1.getCreatedAt().minusSeconds(1);
 
         // when
-        List<PopularReviewDto> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
             PeriodType.DAILY,
             Sort.Direction.ASC,
             cursor,
@@ -421,11 +386,34 @@ public class PopularReviewRepositoryImplTest {
 
         // then
         assertThat(result.size()).isGreaterThanOrEqualTo(1);
-        result.forEach(dto -> {
+        result.forEach(entity -> {
             assertThat(
-                dto.rank() > 1L ||
-                    (dto.rank().equals(1L) && dto.createdAt().isAfter(after))
+                entity.getRank() > 1L ||
+                    (entity.getRank().equals(1L) && entity.getCreatedAt().isAfter(after))
             ).isTrue();
         });
+    }
+
+    @Test
+    void fetchJoin으로_연관_엔티티가_함께_조회된다() {
+        // when
+        List<PopularReview> result = popularReviewRepositoryImpl.findByPeriodWithCursor(
+            PeriodType.DAILY,
+            Sort.Direction.ASC,
+            null,
+            null,
+            10
+        );
+
+        // then
+        assertThat(result).hasSize(2);
+        PopularReview popularReview = result.get(0);
+        assertThat(popularReview.getReview()).isNotNull();
+        assertThat(popularReview.getReview().getContent()).isNotNull();
+        assertThat(popularReview.getReview().getBook()).isNotNull();
+        assertThat(popularReview.getReview().getBook().getTitle()).isNotNull();
+        assertThat(popularReview.getReview().getBook().getThumbnailUrl()).isNotNull();
+        assertThat(popularReview.getReview().getUser()).isNotNull();
+        assertThat(popularReview.getReview().getUser().getNickname()).isNotNull();
     }
 }
