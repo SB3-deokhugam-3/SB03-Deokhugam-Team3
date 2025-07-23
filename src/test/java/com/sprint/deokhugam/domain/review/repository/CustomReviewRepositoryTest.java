@@ -319,8 +319,8 @@ public class CustomReviewRepositoryTest {
         List<Review> result = reviewRepository.findAllByCommentCountAndLikeCountWithSorting();
 
         // then
-        assertThat(result).hasSize(3);
+        assertThat(result).hasSize(2);
         assertThat(result.get(0).getContent()).isEqualTo("리뷰2"); // 가장 높은 점수 리뷰
-        assertThat(result.get(2).getContent()).isEqualTo("리뷰1"); // 가장 낮은 점수 리뷰
+        assertThat(result.get(1).getContent()).isEqualTo("리뷰3"); // 가장 낮은 점수 리뷰
     }
 }

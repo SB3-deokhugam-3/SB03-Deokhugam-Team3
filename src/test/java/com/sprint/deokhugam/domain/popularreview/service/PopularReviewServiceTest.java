@@ -13,7 +13,7 @@ import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewReposit
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.enums.PeriodType;
-import com.sun.jdi.request.DuplicateRequestException;
+import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -103,7 +103,7 @@ public class PopularReviewServiceTest {
     }
 
     @Test
-    void 오늘날짜로_데이터가_생성된게_이미_있다면_DuplicateRequestException에러를_반환한다() {
+    void 오늘날짜로_데이터가_생성된게_이미_있다면_BatchAlreadyRunException에러를_반환한다() {
         //given
         given(popularReviewRepository.existsByCreatedAtBetween(any(Instant.class),
             any(Instant.class)))
@@ -115,7 +115,7 @@ public class PopularReviewServiceTest {
 
         //then
         assertThat(thrown)
-            .isInstanceOf(DuplicateRequestException.class);
+            .isInstanceOf(BatchAlreadyRunException.class);
     }
 
     @Test
@@ -141,7 +141,7 @@ public class PopularReviewServiceTest {
         // when
         List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
             PeriodType.ALL_TIME,
-            contribution);
+            contribution, Instant.now());
 
         // then
         assertThat(result).hasSize(3);
@@ -171,8 +171,7 @@ public class PopularReviewServiceTest {
 
         // when
         List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.MONTHLY,
-            contribution);
+            PeriodType.MONTHLY, contribution, Instant.parse("2025-07-23T00:00:00Z"));
 
         // then
         assertThat(result).hasSize(2);
@@ -201,8 +200,7 @@ public class PopularReviewServiceTest {
 
         // when
         List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.WEEKLY,
-            contribution);
+            PeriodType.WEEKLY, contribution, Instant.parse("2025-07-23T00:00:00Z"));
 
         // then
         assertThat(result).hasSize(1);
@@ -229,8 +227,7 @@ public class PopularReviewServiceTest {
 
         // when
         List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.DAILY,
-            contribution);
+            PeriodType.DAILY, contribution, Instant.parse("2025-07-23T00:00:00Z"));
 
         // then
         assertThat(result).hasSize(0);

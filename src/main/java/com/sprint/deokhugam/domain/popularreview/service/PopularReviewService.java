@@ -4,13 +4,14 @@ import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.enums.PeriodType;
-import com.sun.jdi.request.DuplicateRequestException;
+import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
+import com.sprint.deokhugam.global.utils.TimeUtils;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -24,57 +25,57 @@ public class PopularReviewService {
     private final PopularReviewRepository popularReviewRepository;
 
     /* 배치에서 사용 - 오늘 이미 실행한 배치인지 검증 */
-    public void validateJobNotDuplicated(Instant currentTime)
-        throws DuplicateRequestException {
-        ZoneId zoneId = ZoneId.systemDefault(); // 예: Asia/Seoul
-        ZonedDateTime now = currentTime.atZone(zoneId);
+    public void validateJobNotDuplicated(Instant referenceTime)
+        throws BatchAlreadyRunException {
 
-        // 오늘 시작 시간(00:00)
-        ZonedDateTime startOfDayZdt = now.toLocalDate().atStartOfDay(zoneId);
-        Instant startOfDay = startOfDayZdt.toInstant();
-        // 오늘 종료 시간(23:59:59.999999999)
-        ZonedDateTime endOfDayZdt = startOfDayZdt.plusDays(1).minusNanos(1);
-        Instant endOfDay = endOfDayZdt.toInstant();
+        Instant startOfDay = TimeUtils.startOfDayWithZone(referenceTime).toInstant();
+        Instant endOfDay = TimeUtils.endOfDayWithZone(referenceTime).toInstant();
 
         Boolean isAlreadyExist = popularReviewRepository.existsByCreatedAtBetween(startOfDay,
             endOfDay);
+
         if (isAlreadyExist) {
-            throw new DuplicateRequestException("오늘 이미 실행한 배치입니다.");
+            throw new BatchAlreadyRunException("Review",
+                Map.of("execution datetime", Instant.now()));
         }
     }
 
     /* 배치에서 사용 */
     @Transactional
     public List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
-        PeriodType period, StepContribution contribution) {
+        PeriodType period, StepContribution contribution, Instant today) {
         List<PopularReview> popularReviews = new ArrayList<>();
         List<Review> slicedReview;
         Long rank = 1L;
-        //XXX : 시간은 제외해야하지않나?
-        Instant endDate = Instant.now();
-        Instant startDate;
+        LocalDate startLocalDate;
 
         switch (period) {
             case DAILY:
-                startDate = ZonedDateTime.ofInstant(endDate, ZoneId.systemDefault())
-                    .minusDays(1)
-                    .toInstant();
+                startLocalDate = TimeUtils.toLocalDate(today).minusDays(1);
                 slicedReview = totalReviews.stream()
-                    .filter(review -> review.getCreatedAt().isAfter(startDate)).toList();
+                    .filter(review -> {
+                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
+                        return reviewDate.isEqual(startLocalDate);
+                    }).toList();
                 break;
             case WEEKLY:
-                startDate = ZonedDateTime.ofInstant(endDate, ZoneId.systemDefault())
-                    .minusWeeks(1)
-                    .toInstant();
+                startLocalDate = TimeUtils.toLocalDate(today).minusWeeks(1);
+                System.out.println("startLocalDate = " + startLocalDate);
                 slicedReview = totalReviews.stream()
-                    .filter(review -> review.getCreatedAt().isAfter(startDate)).toList();
+                    .filter(review -> {
+                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
+                        System.out.println("reviewDate = " + reviewDate);
+                        return !reviewDate.isBefore(startLocalDate);
+                    }).toList();
+
                 break;
             case MONTHLY:
-                startDate = ZonedDateTime.ofInstant(endDate, ZoneId.systemDefault())
-                    .minusMonths(1)
-                    .toInstant();
+                startLocalDate = TimeUtils.toLocalDate(today).minusMonths(1);
                 slicedReview = totalReviews.stream()
-                    .filter(review -> review.getCreatedAt().isAfter(startDate)).toList();
+                    .filter(review -> {
+                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
+                        return !reviewDate.isBefore(startLocalDate);
+                    }).toList();
                 break;
             case ALL_TIME:
             default:

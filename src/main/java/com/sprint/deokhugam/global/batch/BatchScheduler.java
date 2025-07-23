@@ -16,6 +16,7 @@ public class BatchScheduler {
     private final Job reviewJob;
 
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
+//    @Scheduled(cron = "0/30 * * * * *", zone = "Asia/Seoul") // 30초마다 실행(테스트용)
     public void runReviewJob() throws Exception {
         JobParameters params = new JobParametersBuilder()
             .addLong("timestamp", System.currentTimeMillis())

@@ -4,6 +4,7 @@ import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.global.enums.PeriodType;
+import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -54,23 +55,28 @@ public class ReviewBatch {
     protected Tasklet reviewTasklet() {
         return (stepContribution, chunkContext) -> {
             try {
+                Instant currentTime = Instant.now();
                 /* 오늘 이미 실행한 배치인지 검증 */
-                popularReviewService.validateJobNotDuplicated(Instant.now());
+                popularReviewService.validateJobNotDuplicated(currentTime);
 
                 List<Review> totalReviews = reviewRepository.findAllByCommentCountAndLikeCountWithSorting();
 
                 popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.ALL_TIME, stepContribution);
+                    PeriodType.ALL_TIME, stepContribution, currentTime);
                 popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.MONTHLY, stepContribution);
+                    PeriodType.MONTHLY, stepContribution, currentTime);
                 popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.WEEKLY, stepContribution);
+                    PeriodType.WEEKLY, stepContribution, currentTime);
                 popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.DAILY, stepContribution);
+                    PeriodType.DAILY, stepContribution, currentTime);
 
-            } catch (Exception e) {
-                log.error(e.getMessage());
+            } catch (BatchAlreadyRunException e) {
+                log.error(e.getMessage(), e);
                 stepContribution.incrementProcessSkipCount();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                stepContribution.incrementProcessSkipCount();
+                throw e;
             }
             return RepeatStatus.FINISHED;
         };
