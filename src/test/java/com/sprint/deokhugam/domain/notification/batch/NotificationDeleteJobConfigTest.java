@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sprint.deokhugam.domain.notification.entity.Notification;
 import com.sprint.deokhugam.domain.notification.repository.NotificationRepository;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
@@ -12,10 +13,12 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS) // 이 테스트 후 컨텍스트 재생성
 @ActiveProfiles("test")
 class NotificationDeleteJobConfigTest {
 
@@ -48,5 +51,10 @@ class NotificationDeleteJobConfigTest {
         List<Notification> remain = notificationRepository.findAll();
         assertThat(remain).extracting("content")
             .containsExactlyInAnyOrder("recent confirmed", "old unconfirmed");
+    }
+
+    @AfterEach
+    void tearDown() {
+        testDataHelper.clearTestData();
     }
 }

@@ -112,4 +112,14 @@ public class NotificationTestDataHelper {
             throw new RuntimeException(e);
         }
     }
+
+    @Transactional
+    public void clearTestData() {
+        em.createQuery("DELETE FROM Notification").executeUpdate();
+        em.createQuery("DELETE FROM Review").executeUpdate();
+        em.createQuery("DELETE FROM Book").executeUpdate();
+        em.createQuery("DELETE FROM User").executeUpdate();
+        em.flush();
+        em.clear();
+    }
 }
