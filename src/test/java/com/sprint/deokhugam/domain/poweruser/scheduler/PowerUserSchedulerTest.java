@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
@@ -48,29 +49,27 @@ class PowerUserSchedulerTest {
         // given
         when(jobLauncher.run(eq(powerUserJob), any(JobParameters.class)))
             .thenReturn(jobExecution);
-        when(jobExecution.getJobId()).thenReturn(1L);
+        when(jobExecution.getStatus()).thenReturn(BatchStatus.COMPLETED);
 
         // when
         powerUserScheduler.schedulePowerUserCalculation();
 
         // then
-        // 일간 + 역대 = 최소 2번은 실행되어야 함
-        verify(jobLauncher, atLeast(2)).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobLauncher, times(1)).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution, times(2)).getStatus();
     }
 
     @Test
-    void schedulePowerUserCalculation_일부_실패_시_다른_작업_계속_실행() throws Exception {
+    void schedulePowerUserCalculation_실패_시_예외_처리() throws Exception {
         // given
         when(jobLauncher.run(eq(powerUserJob), any(JobParameters.class)))
-            .thenThrow(new RuntimeException("일간 계산 실패"))  // 첫 번째 호출에서 실패
-            .thenReturn(jobExecution);  // 두 번째 호출에서 성공
-        when(jobExecution.getJobId()).thenReturn(1L);
+            .thenThrow(new RuntimeException("배치 작업 실패"));
 
         // when
         powerUserScheduler.schedulePowerUserCalculation();
 
         // then
-        verify(jobLauncher, atLeast(2)).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobLauncher, times(1)).run(eq(powerUserJob), any(JobParameters.class));
     }
 }
 

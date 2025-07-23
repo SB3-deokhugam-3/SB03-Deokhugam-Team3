@@ -1,6 +1,8 @@
 package com.sprint.deokhugam.domain.poweruser.repository;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.comment.entity.QComment;
 import com.sprint.deokhugam.domain.poweruser.dto.batch.PowerUserData;
@@ -27,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 @Repository
-public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
+public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
@@ -36,15 +38,18 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
 
     @Override
     @Transactional(readOnly = true)
-    public List<PowerUserData> findUserActivityData(PeriodType period, Instant startDate, Instant endDate)
-    {
+    public List<PowerUserData> findUserActivityData(PeriodType period, Instant startDate, Instant endDate) {
         QReview review = QReview.review;
         QUser user = QUser.user;
         QReviewLike reviewLike = QReviewLike.reviewLike;
         QComment comment = QComment.comment;
 
-        // 1. 기본 리뷰 점수 집계
-        var baseQuery = queryFactory
+        JPAQuery<Tuple> baseQuery = queryFactory
+            .select(
+                user.id,
+                user,
+                review.rating.sum()
+            )
             .from(review)
             .join(review.user, user);
 
@@ -52,50 +57,39 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             baseQuery = baseQuery.where(review.createdAt.between(startDate, endDate));
         }
 
-        var reviewData = baseQuery
-            .select(
-                user.id,
-                user,
-                review.rating.sum()
-            )
+        List<Tuple> reviewData = baseQuery
             .groupBy(user.id)
             .having(review.count().gt(0))
             .fetch();
 
         List<PowerUserData> powerUserDataList = new ArrayList<>();
 
-        for (var tuple : reviewData) {
+        for (Tuple tuple : reviewData) {
             UUID userId = tuple.get(user.id);
             User userEntity = tuple.get(user);
             Integer ratingSum = tuple.get(review.rating.sum());
             Double reviewScoreSum = ratingSum != null ? ratingSum.doubleValue() : 0.0;
 
             // 2. 해당 사용자의 좋아요 수 조회
-            var likeQuery = queryFactory
+            Long likeCount = queryFactory
                 .select(reviewLike.count())
                 .from(reviewLike)
                 .join(reviewLike.review, review)
-                .where(review.user.id.eq(userId));
-
-            if (startDate != null && endDate != null) {
-                likeQuery = likeQuery.where(reviewLike.createdAt.between(startDate, endDate));
-            }
-
-            Long likeCount = likeQuery.fetchOne();
+                .where(review.user.id.eq(userId)
+                    .and(startDate != null && endDate != null ?
+                        reviewLike.createdAt.between(startDate, endDate) : null))
+                .fetchOne();
             if (likeCount == null) likeCount = 0L;
 
             // 3. 해당 사용자의 댓글 수 조회
-            var commentQuery = queryFactory
+            Long commentCount = queryFactory
                 .select(comment.count())
                 .from(comment)
                 .join(comment.review, review)
-                .where(review.user.id.eq(userId));
-
-            if (startDate != null && endDate != null) {
-                commentQuery = commentQuery.where(comment.createdAt.between(startDate, endDate));
-            }
-
-            Long commentCount = commentQuery.fetchOne();
+                .where(review.user.id.eq(userId)
+                    .and(startDate != null && endDate != null ?
+                        comment.createdAt.between(startDate, endDate) : null))
+                .fetchOne();
             if (commentCount == null) commentCount = 0L;
 
             // PowerUserData 생성
@@ -108,7 +102,6 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             );
 
             powerUserDataList.add(powerUserData);
-
             log.debug("사용자 활동 데이터 생성: {}", powerUserData.getUserSummary());
         }
 
@@ -124,8 +117,12 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
         QReviewLike reviewLike = QReviewLike.reviewLike;
         QComment comment = QComment.comment;
 
-        // 1. 기본 리뷰 점수 집계
-        var baseQuery = queryFactory
+        JPAQuery<Tuple> baseQuery = queryFactory
+            .select(
+                user.id,
+                user,
+                review.rating.sum()
+            )
             .from(review)
             .join(review.user, user);
 
@@ -133,50 +130,39 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             baseQuery = baseQuery.where(review.createdAt.between(startDate, endDate));
         }
 
-        var reviewData = baseQuery
-            .select(
-                user.id,
-                user,
-                review.rating.sum()
-            )
+        List<Tuple> reviewData = baseQuery
             .groupBy(user.id)
             .having(review.count().gt(0))
             .fetch();
 
         List<PowerUser> powerUsers = new ArrayList<>();
 
-        for (var tuple : reviewData) {
+        for (Tuple tuple : reviewData) {
             UUID userId = tuple.get(user.id);
             User userEntity = tuple.get(user);
             Integer ratingSum = tuple.get(review.rating.sum());
             Double reviewScoreSum = ratingSum != null ? ratingSum.doubleValue() : 0.0;
 
             // 2. 해당 사용자의 좋아요 수 조회
-            var likeQuery = queryFactory
+            Long likeCount = queryFactory
                 .select(reviewLike.count())
                 .from(reviewLike)
                 .join(reviewLike.review, review)
-                .where(review.user.id.eq(userId));
-
-            if (startDate != null && endDate != null) {
-                likeQuery = likeQuery.where(reviewLike.createdAt.between(startDate, endDate));
-            }
-
-            Long likeCount = likeQuery.fetchOne();
+                .where(review.user.id.eq(userId)
+                    .and(startDate != null && endDate != null ?
+                        reviewLike.createdAt.between(startDate, endDate) : null))
+                .fetchOne();
             if (likeCount == null) likeCount = 0L;
 
             // 3. 해당 사용자의 댓글 수 조회
-            var commentQuery = queryFactory
+            Long commentCount = queryFactory
                 .select(comment.count())
                 .from(comment)
                 .join(comment.review, review)
-                .where(review.user.id.eq(userId));
-
-            if (startDate != null && endDate != null) {
-                commentQuery = commentQuery.where(comment.createdAt.between(startDate, endDate));
-            }
-
-            Long commentCount = commentQuery.fetchOne();
+                .where(review.user.id.eq(userId)
+                    .and(startDate != null && endDate != null ?
+                        comment.createdAt.between(startDate, endDate) : null))
+                .fetchOne();
             if (commentCount == null) commentCount = 0L;
 
             // 4. 최종 점수 계산
@@ -185,7 +171,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
             PowerUser powerUser = new PowerUser(
                 userEntity,
                 period,
-                1L, // 임시 순위, 나중에 재정렬
+                1L,
                 score,
                 reviewScoreSum,
                 likeCount,
@@ -272,7 +258,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom{
         QPowerUser powerUser = QPowerUser.powerUser;
         QUser user = QUser.user;
 
-        var query = queryFactory
+        JPAQuery<PowerUser> query = queryFactory
             .selectFrom(powerUser)
             .join(powerUser.user, user).fetchJoin()
             .where(powerUser.period.eq(period));

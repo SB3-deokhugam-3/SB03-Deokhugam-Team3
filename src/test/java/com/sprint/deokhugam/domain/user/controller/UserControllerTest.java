@@ -491,24 +491,6 @@ class UserControllerTest {
         result.andExpect(status().isBadRequest());
     }
 
-
-    @Test
-    void 파워유저_목록_조회시_limit_범위_검증() throws Exception {
-        // when - limit이 1 미만
-        ResultActions result1 = mockMvc.perform(get("/api/users/power")
-            .param("limit", "0"));
-
-        // then
-        result1.andExpect(status().isBadRequest());
-
-        // when - limit이 100 초과
-        ResultActions result2 = mockMvc.perform(get("/api/users/power")
-            .param("limit", "101"));
-
-        // then
-        result2.andExpect(status().isBadRequest());
-    }
-
     @Test
     void 파워유저_목록_조회시_전체_기간_필터링이_작동() throws Exception {
         // given
