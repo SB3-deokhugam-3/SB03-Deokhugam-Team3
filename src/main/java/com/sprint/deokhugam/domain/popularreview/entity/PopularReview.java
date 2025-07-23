@@ -1,9 +1,12 @@
 package com.sprint.deokhugam.domain.popularreview.entity;
 
+import com.sprint.deokhugam.domain.popularreview.PeriodType;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -22,9 +25,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PopularReview extends BaseEntity {
 
-    // ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')
+    @Enumerated(EnumType.STRING)
     @Column(name = "period", length = 10, nullable = false)
-    private String period = "DAILY";
+    private PeriodType period;
 
     @Column(name = "rank", nullable = false)
     private Long rank = 0L;
@@ -42,5 +45,4 @@ public class PopularReview extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id", nullable = false)
     private Review review;
-
 }
