@@ -1,11 +1,17 @@
 package com.sprint.deokhugam.domain.user.controller;
 
+import com.sprint.deokhugam.domain.popularreview.PeriodType;
+import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.service.UserService;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -120,5 +127,19 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(deletedUser);
+    }
+
+    @GetMapping("/power")
+    public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularReviews(
+        @RequestParam(defaultValue = "DAILY") PeriodType period,
+        @RequestParam(defaultValue = "ASC") String direction,
+        @RequestParam(required = false) String cursor,
+        @RequestParam(required = false) Instant after,
+        @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit
+    ) {
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(null);
     }
 }

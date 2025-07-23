@@ -8,8 +8,12 @@ import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookService;
+import com.sprint.deokhugam.domain.popularreview.PeriodType;
+import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
@@ -156,5 +160,18 @@ public class BookController {
         log.info("[BookController] 도서 물리 삭제 요청 - id: {}", bookId);
         bookService.hardDelete(bookId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/popular")
+    public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularReviews(
+        @RequestParam(defaultValue = "DAILY") PeriodType period,
+        @RequestParam(defaultValue = "ASC") String direction,
+        @RequestParam(required = false) String cursor,
+        @RequestParam(required = false) Instant after,
+        @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit
+    ) {
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(null);
     }
 }
