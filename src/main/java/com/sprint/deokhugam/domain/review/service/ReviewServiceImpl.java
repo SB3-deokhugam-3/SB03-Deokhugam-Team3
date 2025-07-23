@@ -121,7 +121,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = new Review(rating, content, book, user);
         Review savedReview = reviewRepository.save(review);
         book.increaseReviewCount();
-        updateBookRating(request.bookId());
+        updateBookRating(book);
 
         log.info("[review] 생성 완료 - reviewId: {}, bookId: {}, userId: {}, rating: {}, content: {}",
             savedReview.getId(), bookId, userId, rating, content);
@@ -148,7 +148,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         review.softDelete();
         review.getBook().decreaseReviewCount();
-        updateBookRating(review.getBook().getId());
+        updateBookRating(review.getBook());
 
     }
 
@@ -178,16 +178,12 @@ public class ReviewServiceImpl implements ReviewService {
         log.info("[review] 수정 완료 - reviewId: {}, userId: {}, newContent={}, newRating={}", reviewId,
             userId, request.content(), request.rating());
 
-        updateBookRating(review.getBook().getId());
+        updateBookRating(review.getBook());
 
         return reviewMapper.toDto(review, s3Storage);
     }
 
-    private void updateBookRating(UUID bookId) {
-        // 도서 엔티티의 평점 업데이트
-        Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new BookNotFoundException(bookId));
-
+    private void updateBookRating(Book book) {
         // 해당 도서의 모든 리뷰 평점 평균 계산
         Double averageRating = reviewRepository.findAverageRatingByBook(book);
 
