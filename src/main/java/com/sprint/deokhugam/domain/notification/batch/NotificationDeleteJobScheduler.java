@@ -14,7 +14,7 @@ public class NotificationDeleteJobScheduler {
     private final JobLauncher jobLauncher;
     private final Job notificationDeleteJob;
 
-    @Scheduled(cron = "00 00 00 * * *")
+    @Scheduled(cron = "00 05 00 * * *")
     public void runNotificationDeleteJob() throws Exception {
         jobLauncher.run(notificationDeleteJob,
             new org.springframework.batch.core.JobParametersBuilder()
