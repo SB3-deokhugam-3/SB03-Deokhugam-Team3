@@ -84,7 +84,6 @@ public class TesseractOcrExtractor implements OcrExtractor {
                 }
             }
 
-            // 기본 설정
             tesseract.setLanguage("eng");
             tesseract.setPageSegMode(1);
             tesseract.setOcrEngineMode(1);
@@ -187,14 +186,15 @@ public class TesseractOcrExtractor implements OcrExtractor {
         }
     }
 
-    // 새로운 기능: 원본 이미지로 기본 모드만 빠르게 시도
     private String tryOcrWithOriginalImage(BufferedImage image) throws TesseractException {
         tesseract.setPageSegMode(1); // 기본 모드
         String rawText = tesseract.doOCR(image);
         return extractIsbnFromText(rawText);
     }
 
-    // 새로운 기능: 여러 페이지 분할 모드로 시도
+    /**
+     *  여러 페이지 분할 모드로 시도
+     *  */
     private String tryOcrWithMultipleModes(BufferedImage image) throws TesseractException {
         for (int mode : PAGE_SEG_MODES) {
             try {
@@ -266,7 +266,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
     }
 
     private String findIsbnInText(String text) {
-        // 개선된 ISBN 패턴 매칭
+        // ISBN 패턴 매칭 개선
         Matcher matcher = ISBN_PATTERN.matcher(text);
         if (matcher.find()) {
             String rawIsbn = matcher.group();
@@ -278,7 +278,6 @@ public class TesseractOcrExtractor implements OcrExtractor {
             }
         }
 
-        // 기존 숫자 패턴 검색 유지
         Pattern numericPattern = Pattern.compile("\\b(\\d{10}|\\d{13})\\b");
         Matcher numericMatcher = numericPattern.matcher(text);
 
@@ -313,7 +312,9 @@ public class TesseractOcrExtractor implements OcrExtractor {
         return false;
     }
 
-    // 개선된 OCR 오인식 문자 보정
+    /**
+     * OCR 오인식 문자 보정 개선
+     * */
     private String correctOcrErrors(String text) {
         String corrected = text;
 
@@ -342,13 +343,15 @@ public class TesseractOcrExtractor implements OcrExtractor {
         return sb.toString();
     }
 
-    // 기존 이미지 크기 최적화
+    /**
+     * 기존 이미지 크기 최적화
+     * */
     private BufferedImage resizeImageForOcr(BufferedImage image) {
         try {
             int width = image.getWidth();
             int height = image.getHeight();
 
-            // OCR에 적합한 크기 계산 (너무 작으면 확대, 너무 크면 축소)
+            // OCR에 적합한 크기 계산 ( 너무 작으면 확대, 너무 크면 축소 )
             int targetWidth, targetHeight;
 
             if (width < 800 || height < 600) {
@@ -387,7 +390,6 @@ public class TesseractOcrExtractor implements OcrExtractor {
         }
     }
 
-    // 기존 그레이스케일 변환
     private BufferedImage convertToGrayscale(BufferedImage image) {
         try {
             log.debug("[OCR] 그레이스케일 변환 시작");
@@ -409,7 +411,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
         }
     }
 
-    // 새로운 기능: 간단한 노이즈 제거 (안전하고 빠른 방법)
+    // 노이즈 제거 ( 안전하고 빠른 방법 )
     private BufferedImage removeNoise(BufferedImage image) {
         try {
             log.debug("[OCR] 노이즈 제거 시작");
@@ -418,7 +420,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
             int height = image.getHeight();
             BufferedImage cleaned = new BufferedImage(width, height, image.getType());
 
-            // 간단한 미디언 필터 적용 (3x3 윈도우)
+            // 간단한 미디언 필터 적용 ( 3x3 윈도우 )
             for (int y = 1; y < height - 1; y++) {
                 for (int x = 1; x < width - 1; x++) {
                     int[] pixels = new int[9];
@@ -432,7 +434,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
                         }
                     }
 
-                    // 중간값 찾기 (간단한 정렬)
+                    // 중간값 찾기 ( 간단한 정렬 )
                     java.util.Arrays.sort(pixels);
                     int median = pixels[4]; // 9개 중 5번째가 중간값
 
