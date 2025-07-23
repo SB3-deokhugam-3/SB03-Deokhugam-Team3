@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.popularbook.config;
 
 import com.sprint.deokhugam.domain.popularbook.dto.data.BookScoreDto;
 import com.sprint.deokhugam.domain.popularbook.entity.PopularBook;
+import com.sprint.deokhugam.domain.popularbook.exception.MissingPeriodParameterException;
 import com.sprint.deokhugam.domain.popularbook.processor.BookScoreProcessor;
 import com.sprint.deokhugam.domain.popularbook.reader.JpaBookScoreReader;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
@@ -48,6 +49,10 @@ public class PopularBookRankingBatchJobConfig {
         PlatformTransactionManager transactionManager,
         @Value("#{jobParameters['period']}") String periodKey,
         @Value("#{jobParameters['today']}") String todayStr) {
+
+        if (periodKey == null || todayStr == null) {
+            throw new MissingPeriodParameterException("period와 today 파라미터는 필수입니다.");
+        }
 
         PeriodType period = PeriodType.valueOf(periodKey.toUpperCase());
         Instant today = Instant.parse(todayStr);
