@@ -80,6 +80,14 @@ public class PopularBookRepositoryCustomImpl implements PopularBookRepositoryCus
             .fetch();
     }
 
+    @Override
+    public long deleteByPeriod(PeriodType period) {
+        return queryFactory
+            .delete(pb)
+            .where(pb.period.eq(period))
+            .execute();
+    }
+
     private OrderSpecifier<?> getOrderSpecifier(String direction) {
         if (direction.equalsIgnoreCase("asc")) {
             return pb.rank.asc();

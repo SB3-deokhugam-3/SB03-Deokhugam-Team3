@@ -6,6 +6,7 @@ import com.sprint.deokhugam.domain.popularbook.exception.MissingPeriodParameterE
 import com.sprint.deokhugam.domain.popularbook.processor.BookScoreProcessor;
 import com.sprint.deokhugam.domain.popularbook.reader.JpaBookScoreReader;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
+import com.sprint.deokhugam.domain.popularbook.tasklet.DeletePopularBooksTasklet;
 import com.sprint.deokhugam.domain.popularbook.writer.PopularBookRankingWriter;
 import com.sprint.deokhugam.global.period.PeriodType;
 import jakarta.persistence.EntityManager;
@@ -39,7 +40,25 @@ public class PopularBookRankingBatchJobConfig {
         PlatformTransactionManager transactionManager) {
 
         return new JobBuilder("popularBookRankingJob", jobRepository)
-            .start(popularBookRankingStep(jobRepository, transactionManager, null, null))
+            .start(deletePopularBookStep(jobRepository, transactionManager, null))
+            .next(popularBookRankingStep(jobRepository, transactionManager, null, null))
+            .build();
+    }
+
+    @Bean
+    @JobScope
+    public Step deletePopularBookStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        @Value("#{jobParameters['period']}") String periodKey) {
+
+        if (periodKey == null) {
+            throw new MissingPeriodParameterException("period 파라미터는 필수입니다.");
+        }
+
+        PeriodType period = PeriodType.valueOf(periodKey.toUpperCase());
+
+        return new StepBuilder("deletePopularBookStep_" + period.name(), jobRepository)
+            .tasklet(new DeletePopularBooksTasklet(popularBookRepository, period), transactionManager)
             .build();
     }
 
