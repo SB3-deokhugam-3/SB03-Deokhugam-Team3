@@ -117,11 +117,12 @@ public class PopularReviewServiceImpl implements PopularReviewService {
 
         switch (period) {
             case DAILY:
-                startLocalDate = TimeUtils.toLocalDate(today).minusDays(1);
+                LocalDate todayDate = TimeUtils.toLocalDate(today);
                 slicedReview = totalReviews.stream()
                     .filter(review -> {
                         LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
-                        return reviewDate.isEqual(startLocalDate);
+                        // 오늘만
+                        return reviewDate.isEqual(todayDate);
                     }).toList();
                 break;
             case WEEKLY:

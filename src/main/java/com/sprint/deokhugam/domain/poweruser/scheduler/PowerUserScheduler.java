@@ -33,7 +33,7 @@ public class PowerUserScheduler {
     /**
      * 매일 00:05에 파워 유저 데이터 계산
      */
-    @Scheduled(cron = "0/30 * * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 1 * * * *", zone = "Asia/Seoul")
     public void schedulePowerUserCalculation() {
         // 중복 실행 체크
         if (!isRunning.compareAndSet(false, true)) {
