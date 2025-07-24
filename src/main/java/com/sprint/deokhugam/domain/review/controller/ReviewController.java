@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.review.controller;
 
-import com.sprint.deokhugam.domain.popularreview.PeriodType;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
@@ -9,6 +8,7 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

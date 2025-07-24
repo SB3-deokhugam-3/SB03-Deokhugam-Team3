@@ -4,13 +4,10 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.deokhugam.domain.book.entity.QBook;
-import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
-import com.sprint.deokhugam.domain.popularreview.PeriodType;
-import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.entity.QPopularReview;
-import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
 import com.sprint.deokhugam.domain.review.entity.QReview;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -27,32 +24,6 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
     private final JPAQueryFactory queryFactory;
     private static final QPopularReview pr = QPopularReview.popularReview;
     private static final QReview r = QReview.review;
-
-//
-//    @Override
-//    public List<PopularReviewStats> calculatePopularReviews(Instant from, Instant to) {
-//        QReview review = QReview.review;
-//        QReviewLike reviewLike = QReviewLike.reviewLike;
-//        QComment comment = QComment.comment;
-//
-//        return queryFactory
-//            .select(Projections.constructor(PopularReviewStats.class,
-//                review.id,
-//                reviewLike.id.countDistinct().coalesce(0L),
-//                comment.id.countDistinct().coalesce(0L)
-//            ))
-//            .from(review)
-//            .leftJoin(reviewLike).on(
-//                reviewLike.review.id.eq(review.id),
-//                reviewLike.createdAt.between(from, to)
-//            )
-//            .leftJoin(comment).on(
-//                comment.review.id.eq(review.id),
-//                comment.createdAt.between(from, to)
-//            )
-//            .groupBy(review.id)
-//            .fetch();
-//    }
 
     @Override
     public List<PopularReview> findByPeriodWithCursor(

@@ -70,7 +70,7 @@ public class PopularReviewServiceTest {
     private PopularReviewDto popularReviewDto2;
     private PopularReviewDto popularReviewDto3;
 
-    private PopularReview createPopularReview(Review review, String period, Long rank,
+    private PopularReview createPopularReview(Review review, PeriodType period, Long rank,
         double score) {
         PopularReview popularReview = PopularReview.builder()
             .review(review)
@@ -311,11 +311,11 @@ public class PopularReviewServiceTest {
             review3
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review1, PeriodType.ALL_TIME.name(), 1L,
+            createPopularReview(review1, PeriodType.ALL_TIME, 1L,
                 review1.getCommentCount() * 0.7 + review1.getLikeCount() * 0.3),
-            createPopularReview(review2, PeriodType.ALL_TIME.name(), 2L,
+            createPopularReview(review2, PeriodType.ALL_TIME, 2L,
                 review2.getCommentCount() * 0.7 + review2.getLikeCount() * 0.3),
-            createPopularReview(review3, PeriodType.ALL_TIME.name(), 3L,
+            createPopularReview(review3, PeriodType.ALL_TIME, 3L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
         );
 
@@ -344,9 +344,9 @@ public class PopularReviewServiceTest {
             review1
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME.name(), 1L,
+            createPopularReview(review3, PeriodType.ALL_TIME, 1L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3),
-            createPopularReview(review1, PeriodType.ALL_TIME.name(), 2L,
+            createPopularReview(review1, PeriodType.ALL_TIME, 2L,
                 review1.getCommentCount() * 0.7 + review1.getLikeCount() * 0.3)
         );
 
@@ -375,7 +375,7 @@ public class PopularReviewServiceTest {
             notInPeriodReview2
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME.name(), 1L,
+            createPopularReview(review3, PeriodType.ALL_TIME, 1L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
         );
 

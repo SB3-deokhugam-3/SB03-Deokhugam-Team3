@@ -1,6 +1,6 @@
 package com.sprint.deokhugam.domain.popularreview.dto.data;
 
-import com.sprint.deokhugam.domain.popularreview.PeriodType;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.util.UUID;
 

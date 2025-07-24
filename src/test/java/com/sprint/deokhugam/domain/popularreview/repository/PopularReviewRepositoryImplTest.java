@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
-import com.sprint.deokhugam.domain.popularreview.PeriodType;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
@@ -15,6 +14,7 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;

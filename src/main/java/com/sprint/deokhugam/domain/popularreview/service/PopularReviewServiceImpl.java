@@ -151,7 +151,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             Long likeCount = review.getLikeCount();
             Double score = commentCount * 0.7 + likeCount * 0.3;
             PopularReview popularReview = PopularReview.builder()
-                .period(period.name())
+                .period(period)
                 .rank(rank)
                 .score(score)
                 .likeCount(likeCount)
