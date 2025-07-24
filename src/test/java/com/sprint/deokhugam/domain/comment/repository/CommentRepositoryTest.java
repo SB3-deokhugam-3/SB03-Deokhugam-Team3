@@ -25,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
@@ -198,10 +197,6 @@ class CommentRepositoryTest {
         ReflectionTestUtils.setField(comment, "updatedAt", createdAt);
         ReflectionTestUtils.setField(comment, "isDeleted", false);
         return comment;
-    }
-
-    private Comment createComment(String content) {
-        return new Comment(review1, user1, content);
     }
 
     private Comment create(String content) {
