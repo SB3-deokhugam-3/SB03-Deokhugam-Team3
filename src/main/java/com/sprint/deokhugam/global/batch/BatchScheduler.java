@@ -21,7 +21,7 @@ public class BatchScheduler {
     private final Job popularBookRankingJob;
 
 
-    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0/30 * * * * *", zone = "Asia/Seoul")
 //    @Scheduled(cron = "0/10 * * * * *", zone = "Asia/Seoul") // 10초마다 실행(테스트용)
     public void runPopularReviewJob() throws Exception {
         JobParameters params = new JobParametersBuilder()
@@ -30,7 +30,7 @@ public class BatchScheduler {
         jobLauncher.run(popularReviewJob, params);
     }
 
-    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0/30 * * * * *", zone = "Asia/Seoul")
     public void runPopularBookRankingJob() {
         Instant today = Instant.now();
 

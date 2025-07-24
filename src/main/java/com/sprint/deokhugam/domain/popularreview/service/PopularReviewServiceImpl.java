@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -168,5 +169,22 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         return popularReviews;
     }
 
+    @Override
+    public Double getUserPopularityScoreSum(UUID userId, PeriodType period) {
+        if (userId == null) {
+            throw new IllegalArgumentException("사용자 ID는 필수입니다.");
+        }
+        if (period == null) {
+            throw new IllegalArgumentException("기간 타입은 필수입니다.");
+        }
 
+        log.debug("사용자 인기 리뷰 점수 합계 조회 - userId: {}, period: {}", userId, period);
+
+        Double scoreSum = popularReviewRepository.findScoreSumByUserIdAndPeriod(userId, period);
+
+        log.debug("사용자 인기 리뷰 점수 합계 조회 결과 - userId: {}, period: {}, scoreSum: {}",
+            userId, period, scoreSum);
+
+        return scoreSum != null ? scoreSum : 0.0;
+    }
 }

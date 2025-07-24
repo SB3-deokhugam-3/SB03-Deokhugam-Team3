@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.poweruser.service;
 
+import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
@@ -7,6 +8,7 @@ import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,28 +20,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class PowerUserService {
 
     private final PowerUserRepository powerUserRepository;
+    private final PopularReviewService popularReviewService;
 
     public static final double REVIEW_SCORE_WEIGHT = 0.5;  // 현재 0으로 처리하므로 실질적으로 미적용
     public static final double LIKE_COUNT_WEIGHT = 0.2;
     public static final double COMMENT_COUNT_WEIGHT = 0.3;
 
     /**
-     * 활동 점수 계산 (임시: 리뷰 인기 점수는 0으로 처리)
+     * 활동 점수 계산 - 인기 리뷰 점수를 실제로 반영
      *
-     * 원래 공식: 활동 점수 = (리뷰 인기 점수 * 0.5) + (좋아요 수 * 0.2) + (댓글 수 * 0.3)
-     * 현재 공식: 활동 점수 = (0 * 0.5) + (좋아요 수 * 0.2) + (댓글 수 * 0.3)
-     *          → 활동 점수 = (좋아요 수 * 0.2) + (댓글 수 * 0.3)
+     * 공식: 활동 점수 = (리뷰 인기 점수 * 0.5) + (좋아요 수 * 0.2) + (댓글 수 * 0.3)
      */
     public static Double calculateActivityScore(Double reviewScoreSum, Long likeCount, Long commentCount) {
+        if (reviewScoreSum == null) reviewScoreSum = 0.0;
         if (likeCount == null) likeCount = 0L;
         if (commentCount == null) commentCount = 0L;
 
-        Double tempReviewScore = 0.0;
-
-        log.debug("활동 점수 계산 - 리뷰점수: {} (임시로 0 처리), 좋아요: {}, 댓글: {}",
+        log.debug("활동 점수 계산 - 리뷰점수: {}, 좋아요: {}, 댓글: {}",
             reviewScoreSum, likeCount, commentCount);
 
-        return (tempReviewScore * REVIEW_SCORE_WEIGHT) +
+        return (reviewScoreSum * REVIEW_SCORE_WEIGHT) +
             (likeCount * LIKE_COUNT_WEIGHT) +
             (commentCount * COMMENT_COUNT_WEIGHT);
     }
@@ -113,8 +113,9 @@ public class PowerUserService {
             user.updateRank(actualRank);
             previousScore = currentScore;
 
-            log.debug("순위 할당: {} 순위, {} 점수 (좋아요:{}, 댓글:{}), {} 사용자",
-                actualRank, currentScore, user.getLikeCount(), user.getCommentCount(), user.getUser().getNickname());
+            log.debug("순위 할당: {} 순위, {} 점수 (리뷰:{}, 좋아요:{}, 댓글:{}), {} 사용자",
+                actualRank, currentScore, user.getReviewScoreSum(), user.getLikeCount(),
+                user.getCommentCount(), user.getUser().getNickname());
         }
 
         return sorted;
@@ -185,9 +186,21 @@ public class PowerUserService {
             .createdAt(powerUser.getCreatedAt())
             .rank(powerUser.getRank())
             .score(powerUser.getScore())
-            .reviewScoreSum(0.0) // 임시로 0 반환 ( 인기 리뷰 점수 로직 구현 전까지 )
+            .reviewScoreSum(powerUser.getReviewScoreSum()) // 실제 저장된 값 사용
             .likeCount(powerUser.getLikeCount())
             .commentCount(powerUser.getCommentCount())
             .build();
+    }
+
+    /**
+     * 특정 사용자의 기간별 인기 리뷰 점수 합계를 조회
+     */
+    public Double getUserReviewScoreSum(UUID userId, PeriodType period) {
+        try {
+            return popularReviewService.getUserPopularityScoreSum(userId, period);
+        } catch (Exception e) {
+            log.error("인기 리뷰 점수 조회 중 오류 발생 - userId: {}, period: {}", userId, period, e);
+            return 0.0;
+        }
     }
 }
