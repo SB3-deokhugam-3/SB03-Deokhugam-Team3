@@ -1,8 +1,9 @@
-package com.sprint.deokhugam.global.batch;
+package com.sprint.deokhugam.domain.popularreview.batch;
 
 import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
+import com.sprint.deokhugam.global.batch.BatchListener;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
 import java.time.Instant;
@@ -33,26 +34,24 @@ public class ReviewBatch {
     private final PopularReviewService popularReviewService;
     private final ReviewRepository reviewRepository;
 
-    private final String REVIEW_BATCH_NAME = "POPULAR_REVIEW_RANKING";
-
     @Bean
-    public Job reviewJob() {
-        return new JobBuilder(REVIEW_BATCH_NAME, jobRepository)
+    public Job popularReviewJob() {
+        return new JobBuilder("popularReviewRankingJob", jobRepository)
             .incrementer(new RunIdIncrementer())
-            .start(reviewStep(jobRepository, transactionManager))
+            .start(popularReviewStep(jobRepository, transactionManager))
             .build();
     }
 
     @Bean
-    public Step reviewStep(JobRepository jobRepository,
+    public Step popularReviewStep(JobRepository jobRepository,
         PlatformTransactionManager transactionManager) {
         return new StepBuilder("reviewStep", jobRepository)
-            .tasklet(reviewTasklet(), transactionManager)
+            .tasklet(popularReviewTasklet(), transactionManager)
             .listener(listener)
             .build();
     }
 
-    protected Tasklet reviewTasklet() {
+    protected Tasklet popularReviewTasklet() {
         return (stepContribution, chunkContext) -> {
             try {
                 Instant currentTime = Instant.now();

@@ -1,4 +1,4 @@
-package com.sprint.deokhugam.global.batch;
+package com.sprint.deokhugam.domain.popularreview.batch;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -13,14 +13,14 @@ import org.springframework.stereotype.Component;
 public class BatchScheduler {
 
     private final JobLauncher jobLauncher;
-    private final Job reviewJob;
+    private final Job popularReviewJob;
 
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0/30 * * * * *", zone = "Asia/Seoul") // 30초마다 실행(테스트용)
-    public void runReviewJob() throws Exception {
+//    @Scheduled(cron = "0/10 * * * * *", zone = "Asia/Seoul") // 10초마다 실행(테스트용)
+    public void runPopularReviewJob() throws Exception {
         JobParameters params = new JobParametersBuilder()
             .addLong("timestamp", System.currentTimeMillis())
             .toJobParameters();
-        jobLauncher.run(reviewJob, params);
+        jobLauncher.run(popularReviewJob, params);
     }
 }

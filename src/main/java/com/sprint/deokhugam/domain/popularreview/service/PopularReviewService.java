@@ -9,6 +9,7 @@ import com.sprint.deokhugam.global.utils.TimeUtils;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +28,18 @@ public class PopularReviewService {
     /* 배치에서 사용 - 오늘 이미 실행한 배치인지 검증 */
     public void validateJobNotDuplicated(Instant referenceTime)
         throws BatchAlreadyRunException {
+        ZoneId zoneId = ZoneId.of("Asia/Seoul");
 
-        Instant startOfDay = TimeUtils.startOfDayWithZone(referenceTime).toInstant();
-        Instant endOfDay = TimeUtils.endOfDayWithZone(referenceTime).toInstant();
+        Instant startOfDay = PeriodType.DAILY.getStartInstant(referenceTime, zoneId);
+        Instant endOfDay = PeriodType.DAILY.getEndInstant(referenceTime, zoneId);
+
+        System.out.println("startOfDay = " + startOfDay);
+        System.out.println("endOfDay = " + endOfDay);
 
         Boolean isAlreadyExist = popularReviewRepository.existsByCreatedAtBetween(startOfDay,
             endOfDay);
+
+        System.out.println("isAlreadyExist = " + isAlreadyExist);
 
         if (isAlreadyExist) {
             throw new BatchAlreadyRunException("Review",
@@ -60,11 +67,9 @@ public class PopularReviewService {
                 break;
             case WEEKLY:
                 startLocalDate = TimeUtils.toLocalDate(today).minusWeeks(1);
-                System.out.println("startLocalDate = " + startLocalDate);
                 slicedReview = totalReviews.stream()
                     .filter(review -> {
                         LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
-                        System.out.println("reviewDate = " + reviewDate);
                         return !reviewDate.isBefore(startLocalDate);
                     }).toList();
 
@@ -88,7 +93,7 @@ public class PopularReviewService {
             Long likeCount = review.getLikeCount();
             Double score = commentCount * 0.7 + likeCount * 0.3;
             PopularReview popularReview = PopularReview.builder()
-                .period(period.getValue())
+                .period(period.name())
                 .rank(rank)
                 .score(score)
                 .likeCount(likeCount)

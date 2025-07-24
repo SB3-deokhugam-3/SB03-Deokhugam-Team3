@@ -130,11 +130,11 @@ public class PopularReviewServiceTest {
             review3
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review1, PeriodType.ALL_TIME.getValue(), 1L,
+            createPopularReview(review1, PeriodType.ALL_TIME.name(), 1L,
                 review1.getCommentCount() * 0.7 + review1.getLikeCount() * 0.3),
-            createPopularReview(review2, PeriodType.ALL_TIME.getValue(), 2L,
+            createPopularReview(review2, PeriodType.ALL_TIME.name(), 2L,
                 review2.getCommentCount() * 0.7 + review2.getLikeCount() * 0.3),
-            createPopularReview(review3, PeriodType.ALL_TIME.getValue(), 3L,
+            createPopularReview(review3, PeriodType.ALL_TIME.name(), 3L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
         );
 
@@ -163,9 +163,9 @@ public class PopularReviewServiceTest {
             review1
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME.getValue(), 1L,
+            createPopularReview(review3, PeriodType.ALL_TIME.name(), 1L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3),
-            createPopularReview(review1, PeriodType.ALL_TIME.getValue(), 2L,
+            createPopularReview(review1, PeriodType.ALL_TIME.name(), 2L,
                 review1.getCommentCount() * 0.7 + review1.getLikeCount() * 0.3)
         );
 
@@ -194,7 +194,7 @@ public class PopularReviewServiceTest {
             notInPeriodReview2
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME.getValue(), 1L,
+            createPopularReview(review3, PeriodType.ALL_TIME.name(), 1L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
         );
 
