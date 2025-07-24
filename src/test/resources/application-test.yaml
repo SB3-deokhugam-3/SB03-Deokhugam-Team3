@@ -13,7 +13,9 @@ spring:
       enabled: true
   batch:
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
+    job:
+      enabled: false
 
 # S3 - 테스트용 더미
 deokhugam:
