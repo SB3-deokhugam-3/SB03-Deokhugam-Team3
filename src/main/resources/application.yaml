@@ -14,6 +14,9 @@ spring:
     jdbc:
       initialize-schema: never
 
+    job:
+      enabled: false # job 자동실행해제
+
 
 # OCR 구현체 설정
 ocr:
