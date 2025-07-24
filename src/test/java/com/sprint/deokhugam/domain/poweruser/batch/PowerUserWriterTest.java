@@ -23,7 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.item.Chunk;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PowerUserWrite 테스트")
+@DisplayName("PowerUserWriter 테스트")
 class PowerUserWriterTest {
 
     @Mock

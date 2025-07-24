@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PowerUserDateReader 테스트")
+@DisplayName("PowerUserDataReader 테스트")
 class PowerUserDataReaderTest {
 
     @Mock

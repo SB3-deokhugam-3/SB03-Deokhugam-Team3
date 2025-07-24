@@ -31,7 +31,7 @@ public class PowerUserScheduler {
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     /**
-     * 매일 새벽 2시에 파워 유저 데이터 계산
+     * 매일 00:05에 파워 유저 데이터 계산
      */
     @Scheduled(cron = "0 5 0 * * *")
     public void schedulePowerUserCalculation() {
@@ -73,19 +73,5 @@ public class PowerUserScheduler {
                 .description("PowerUser batch processing time")
                 .register(meterRegistry));
         }
-    }
-
-    /**
-     * 주간 계산 실행일인지 확인 ( 일요일 )
-     */
-    private boolean isWeeklyCalculationDay() {
-        return LocalDate.now().getDayOfWeek() == DayOfWeek.SUNDAY;
-    }
-
-    /**
-     * 월간 계산 실행일인지 확인 ( 매월 1일 )
-     */
-    private boolean isMonthlyCalculationDay() {
-        return LocalDate.now().getDayOfMonth() == 1;
     }
 }
