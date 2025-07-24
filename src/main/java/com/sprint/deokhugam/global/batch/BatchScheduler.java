@@ -1,4 +1,4 @@
-package com.sprint.deokhugam.domain.popularbook.scheduler;
+package com.sprint.deokhugam.global.batch;
 
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
@@ -12,15 +12,26 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
-public class PopularBookRankingScheduler {
+@Component
+public class BatchScheduler {
 
     private final JobLauncher jobLauncher;
+    private final Job popularReviewJob;
     private final Job popularBookRankingJob;
 
+
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
-    public void runJob() {
+//    @Scheduled(cron = "0/10 * * * * *", zone = "Asia/Seoul") // 10초마다 실행(테스트용)
+    public void runPopularReviewJob() throws Exception {
+        JobParameters params = new JobParametersBuilder()
+            .addLong("timestamp", System.currentTimeMillis())
+            .toJobParameters();
+        jobLauncher.run(popularReviewJob, params);
+    }
+
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
+    public void runPopularBookRankingJob() {
         Instant today = Instant.now();
 
         for (PeriodType period : PeriodType.values()) {
@@ -31,7 +42,8 @@ public class PopularBookRankingScheduler {
                     .addLong("timestamp", System.currentTimeMillis()) // 유니크 파라미터
                     .toJobParameters();
 
-                log.info("[PopularBookRankingScheduler] 인기 도서 랭킹 배치 실행 - period: {}, today: {}", period, today);
+                log.info("[PopularBookRankingScheduler] 인기 도서 랭킹 배치 실행 - period: {}, today: {}",
+                    period, today);
 
                 jobLauncher.run(popularBookRankingJob, jobParameters);
             } catch (Exception e) {
