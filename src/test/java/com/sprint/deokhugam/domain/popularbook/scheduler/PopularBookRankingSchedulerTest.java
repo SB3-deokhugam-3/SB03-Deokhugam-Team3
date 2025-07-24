@@ -1,0 +1,71 @@
+package com.sprint.deokhugam.domain.popularbook.scheduler;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import com.sprint.deokhugam.global.enums.PeriodType;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+@ExtendWith(MockitoExtension.class)
+class PopularBookRankingSchedulerTest {
+
+    @InjectMocks
+    private PopularBookRankingScheduler scheduler;
+
+    @Mock
+    private JobLauncher jobLauncher;
+
+    @Mock
+    private Job popularBookRankingJob;
+
+    @Test
+    void 각_기간별_작업_파라미터_검증() throws Exception {
+
+        // given
+        JobExecution mockExecution = new JobExecution(1L);
+
+        given(jobLauncher.run(any(Job.class), any(JobParameters.class))).willReturn(mockExecution);
+
+        // when
+        scheduler.runJob();
+
+        // then
+        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
+        verify(jobLauncher, times(PeriodType.values().length))
+            .run(eq(popularBookRankingJob), parametersCaptor.capture());
+        List<JobParameters> captureParameters = parametersCaptor.getAllValues();
+        // 각 기간별로 올바른 파라미터가 전달되었는지 확인
+        Set<String> expectedPeriods = Arrays.stream(PeriodType.values())
+            .map(Enum::name)
+            .collect(Collectors.toSet());
+        Set<String> actualPeriods = captureParameters.stream()
+            .map(params -> params.getString("period"))
+            .collect(Collectors.toSet());
+        assertEquals(expectedPeriods, actualPeriods);
+    }
+}
+
