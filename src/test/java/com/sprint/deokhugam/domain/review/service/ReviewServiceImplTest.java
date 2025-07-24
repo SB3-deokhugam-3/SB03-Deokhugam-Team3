@@ -19,7 +19,6 @@ import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
-import com.sprint.deokhugam.domain.review.exception.DuplicationReviewException;
 import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.mapper.ReviewMapper;
