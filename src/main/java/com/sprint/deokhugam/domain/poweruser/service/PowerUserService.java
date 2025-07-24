@@ -93,10 +93,7 @@ public class PowerUserService {
         // 1. 점수 기준 내림차순 정렬
         List<PowerUser> sorted = powerUsers.stream()
             .sorted(Comparator.comparing(PowerUser::getScore).reversed()
-                .thenComparing(PowerUser::getLikeCount).reversed()  // 리뷰점수가 0이므로 좋아요 우선
-                .thenComparing(PowerUser::getCommentCount).reversed()
-                .thenComparing(PowerUser::getReviewScoreSum).reversed()  // 나중에 활용할 수 있도록 유지
-                .thenComparing(user -> user.getUser().getNickname())) // 동점시 닉네임으로 정렬
+                .thenComparing(user -> user.getUser().getNickname())) // 동점시만 닉네임으로 구분
             .toList();
 
         // 2. 순위 재할당 (동점자 처리 포함)

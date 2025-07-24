@@ -4,12 +4,19 @@ import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,132 +26,69 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PowerUserBatchService {
 
-    private final PowerUserRepository powerUserRepository;
-    private final PowerUserService powerUserService;
+    private final JobLauncher jobLauncher;
+    private final Job powerUserJob;
 
     /**
-     * 일간 파워 유저 계산 및 저장
+     * 일간 파워 유저 배치 실행
      */
     @Transactional(propagation = Propagation.REQUIRED)
     public void calculateDailyPowerUsers() {
-        log.info("일간 파워 유저 계산 시작");
-
-        try {
-            // 어제 00:00:00 ~ 23:59:59
-            LocalDateTime endTime = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0)
-                .withNano(0);
-            LocalDateTime startTime = endTime.minusDays(1);
-
-            ZoneId koreaZone = ZoneId.of("Asia/Seoul");
-            Instant startInstant = startTime.atZone(koreaZone).toInstant();
-            Instant endInstant = endTime.atZone(koreaZone).toInstant();
-
-            // 새로운 일간 파워 유저 계산
-            List<PowerUser> powerUsers = powerUserRepository.calculateAndCreatePowerUsers(
-                PeriodType.DAILY, startInstant, endInstant);
-
-            // 기존 데이터 삭제 후 새로 저장
-            if (!powerUsers.isEmpty()) {
-                powerUserService.replacePowerUsers(powerUsers); // 삭제 + 저장
-                log.info("일간 파워 유저 계산 완료 - 총 {}명", powerUsers.size());
-            } else {
-                log.info("일간 파워 유저 계산 완료 - 대상 사용자 없음");
-            }
-
-        } catch (Exception e) {
-            log.error("일간 파워 유저 계산 중 오류 발생", e);
-            throw new RuntimeException("일간 파워 유저 계산 실패", e);
-        }
-
+        log.info("일간 파워 유저 배치 실행 시작");
+        executePowerUserBatch(PeriodType.DAILY);
     }
 
     /**
-     * 주간 파워 유저 계산 및 저장 (지난 7일간)
+     * 주간 파워 유저 배치 실행
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void calculateWeeklyPowerUsers() {
-        log.info("주간 파워 유저 계산 시작");
-
-        try {
-            // 현재 시점에서 7일 전부터 지금까지
-            LocalDateTime endTime = LocalDateTime.now();
-            LocalDateTime startTime = endTime.minusDays(7);
-
-            Instant startInstant = startTime.toInstant(ZoneOffset.UTC);
-            Instant endInstant = endTime.toInstant(ZoneOffset.UTC);
-
-            log.info("주간 파워유저 계산 범위: {} ~ {}", startTime, endTime);
-
-            List<PowerUser> powerUsers = powerUserRepository.calculateAndCreatePowerUsers(
-                PeriodType.WEEKLY, startInstant, endInstant);
-
-            if (!powerUsers.isEmpty()) {
-                powerUserService.replacePowerUsers(powerUsers);
-                log.info("주간 파워 유저 계산 완료 - 총 {}명", powerUsers.size());
-            } else {
-                log.info("주간 파워 유저 계산 완료 - 대상 사용자 없음");
-            }
-
-        } catch (Exception e) {
-            log.error("주간 파워 유저 계산 중 오류 발생", e);
-            throw new RuntimeException("주간 파워 유저 계산 실패", e);
-        }
+        log.info("주간 파워 유저 배치 실행 시작");
+        executePowerUserBatch(PeriodType.WEEKLY);
     }
 
     /**
-     * 월간 파워 유저 계산 및 저장 (지난 30일간)
+     * 월간 파워 유저 배치 실행
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void calculateMonthlyPowerUsers() {
-        log.info("월간 파워 유저 계산 시작");
-
-        try {
-            // 현재 시점에서 30일 전부터 지금까지
-            LocalDateTime endTime = LocalDateTime.now();
-            LocalDateTime startTime = endTime.minusDays(30);
-
-            Instant startInstant = startTime.toInstant(ZoneOffset.UTC);
-            Instant endInstant = endTime.toInstant(ZoneOffset.UTC);
-
-            log.info("월간 파워유저 계산 범위: {} ~ {}", startTime, endTime);
-
-            List<PowerUser> powerUsers = powerUserRepository.calculateAndCreatePowerUsers(
-                PeriodType.MONTHLY, startInstant, endInstant);
-
-            if (!powerUsers.isEmpty()) {
-                powerUserService.replacePowerUsers(powerUsers); // 기존 MONTHLY 삭제 후 새로 저장
-                log.info("월간 파워 유저 계산 완료 - 총 {}명", powerUsers.size());
-            } else {
-                log.info("월간 파워 유저 계산 완료 - 대상 사용자 없음");
-            }
-
-        } catch (Exception e) {
-            log.error("월간 파워 유저 계산 중 오류 발생", e);
-            throw new RuntimeException("월간 파워 유저 계산 실패", e);
-        }
+        log.info("월간 파워 유저 배치 실행 시작");
+        executePowerUserBatch(PeriodType.MONTHLY);
     }
 
     /**
-     * 역대 파워 유저 계산 및 저장
+     * 역대 파워 유저 배치 실행
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void calculateAllTimePowerUsers() {
-        log.info("역대 파워 유저 계산 시작");
+        log.info("역대 파워 유저 배치 실행 시작");
+        executePowerUserBatch(PeriodType.ALL_TIME);
+    }
 
+    /**
+     * 기간별 파워 유저 배치 실행
+     */
+    private void executePowerUserBatch(PeriodType periodType) {
         try {
-            List<PowerUser> powerUsers = powerUserRepository.calculateAndCreatePowerUsers(
-                PeriodType.ALL_TIME, null, null);
+            JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("timestamp", System.currentTimeMillis())
+                .addString("period", periodType.name())
+                .addString("executionDate", LocalDate.now().toString())
+                .toJobParameters();
 
-            if (!powerUsers.isEmpty()) {
-                powerUserService.replacePowerUsers(powerUsers); //  삭제 + 저장
-                log.info("역대 파워 유저 계산 완료 - 총 {}명", powerUsers.size());
+            JobExecution jobExecution = jobLauncher.run(powerUserJob, jobParameters);
+
+            if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
+                log.info("{} 파워 유저 배치 실행 완료", periodType);
             } else {
-                log.info("역대 파워 유저 계산 완료 - 대상 사용자 없음");
+                log.error("{} 파워 유저 배치 실행 실패 - Status: {}",
+                    periodType, jobExecution.getStatus());
+                throw new RuntimeException(periodType + " 파워 유저 배치 실행 실패");
             }
 
         } catch (Exception e) {
-            log.error("역대 파워 유저 계산 중 오류 발생", e);
-            throw new RuntimeException("역대 파워 유저 계산 실패", e);
+            log.error("{} 파워 유저 배치 실행 중 오류 발생", periodType, e);
+            throw new RuntimeException(periodType + " 파워 유저 배치 실행 실패", e);
         }
     }
 }

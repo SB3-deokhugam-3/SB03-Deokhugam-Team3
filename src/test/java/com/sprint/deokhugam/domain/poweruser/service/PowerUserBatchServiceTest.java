@@ -2,110 +2,264 @@ package com.sprint.deokhugam.domain.poweruser.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
-import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.global.enums.PeriodType;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.launch.JobLauncher;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PowerUserBatchService 테스트")
-public class PowerUserBatchServiceTest {
+class PowerUserBatchServiceTest {
 
     @Mock
-    private PowerUserRepository powerUserRepository;
+    private JobLauncher jobLauncher;
 
     @Mock
-    private PowerUserService powerUserService;
+    private Job powerUserJob;
+
+    @Mock
+    private JobExecution jobExecution;
 
     @InjectMocks
     private PowerUserBatchService powerUserBatchService;
 
     @Test
-    void calculateDailyPowerUsers_정상_계산() {
+    void 일간_파워유저_배치_정상_실행() throws Exception {
         // given
-        List<PowerUser> mockPowerUsers = Arrays.asList(mock(PowerUser.class));
-        when(powerUserRepository.calculateAndCreatePowerUsers(eq(PeriodType.DAILY), any(), any()))
-            .thenReturn(mockPowerUsers);
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.COMPLETED).when(jobExecution).getStatus();
 
         // when
         powerUserBatchService.calculateDailyPowerUsers();
 
         // then
-        verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.DAILY), any(), any());
-        verify(powerUserService).replacePowerUsers(mockPowerUsers); // replacePowerUsers 검증
-        // deleteByPeriod는 replacePowerUsers 내부에서 호출되므로 직접 검증하지 않음
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution).getStatus();
     }
 
     @Test
-    void calculateWeeklyPowerUsers_정상_계산() {
+    void 주간_파워유저_배치_정상_실행() throws Exception {
         // given
-        List<PowerUser> mockPowerUsers = Arrays.asList(mock(PowerUser.class));
-        when(powerUserRepository.calculateAndCreatePowerUsers(eq(PeriodType.WEEKLY), any(), any()))
-            .thenReturn(mockPowerUsers);
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.COMPLETED).when(jobExecution).getStatus();
 
         // when
         powerUserBatchService.calculateWeeklyPowerUsers();
 
         // then
-        verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.WEEKLY), any(), any());
-        verify(powerUserService).replacePowerUsers(mockPowerUsers);
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution).getStatus();
     }
 
     @Test
-    void calculateMonthlyPowerUsers_정상_계산() {
+    void 월간_파워유저_배치_정상_실행() throws Exception {
         // given
-        List<PowerUser> mockPowerUsers = Arrays.asList(mock(PowerUser.class));
-        when(powerUserRepository.calculateAndCreatePowerUsers(eq(PeriodType.MONTHLY), any(), any()))
-            .thenReturn(mockPowerUsers);
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.COMPLETED).when(jobExecution).getStatus();
 
         // when
         powerUserBatchService.calculateMonthlyPowerUsers();
 
         // then
-        verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.MONTHLY), any(), any());
-        verify(powerUserService).replacePowerUsers(mockPowerUsers);
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution).getStatus();
     }
 
     @Test
-    void calculateAllTimePowerUsers_정상_계산() {
+    void 역대_파워유저_배치_정상_실행() throws Exception {
         // given
-        List<PowerUser> mockPowerUsers = Arrays.asList(mock(PowerUser.class));
-        when(powerUserRepository.calculateAndCreatePowerUsers(PeriodType.ALL_TIME, null, null))
-            .thenReturn(mockPowerUsers);
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.COMPLETED).when(jobExecution).getStatus();
 
         // when
         powerUserBatchService.calculateAllTimePowerUsers();
 
         // then
-        verify(powerUserRepository).calculateAndCreatePowerUsers(PeriodType.ALL_TIME, null, null);
-        verify(powerUserService).replacePowerUsers(mockPowerUsers);
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution).getStatus();
     }
 
     @Test
-    void calculateDailyPowerUsers_빈_결과_처리() {
+    void 일간_파워유저_배치_실행_실패_상태() throws Exception {
         // given
-        List<PowerUser> emptyList = Collections.emptyList();
-        when(powerUserRepository.calculateAndCreatePowerUsers(eq(PeriodType.DAILY), any(), any()))
-            .thenReturn(emptyList);
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.FAILED).when(jobExecution).getStatus();
 
         // when
-        powerUserBatchService.calculateDailyPowerUsers();
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateDailyPowerUsers();
+        });
 
         // then
-        verify(powerUserRepository).calculateAndCreatePowerUsers(eq(PeriodType.DAILY), any(), any());
-        verify(powerUserService, never()).replacePowerUsers(any()); // 빈 리스트일 때는 호출되지 않음
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution, times(2)).getStatus();
+        assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
+    }
+
+    @Test
+    void 주간_파워유저_배치_실행_실패_상태() throws Exception {
+        // given
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.FAILED).when(jobExecution).getStatus();
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateWeeklyPowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution, times(2)).getStatus();
+        assert(exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
+    }
+
+    @Test
+    void 월간_파워유저_배치_실행_실패_상태() throws Exception {
+        // given
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.FAILED).when(jobExecution).getStatus();
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateMonthlyPowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution, times(2)).getStatus();
+        assert(exception.getMessage().contains("MONTHLY 파워 유저 배치 실행 실패"));
+    }
+
+    @Test
+    void 역대_파워유저_배치_실행_실패_상태() throws Exception {
+        // given
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.FAILED).when(jobExecution).getStatus();
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateAllTimePowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution, times(2)).getStatus();
+        assert(exception.getMessage().contains("ALL_TIME 파워 유저 배치 실행 실패"));
+    }
+
+    @Test
+    void 일간_파워유저_배치_실행_예외_발생() throws Exception {
+        // given
+        RuntimeException testException = new RuntimeException("배치 실행 중 예외 발생");
+        doThrow(testException).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateDailyPowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
+        assert(exception.getCause() == testException);
+    }
+
+    @Test
+    void 주간_파워유저_배치_실행_예외_발생() throws Exception {
+        // given
+        RuntimeException testException = new RuntimeException("배치 실행 중 예외 발생");
+        doThrow(testException).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateWeeklyPowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        assert(exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
+        assert(exception.getCause() == testException);
+    }
+
+    @Test
+    void 월간_파워유저_배치_실행_예외_발생() throws Exception {
+        // given
+        RuntimeException testException = new RuntimeException("배치 실행 중 예외 발생");
+        doThrow(testException).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateMonthlyPowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        assert(exception.getMessage().contains("MONTHLY 파워 유저 배치 실행 실패"));
+        assert(exception.getCause() == testException);
+    }
+
+    @Test
+    void 역대_파워유저_배치_실행_예외_발생() throws Exception {
+        // given
+        RuntimeException testException = new RuntimeException("배치 실행 중 예외 발생");
+        doThrow(testException).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateAllTimePowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        assert(exception.getMessage().contains("ALL_TIME 파워 유저 배치 실행 실패"));
+        assert(exception.getCause() == testException);
+    }
+
+    @Test
+    void 배치_실행_상태_진행중() throws Exception {
+        // given
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.STARTED).when(jobExecution).getStatus();
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateDailyPowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution, times(2)).getStatus(); // 2번 호출 허용
+        assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
+    }
+
+    @Test
+    void 배치_실행_상태_포기됨() throws Exception {
+        // given
+        doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        doReturn(BatchStatus.ABANDONED).when(jobExecution).getStatus();
+
+        // when
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            powerUserBatchService.calculateWeeklyPowerUsers();
+        });
+
+        // then
+        verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
+        verify(jobExecution, times(2)).getStatus(); // 2번 호출 허용
+        assert(exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
     }
 }
