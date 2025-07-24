@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import static com.sprint.deokhugam.fixture.ReviewFixture.*;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
@@ -70,202 +71,24 @@ public class PopularReviewServiceTest {
     private PopularReviewDto popularReviewDto2;
     private PopularReviewDto popularReviewDto3;
 
-    private PopularReview createPopularReview(Review review, PeriodType period, Long rank,
-        double score) {
-        PopularReview popularReview = PopularReview.builder()
-            .review(review)
-            .period(period)
-            .rank(rank)
-            .score(score)
-            .commentCount(review.getCommentCount())
-            .likeCount(review.getLikeCount())
-            .build();
-
-        return popularReview;
-    }
-
-    private Review createReview(Long commentCount, Long likeCount, String createdAt) {
-        User user = User.builder()
-            .email("user1@example.com")
-            .nickname("유저1")
-            .password("encryptedPwd1")
-            .build();
-        ReflectionTestUtils.setField(user, "id",
-            UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
-
-        Book book = Book.builder()
-            .title("책1")
-            .author("저자1")
-            .description("설명1")
-            .publisher("출판사1")
-            .publishedDate(LocalDate.parse("2022-01-01"))
-            .isbn("111-1111111111")
-            .thumbnailUrl("https://example.com/image1.jpg")
-            .reviewCount(10L)
-            .rating(4.5)
-            .isDeleted(false)
-            .build();
-        ReflectionTestUtils.setField(book, "id",
-            UUID.fromString("f6601c1d-c9b9-4ae1-a7aa-b4345921f4ca"));
-
-        Review review = new Review(4, "이 책 따봉임", book, user);
-        ReflectionTestUtils.setField(review, "likeCount", likeCount);
-        ReflectionTestUtils.setField(review, "commentCount", commentCount);
-        ReflectionTestUtils.setField(review, "createdAt", Instant.parse(createdAt));
-
-        return review;
-    }
-
     @BeforeEach
     void setup() {
-        user1 = User.builder()
-            .email("user1@test.com")
-            .nickname("유저1")
-            .password("pw")
-            .build();
+        user1 = user("user1@test.com", "유저1");
+        book1 = book("테스트 책1", "1234567890");
+        review1 = review(user1, book1, "리뷰1", 10, 5, false);
 
-        user2 = User.builder()
-            .email("user2@test.com")
-            .nickname("유저2")
-            .password("pw")
-            .build();
+        user2 = user("user1@test.com", "유저1");
+        book2 = book("테스트 책2", "0987654321");
+        review2 = review(user1, book1, "리뷰2", 3, 2, false);
+        review3 = review(user1, book2, "삭제된 리뷰", 3, 1, true);
 
-        book1 = Book.builder()
-            .title("테스트 책1")
-            .author("저자1")
-            .publisher("출판사1")
-            .description("테스트 책1 설명")
-            .isbn("1234567890")
-            .publishedDate(LocalDate.now())
-            .thumbnailUrl("http://example.com/book1.jpg")
-            .rating(4.5)
-            .reviewCount(0L)
-            .isDeleted(false)
-            .build();
+        popularReview1 = popularReview(review1, PeriodType.DAILY, 1L, 8.5);
+        popularReview2 = popularReview(review2, PeriodType.DAILY, 2L, 4.4);
+        popularReview3 = popularReview(review3, PeriodType.WEEKLY, 1L, 2.0);
 
-        book2 = Book.builder()
-            .title("테스트 책2")
-            .author("저자2")
-            .publisher("출판사2")
-            .description("테스트 책2 설명")
-            .isbn("0987654321")
-            .publishedDate(LocalDate.now())
-            .thumbnailUrl("http://example.com/book2.jpg")
-            .rating(4.0)
-            .reviewCount(0L)
-            .isDeleted(false)
-            .build();
-
-        review1 = Review.builder()
-            .user(user1)
-            .book(book1)
-            .content("리뷰1")
-            .rating(5)
-            .likeCount(10L)
-            .commentCount(5L)
-            .isDeleted(false)
-            .build();
-
-        review2 = Review.builder()
-            .user(user2)
-            .book(book2)
-            .content("리뷰2")
-            .rating(4)
-            .likeCount(3L)
-            .commentCount(2L)
-            .isDeleted(false)
-            .build();
-
-        review3 = Review.builder()
-            .user(user1)
-            .book(book2)
-            .content("삭제된 리뷰")
-            .rating(3)
-            .likeCount(1L)
-            .commentCount(1L)
-            .isDeleted(true)
-            .build();
-
-        popularReview1 = PopularReview.builder()
-            .review(review1)
-            .period(PeriodType.DAILY)
-            .rank(1L)
-            .score(8.5)
-            .likeCount(10L)
-            .commentCount(5L)
-            .build();
-
-        popularReview2 = PopularReview.builder()
-            .review(review2)
-            .period(PeriodType.DAILY)
-            .rank(2L)
-            .score(4.4)
-            .likeCount(3L)
-            .commentCount(2L)
-            .build();
-
-        popularReview3 = PopularReview.builder()
-            .review(review3)
-            .period(PeriodType.WEEKLY)
-            .rank(1L)
-            .score(2.0)
-            .likeCount(1L)
-            .commentCount(1L)
-            .build();
-
-        popularReviewDto1 = new PopularReviewDto(
-            UUID.randomUUID(),
-            review1.getId(),
-            book1.getId(),
-            book1.getTitle(),
-            "https://s3.example.com/converted1.jpg",
-            user1.getId(),
-            user1.getNickname(),
-            review1.getContent(),
-            (double) review1.getRating(),
-            PeriodType.DAILY,
-            Instant.now(),
-            1L,
-            8.5,
-            10L,
-            5L
-        );
-
-        popularReviewDto2 = new PopularReviewDto(
-            UUID.randomUUID(),
-            review2.getId(),
-            book2.getId(),
-            book2.getTitle(),
-            "https://s3.example.com/converted2.jpg",
-            user2.getId(),
-            user2.getNickname(),
-            review2.getContent(),
-            (double) review2.getRating(),
-            PeriodType.DAILY,
-            Instant.now(),
-            2L,
-            4.4,
-            3L,
-            2L
-        );
-
-        popularReviewDto3 = new PopularReviewDto(
-            UUID.randomUUID(),
-            review3.getId(),
-            book2.getId(),
-            book2.getTitle(),
-            "https://s3.example.com/converted3.jpg",
-            user1.getId(),
-            user1.getNickname(),
-            review3.getContent(),
-            (double) review3.getRating(),
-            PeriodType.WEEKLY,
-            Instant.now(),
-            1L,
-            2.0,
-            1L,
-            1L
-        );
+        popularReviewDto1 = dto(popularReview1);
+        popularReviewDto2 = dto(popularReview2);
+        popularReviewDto3 = dto(popularReview3);
     }
 
     @Test
@@ -589,6 +412,52 @@ public class PopularReviewServiceTest {
         // then
         assertThat(response.content()).hasSize(1);
         PopularReviewDto dto = response.content().get(0);
-        assertThat(dto.bookThumbnailUrl()).isEqualTo("https://s3.example.com/converted1.jpg");
+        assertThat(dto.bookThumbnailUrl()).isEqualTo("https://s3.example.com/converted.jpg");
+    }
+
+    private PopularReview createPopularReview(Review review, PeriodType period, Long rank,
+        double score) {
+        PopularReview popularReview = PopularReview.builder()
+            .review(review)
+            .period(period)
+            .rank(rank)
+            .score(score)
+            .commentCount(review.getCommentCount())
+            .likeCount(review.getLikeCount())
+            .build();
+
+        return popularReview;
+    }
+
+    private Review createReview(Long commentCount, Long likeCount, String createdAt) {
+        User user = User.builder()
+            .email("user1@example.com")
+            .nickname("유저1")
+            .password("encryptedPwd1")
+            .build();
+        ReflectionTestUtils.setField(user, "id",
+            UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
+
+        Book book = Book.builder()
+            .title("책1")
+            .author("저자1")
+            .description("설명1")
+            .publisher("출판사1")
+            .publishedDate(LocalDate.parse("2022-01-01"))
+            .isbn("111-1111111111")
+            .thumbnailUrl("https://example.com/image1.jpg")
+            .reviewCount(10L)
+            .rating(4.5)
+            .isDeleted(false)
+            .build();
+        ReflectionTestUtils.setField(book, "id",
+            UUID.fromString("f6601c1d-c9b9-4ae1-a7aa-b4345921f4ca"));
+
+        Review review = new Review(4, "이 책 따봉임", book, user);
+        ReflectionTestUtils.setField(review, "likeCount", likeCount);
+        ReflectionTestUtils.setField(review, "commentCount", commentCount);
+        ReflectionTestUtils.setField(review, "createdAt", Instant.parse(createdAt));
+
+        return review;
     }
 }
