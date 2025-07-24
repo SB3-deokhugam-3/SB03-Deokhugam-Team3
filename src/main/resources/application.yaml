@@ -9,7 +9,7 @@ spring:
       max-request-size: 10MB
   batch:
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
 
 # OCR 구현체 설정
 ocr:

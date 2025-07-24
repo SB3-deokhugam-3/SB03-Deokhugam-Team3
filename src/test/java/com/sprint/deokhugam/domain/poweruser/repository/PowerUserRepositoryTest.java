@@ -2,16 +2,22 @@ package com.sprint.deokhugam.domain.poweruser.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.sprint.deokhugam.domain.poweruser.dto.batch.PowerUserData;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import com.sprint.deokhugam.global.enums.PeriodType;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -175,5 +181,120 @@ public class PowerUserRepositoryTest {
         // then
         assertThat(powerUserRepository.countByPeriod(PeriodType.DAILY)).isEqualTo(0L);
         assertThat(powerUserRepository.countByPeriod(PeriodType.WEEKLY)).isEqualTo(1L);
+    }
+
+    @Test
+    void findByPeriodAndRankBetween_순위범위_조회() {
+        // given
+        User testUser3 = createTestUser("test3@test.com", "유저3");
+        testUser3 = entityManager.persistAndFlush(testUser3);
+
+        List<PowerUser> powerUsers = List.of(
+            createPowerUser(testUser1, PeriodType.DAILY, 1L, 100.0),
+            createPowerUser(testUser2, PeriodType.DAILY, 5L, 80.0),
+            createPowerUser(testUser3, PeriodType.DAILY, 10L, 60.0)
+        );
+        powerUserRepository.saveAll(powerUsers);
+
+        // when
+        List<PowerUser> result = powerUserRepository
+            .findByPeriodAndRankBetween(PeriodType.DAILY, 1L, 5L);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
+        assertThat(result.get(1).getRank()).isEqualTo(5L);
+    }
+
+    @Test
+    void findByUserIdAndPeriod_존재하지않는_사용자() {
+        // when
+        Optional<PowerUser> result = powerUserRepository
+            .findByUserIdAndPeriod(UUID.randomUUID(), PeriodType.DAILY);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void countByPeriod_데이터없음() {
+        // when
+        Long count = powerUserRepository.countByPeriod(PeriodType.DAILY);
+
+        // then
+        assertThat(count).isEqualTo(0L);
+    }
+
+    @Test
+    void existsByUserIdAndPeriod_존재하지않는_사용자() {
+        // when
+        boolean exists = powerUserRepository.existsByUserIdAndPeriod(
+            UUID.randomUUID(), PeriodType.DAILY);
+
+        // then
+        assertThat(exists).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(PeriodType.class)
+    void 모든_PeriodType에_대한_기본_조회_테스트(PeriodType period) {
+        // given
+        PowerUser powerUser = createPowerUser(testUser1, period, 1L, 100.0);
+        powerUserRepository.save(powerUser);
+
+        // when
+        Long count = powerUserRepository.countByPeriod(period);
+
+        // then
+        assertThat(count).isEqualTo(1L);
+    }
+
+    @Test
+    void findByPeriodOrderByRankAsc_페이징_없음() {
+        // given
+        List<PowerUser> powerUsers = List.of(
+            createPowerUser(testUser1, PeriodType.WEEKLY, 1L, 100.0),
+            createPowerUser(testUser2, PeriodType.WEEKLY, 2L, 90.0)
+        );
+        powerUserRepository.saveAll(powerUsers);
+
+        // when
+        List<PowerUser> result = powerUserRepository
+            .findByPeriodOrderByRankAsc(PeriodType.WEEKLY, null);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
+        assertThat(result.get(1).getRank()).isEqualTo(2L);
+    }
+
+    @Test
+    void deleteByPeriod_해당기간_데이터없음() {
+        // given - 데이터 없음
+
+        // when & then - 예외 없이 정상 실행
+        powerUserRepository.deleteByPeriod(PeriodType.DAILY);
+        assertThat(powerUserRepository.countByPeriod(PeriodType.DAILY)).isEqualTo(0L);
+    }
+
+    //  헬퍼 메서드들
+    private User createTestUser(String email, String nickname) {
+        return User.builder()
+            .email(email)
+            .nickname(nickname)
+            .password("password")
+            .build();
+    }
+
+    private PowerUser createPowerUser(User user, PeriodType period, Long rank, Double score) {
+        return PowerUser.builder()
+            .user(user)
+            .period(period)
+            .rank(rank)
+            .score(score)
+            .reviewScoreSum(score * 0.8)
+            .likeCount(50L)
+            .commentCount(30L)
+            .build();
     }
 }
