@@ -1,23 +1,23 @@
 package com.sprint.deokhugam.domain.poweruser.repository;
 
-import com.querydsl.core.Tuple;
+import static com.sprint.deokhugam.domain.comment.entity.QComment.comment;
+import static com.sprint.deokhugam.domain.poweruser.entity.QPowerUser.powerUser;
+import static com.sprint.deokhugam.domain.review.entity.QReview.review;
+import static com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike.reviewLike;
+import static com.sprint.deokhugam.domain.user.entity.QUser.user;
+
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.sprint.deokhugam.domain.comment.entity.QComment;
 import com.sprint.deokhugam.domain.poweruser.dto.batch.PowerUserData;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
-import com.sprint.deokhugam.domain.poweruser.entity.QPowerUser;
 import com.sprint.deokhugam.domain.poweruser.service.PowerUserService;
-import com.sprint.deokhugam.domain.review.entity.QReview;
-import com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike;
-import com.sprint.deokhugam.domain.user.entity.QUser;
-import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -38,169 +38,120 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
     @Override
     @Transactional(readOnly = true)
     public List<PowerUserData> findUserActivityData(PeriodType period, Instant startDate, Instant endDate) {
-        log.info("사용자 활동 데이터 조회 시작 - 기간: {}, 범위: {} ~ {}", period, startDate, endDate);
+        log.debug("사용자 활동 데이터 조회 시작 - 기간: {}, 시작: {}, 종료: {}", period, startDate, endDate);
 
-        QReview review = QReview.review;
-        QUser user = QUser.user;
-        QReviewLike reviewLike = QReviewLike.reviewLike;
-        QComment comment = QComment.comment;
-
-        // 기간 조건 생성
-        BooleanExpression dateCondition = createDateCondition(review.createdAt, startDate, endDate);
-
-        // 1. 리뷰 기반 기본 데이터 조회
-        List<Tuple> reviewData = queryFactory
-            .select(
-                user.id,
+        return queryFactory
+            .select(Projections.constructor(PowerUserData.class,
                 user,
-                review.rating.sum()
-            )
-            .from(review)
-            .join(review.user, user)
-            .where(dateCondition)
+                Expressions.constant(period), // PeriodType을 상수로 전달
+                Expressions.numberTemplate(Double.class, "0.0"), // 리뷰 점수는 임시로 0.0으로 설정
+                review.id.count().coalesce(0L), // 실제로는 리뷰 수 ( 임시 )
+                comment.id.count().coalesce(0L) // 댓글 수
+            ))
+            .from(user)
+            .leftJoin(review).on(review.user.eq(user)
+                .and(createDateCondition(review.createdAt, startDate, endDate)))
+            .leftJoin(comment).on(comment.user.eq(user)
+                .and(createDateCondition(comment.createdAt, startDate, endDate)))
             .groupBy(user.id)
-            .having(review.count().gt(0))
+            .having(
+                // 리뷰 수 + 댓글 수 > 0인 활성 사용자만 조회
+                review.id.count().coalesce(0L)
+                    .add(comment.id.count().coalesce(0L)).gt(0))
             .fetch();
-
-        List<PowerUserData> powerUserDataList = new ArrayList<>();
-
-        for (Tuple tuple : reviewData) {
-            UUID userId = tuple.get(user.id);
-            User userEntity = tuple.get(user);
-            Integer ratingSum = tuple.get(review.rating.sum());
-            Double reviewScoreSum = ratingSum != null ? ratingSum.doubleValue() : 0.0;
-
-            // 2. 해당 사용자의 좋아요 수 조회 (기간 필터링 적용)
-            Long likeCount = getLikeCountForUser(userId, startDate, endDate);
-
-            // 3. 해당 사용자의 댓글 수 조회 (기간 필터링 적용)
-            Long commentCount = getCommentCountForUser(userId, startDate, endDate);
-
-            PowerUserData powerUserData = new PowerUserData(
-                userEntity,
-                period,
-                reviewScoreSum,
-                likeCount,
-                commentCount
-            );
-
-            powerUserDataList.add(powerUserData);
-            log.debug("사용자 활동 데이터 생성: {}", powerUserData.getUserSummary());
-        }
-
-        log.info("사용자 활동 데이터 조회 완료 - {} 기간, {} 명", period, powerUserDataList.size());
-        return powerUserDataList;
     }
 
     @Override
     @Transactional
     public List<PowerUser> calculateAndCreatePowerUsers(PeriodType period, Instant startDate, Instant endDate) {
-        log.info("파워유저 계산 시작 - 기간: {}, 범위: {} ~ {}", period, startDate, endDate);
+        log.info("파워 유저 계산 시작 - 기간: {} (리뷰 인기 점수는 임시로 0 처리)", period);
 
-        QReview review = QReview.review;
-        QUser user = QUser.user;
+        // 1. 사용자 활동 데이터 조회
+        List<PowerUserData> activityData = findUserActivityData(period, startDate, endDate);
 
-        // 기간 조건 생성
-        BooleanExpression dateCondition = createDateCondition(review.createdAt, startDate, endDate);
-
-        // 1. 리뷰 기반 기본 데이터 조회
-        List<Tuple> reviewData = queryFactory
-            .select(
-                user.id,
-                user,
-                review.rating.sum()
-            )
-            .from(review)
-            .join(review.user, user)
-            .where(dateCondition)
-            .groupBy(user.id)
-            .having(review.count().gt(0))
-            .fetch();
-
-        log.info("리뷰 작성 사용자 수: {} 명", reviewData.size());
-
-        List<PowerUser> powerUsers = new ArrayList<>();
-
-        for (Tuple tuple : reviewData) {
-            UUID userId = tuple.get(user.id);
-            User userEntity = tuple.get(user);
-            Integer ratingSum = tuple.get(review.rating.sum());
-            Double reviewScoreSum = ratingSum != null ? ratingSum.doubleValue() : 0.0;
-
-            // 2. 해당 사용자의 좋아요 수 조회 (기간 필터링 적용)
-            Long likeCount = getLikeCountForUser(userId, startDate, endDate);
-
-            // 3. 해당 사용자의 댓글 수 조회 (기간 필터링 적용)
-            Long commentCount = getCommentCountForUser(userId, startDate, endDate);
-
-            // 4. 최종 점수 계산
-            Double score = PowerUserService.calculateActivityScore(reviewScoreSum, likeCount, commentCount);
-
-            PowerUser powerUser = new PowerUser(
-                userEntity,
-                period,
-                1L, // 임시 순위 - 아래에서 점수순으로 재할당
-                score,
-                reviewScoreSum,
-                likeCount,
-                commentCount
-            );
-            powerUsers.add(powerUser);
-
-            log.debug("파워유저 생성: {} (점수: {})", userEntity.getNickname(), score);
+        if (activityData.isEmpty()) {
+            log.info("활동 데이터가 없어 파워 유저 계산을 건너뜁니다.");
+            return List.of();
         }
 
-        // 점수 기준으로 정렬하고 순위 재할당
-        powerUsers.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
+        // 2. PowerUser 엔티티 생성 및 점수 계산
+        List<PowerUser> powerUsers = activityData.stream()
+            .map(data -> {
+                // 실제 좋아요 수와 댓글 수 조회
+                Long actualLikeCount = getLikeCountForUser(data.user().getId(), startDate, endDate);
+                Long actualCommentCount = getCommentCountForUser(data.user().getId(), startDate, endDate);
+
+                // 리뷰 인기 점수는 임시로 0.0으로 설정
+                Double tempReviewScore = 0.0;
+
+                Double score = PowerUserService.calculateActivityScore(
+                    tempReviewScore, actualLikeCount, actualCommentCount);
+
+                log.debug("사용자 {} 점수 계산: 리뷰점수={} (임시0), 좋아요={}, 댓글={}, 총점={}",
+                    data.user().getNickname(), tempReviewScore, actualLikeCount, actualCommentCount, score);
+
+                return PowerUser.builder()
+                    .user(data.user())
+                    .period(period)
+                    .rank(1L) // 임시 순위, 나중에 재계산됨
+                    .score(score)
+                    .reviewScoreSum(tempReviewScore) // 임시로 0.0 저장
+                    .likeCount(actualLikeCount)
+                    .commentCount(actualCommentCount)
+                    .build();
+            })
+            .sorted((a, b) -> Double.compare(b.getScore(), a.getScore())) // 내림차순 정렬
+            .toList();
+
+        // 3. 순위 재할당
         for (int i = 0; i < powerUsers.size(); i++) {
-            powerUsers.get(i).updateRank((long) (i + 1));
+            Long rank = (long) (i + 1);
+            powerUsers.get(i).updateRank(rank);
+
+            log.debug("순위 할당: {} 순위, {} 점수 (좋아요:{}, 댓글:{}), {} 사용자",
+                rank, powerUsers.get(i).getScore(), powerUsers.get(i).getLikeCount(),
+                powerUsers.get(i).getCommentCount(), powerUsers.get(i).getUser().getNickname());
         }
 
-        log.info("파워유저 계산 완료 - {} 기간, {} 명", period, powerUsers.size());
+        log.info("파워 유저 계산 완료 - 총 {}명 (리뷰 점수는 임시로 0 처리됨)", powerUsers.size());
         return powerUsers;
     }
 
     @Override
     @Transactional
     public void recalculateRank(PeriodType period) {
-        QPowerUser powerUser = QPowerUser.powerUser;
+        log.info("순위 재계산 시작 - 기간: {}", period);
 
         List<PowerUser> powerUsers = queryFactory
             .selectFrom(powerUser)
             .where(powerUser.period.eq(period))
-            .orderBy(powerUser.score.desc())
+            .orderBy(powerUser.score.desc(),
+                powerUser.likeCount.desc(),      // 리뷰점수가 0이므로 좋아요 우선
+                powerUser.commentCount.desc(),
+                powerUser.reviewScoreSum.desc())  // 나중에 활용할 수 있도록 유지
             .fetch();
 
         for (int i = 0; i < powerUsers.size(); i++) {
             powerUsers.get(i).updateRank((long) (i + 1));
         }
 
-        // 배치 업데이트
-        batchUpsertPowerUsers(powerUsers);
+        log.info("순위 재계산 완료 - 총 {}명", powerUsers.size());
     }
 
     @Override
     public List<PowerUser> findTopPowerUsersNByPeriod(PeriodType period, int limit) {
-        QPowerUser powerUser = QPowerUser.powerUser;
-        QUser user = QUser.user;
-
         return queryFactory
             .selectFrom(powerUser)
-            .join(powerUser.user, user).fetchJoin()
             .where(powerUser.period.eq(period))
-            .orderBy(powerUser.rank.asc())
+            .orderBy(powerUser.rank.asc()) // 순위 오름차순 ( 1등, 2등, 3등... )
             .limit(limit)
             .fetch();
     }
 
     @Override
     public List<PowerUser> findPowerUserHistoryByUserId(UUID userId) {
-        QPowerUser powerUser = QPowerUser.powerUser;
-        QUser user = QUser.user;
-
         return queryFactory
             .selectFrom(powerUser)
-            .join(powerUser.user, user).fetchJoin()
             .where(powerUser.user.id.eq(userId))
             .orderBy(powerUser.period.asc(), powerUser.createdAt.desc())
             .fetch();
@@ -209,70 +160,61 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
     @Override
     @Transactional
     public void batchUpsertPowerUsers(List<PowerUser> powerUsers) {
-        int batchSize = 100;
-
-        for (int i = 0; i < powerUsers.size(); i++) {
-            entityManager.merge(powerUsers.get(i));
-
-            if ((i + 1) % batchSize == 0) {
-                entityManager.flush();
-                entityManager.clear();
-            }
+        if (powerUsers.isEmpty()) {
+            return;
         }
 
-        entityManager.flush();
-        entityManager.clear();
+        int batchSize = 1000;
+        for (int i = 0; i < powerUsers.size(); i += batchSize) {
+            int endIndex = Math.min(i + batchSize, powerUsers.size());
+            List<PowerUser> batch = powerUsers.subList(i, endIndex);
+
+            for (PowerUser pu : batch) {
+                entityManager.merge(pu);
+            }
+            entityManager.flush();
+            entityManager.clear();
+        }
     }
 
     @Override
     public List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit, String cursor, String after) {
-        QPowerUser powerUser = QPowerUser.powerUser;
-        QUser user = QUser.user;
+        OrderSpecifier<?> orderSpecifier = "ASC".equals(direction)
+            ? powerUser.rank.asc()
+            : powerUser.rank.desc();
 
-        JPAQuery<PowerUser> query = queryFactory
-            .selectFrom(powerUser)
-            .join(powerUser.user, user).fetchJoin()
-            .where(powerUser.period.eq(period));
+        BooleanExpression whereClause = powerUser.period.eq(period);
 
-        // 커서 기반 필터링 (순위 기준)
-        if (cursor != null && !cursor.isEmpty()) {
+        if (cursor != null) {
             try {
                 Long cursorRank = Long.parseLong(cursor);
-                if ("DESC".equalsIgnoreCase(direction)) {
-                    query = query.where(powerUser.rank.lt(cursorRank));
+                if ("DESC".equals(direction)) {
+                    whereClause = whereClause.and(powerUser.rank.lt(cursorRank)); // DESC는 lt
                 } else {
-                    query = query.where(powerUser.rank.gt(cursorRank));
+                    whereClause = whereClause.and(powerUser.rank.gt(cursorRank)); // ASC는 gt
                 }
             } catch (NumberFormatException e) {
-                log.warn("Invalid cursor format: {}", cursor);
+                log.warn("잘못된 cursor 형식: {}", cursor);
             }
         }
 
-        // after 시간 기준 필터링 (추가 정렬 조건)
-        if (after != null && !after.isEmpty()) {
+        // after 파라미터 처리 수정
+        if (after != null) {
             try {
                 Instant afterTime = Instant.parse(after);
-                if ("DESC".equalsIgnoreCase(direction)) {
-                    query = query.where(powerUser.createdAt.lt(afterTime));
-                } else {
-                    query = query.where(powerUser.createdAt.gt(afterTime));
-                }
+                whereClause = whereClause.and(powerUser.createdAt.gt(afterTime)); // after 시간보다 이후 데이터만
             } catch (Exception e) {
-                log.warn("Invalid after format: {}", after);
+                log.warn("잘못된 after 시간 형식: {}", after);
             }
         }
 
-        // 정렬 방향 적용
-        if ("DESC".equalsIgnoreCase(direction)) {
-            query = query.orderBy(powerUser.rank.desc());
-        } else {
-            query = query.orderBy(powerUser.rank.asc());
-        }
-
-        return query.limit(limit).fetch();
+        return queryFactory
+            .selectFrom(powerUser)
+            .where(whereClause)
+            .orderBy(orderSpecifier, powerUser.createdAt.desc())
+            .limit(limit)
+            .fetch();
     }
-
-    // 🛠️ 헬퍼 메서드들
 
     /**
      * 기간 조건 생성 헬퍼 메서드
@@ -282,51 +224,43 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
         Instant startDate,
         Instant endDate) {
 
-        if (startDate != null && endDate != null) {
-            log.debug("기간 필터링 적용: {} ~ {}", startDate, endDate);
-            return dateField.between(startDate, endDate);
+        if (startDate == null && endDate == null) {
+            return null;
         }
-        log.debug("전체 기간 조회 (ALL_TIME)");
-        return null;
+        if (startDate == null) {
+            return dateField.loe(endDate);
+        }
+        if (endDate == null) {
+            return dateField.goe(startDate);
+        }
+        return dateField.between(startDate, endDate);
     }
 
     /**
      * 특정 사용자의 좋아요 수 조회 ( 기간 필터링 적용 )
      */
     private Long getLikeCountForUser(UUID userId, Instant startDate, Instant endDate) {
-        QReview review = QReview.review;
-        QReviewLike reviewLike = QReviewLike.reviewLike;
-
-        BooleanExpression dateCondition = createDateCondition(reviewLike.createdAt, startDate, endDate);
-
-        Long likeCount = queryFactory
-            .select(reviewLike.count())
+        Long count = queryFactory
+            .select(reviewLike.id.count())
             .from(reviewLike)
-            .join(reviewLike.review, review)
-            .where(review.user.id.eq(userId)
-                .and(dateCondition))
+            .where(reviewLike.user.id.eq(userId)
+                .and(createDateCondition(reviewLike.createdAt, startDate, endDate)))
             .fetchOne();
 
-        return likeCount != null ? likeCount : 0L;
+        return count != null ? count : 0L;
     }
 
     /**
      * 특정 사용자의 댓글 수 조회 ( 기간 필터링 적용 )
      */
     private Long getCommentCountForUser(UUID userId, Instant startDate, Instant endDate) {
-        QReview review = QReview.review;
-        QComment comment = QComment.comment;
-
-        BooleanExpression dateCondition = createDateCondition(comment.createdAt, startDate, endDate);
-
-        Long commentCount = queryFactory
-            .select(comment.count())
+        Long count = queryFactory
+            .select(comment.id.count())
             .from(comment)
-            .join(comment.review, review)
-            .where(review.user.id.eq(userId)
-                .and(dateCondition))
+            .where(comment.user.id.eq(userId)
+                .and(createDateCondition(comment.createdAt, startDate, endDate)))
             .fetchOne();
 
-        return commentCount != null ? commentCount : 0L;
+        return count != null ? count : 0L;
     }
 }

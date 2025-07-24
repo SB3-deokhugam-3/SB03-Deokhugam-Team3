@@ -5,11 +5,10 @@ import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,39 +19,46 @@ public class PowerUserService {
 
     private final PowerUserRepository powerUserRepository;
 
-    public static final double REVIEW_SCORE_WEIGHT = 0.5;
+    public static final double REVIEW_SCORE_WEIGHT = 0.5;  // 현재 0으로 처리하므로 실질적으로 미적용
     public static final double LIKE_COUNT_WEIGHT = 0.2;
     public static final double COMMENT_COUNT_WEIGHT = 0.3;
 
     /**
-     * 활동 점수 계산
-     * 점수 = ( 리뷰 인기 점수 * 0.5 ) + ( 좋아요 수 * 0.2 ) + ( 댓글 수 * 0.3 )
-     * */
+     * 활동 점수 계산 (임시: 리뷰 인기 점수는 0으로 처리)
+     *
+     * 원래 공식: 활동 점수 = (리뷰 인기 점수 * 0.5) + (좋아요 수 * 0.2) + (댓글 수 * 0.3)
+     * 현재 공식: 활동 점수 = (0 * 0.5) + (좋아요 수 * 0.2) + (댓글 수 * 0.3)
+     *          → 활동 점수 = (좋아요 수 * 0.2) + (댓글 수 * 0.3)
+     */
     public static Double calculateActivityScore(Double reviewScoreSum, Long likeCount, Long commentCount) {
-        if (reviewScoreSum == null) reviewScoreSum = 0.0;
         if (likeCount == null) likeCount = 0L;
         if (commentCount == null) commentCount = 0L;
 
-        return (reviewScoreSum * REVIEW_SCORE_WEIGHT) +
+        Double tempReviewScore = 0.0;
+
+        log.debug("활동 점수 계산 - 리뷰점수: {} (임시로 0 처리), 좋아요: {}, 댓글: {}",
+            reviewScoreSum, likeCount, commentCount);
+
+        return (tempReviewScore * REVIEW_SCORE_WEIGHT) +
             (likeCount * LIKE_COUNT_WEIGHT) +
             (commentCount * COMMENT_COUNT_WEIGHT);
     }
 
     /**
      * 기간별 파워 유저 데이터 저장
-     * */
+     */
     public void savePowerUsers(List<PowerUser> powerUsers) {
-        if (!powerUsers.isEmpty()) {
-            PeriodType period = powerUsers.get(0).getPeriod();
-
-            // 순위 설정
-            for (int i = 0; i < powerUsers.size(); i++) {
-                powerUsers.get(i).updateRank((long) (i + 1));
-            }
-
-            powerUserRepository.saveAll(powerUsers);
-            log.info("파워 유저 데이터 저장 완료: {} 기간, {} 명", period, powerUsers.size());
+        if (powerUsers == null || powerUsers.isEmpty()) {
+            log.warn("저장할 PowerUser 데이터가 없습니다.");
+            return;
         }
+
+        // 점수 기준 내림차순 정렬 후 순위 재할당
+        List<PowerUser> sortedUsers = sortAndAssignRanks(powerUsers);
+
+        log.info("PowerUser 저장 시작 - {} 건", sortedUsers.size());
+        powerUserRepository.saveAll(sortedUsers);
+        log.info("PowerUser 저장 완료 - {} 건", sortedUsers.size());
     }
 
     /**
@@ -60,24 +66,69 @@ public class PowerUserService {
      */
     @Transactional
     public void replacePowerUsers(List<PowerUser> powerUsers) {
-        if (!powerUsers.isEmpty()) {
-            PeriodType period = powerUsers.get(0).getPeriod();
-
-            // 기존 데이터 삭제
-            powerUserRepository.deleteByPeriod(period);
-            log.debug("기존 {} 파워 유저 데이터 삭제 완료", period);
-
-            // 새 데이터 저장
-            savePowerUsers(powerUsers);
+        if (powerUsers == null || powerUsers.isEmpty()) {
+            log.warn("교체할 PowerUser 데이터가 없습니다.");
+            return;
         }
+
+        // 기간 정보 추출 (모든 powerUser가 같은 period를 가진다고 가정)
+        PeriodType period = powerUsers.get(0).getPeriod();
+
+        log.info("기존 {} PowerUser 데이터 삭제 시작", period);
+        powerUserRepository.deleteByPeriod(period);
+        log.info("기존 {} PowerUser 데이터 삭제 완료", period);
+
+        // 점수 기준 내림차순 정렬 후 순위 재할당
+        List<PowerUser> sortedUsers = sortAndAssignRanks(powerUsers);
+
+        log.info("{} PowerUser 새 데이터 저장 시작 - {} 건", period, sortedUsers.size());
+        powerUserRepository.saveAll(sortedUsers);
+        log.info("{} PowerUser 새 데이터 저장 완료 - {} 건", period, sortedUsers.size());
     }
 
     /**
-     * 기간별 파워 유저 조회 ( 상위 10 명 )
-     * */
+     * 점수 기준 내림차순 정렬 후 순위 재할당
+     */
+    private List<PowerUser> sortAndAssignRanks(List<PowerUser> powerUsers) {
+        // 1. 점수 기준 내림차순 정렬
+        List<PowerUser> sorted = powerUsers.stream()
+            .sorted(Comparator.comparing(PowerUser::getScore).reversed()
+                .thenComparing(PowerUser::getLikeCount).reversed()  // 리뷰점수가 0이므로 좋아요 우선
+                .thenComparing(PowerUser::getCommentCount).reversed()
+                .thenComparing(PowerUser::getReviewScoreSum).reversed()  // 나중에 활용할 수 있도록 유지
+                .thenComparing(user -> user.getUser().getNickname())) // 동점시 닉네임으로 정렬
+            .toList();
+
+        // 2. 순위 재할당 (동점자 처리 포함)
+        Double previousScore = null;
+        Long actualRank = 1L;
+
+        for (int i = 0; i < sorted.size(); i++) {
+            PowerUser user = sorted.get(i);
+            Double currentScore = user.getScore();
+
+            // 동점이 아닌 경우 실제 순위 업데이트
+            if (previousScore == null || !currentScore.equals(previousScore)) {
+                actualRank = (long) (i + 1);
+            }
+
+            // 순위 업데이트
+            user.updateRank(actualRank);
+            previousScore = currentScore;
+
+            log.debug("순위 할당: {} 순위, {} 점수 (좋아요:{}, 댓글:{}), {} 사용자",
+                actualRank, currentScore, user.getLikeCount(), user.getCommentCount(), user.getUser().getNickname());
+        }
+
+        return sorted;
+    }
+
+    /**
+     * 기간별 파워 유저 조회 ( 상위 limit 명 )
+     */
     public List<PowerUser> getPowerUsersByPeriod(PeriodType period, int limit) {
-        Pageable pageable = PageRequest.of(0, limit);
-        return powerUserRepository.findByPeriodOrderByRankAsc(period,pageable);
+        validateGetPowerUserInput(limit, "DESC", period);
+        return powerUserRepository.findTopPowerUsersNByPeriod(period, limit);
     }
 
     /**
@@ -86,49 +137,32 @@ public class PowerUserService {
     public CursorPageResponse<PowerUserDto> getPowerUsersWithCursor(
         PeriodType period, String direction, int size, String cursor, String after) {
 
-        // 입력값 검증
         validateGetPowerUserInput(size, direction, period);
 
-        // 커서 기반 조회 (size + 1로 다음 페이지 존재 여부 확인)
         List<PowerUser> powerUsers = powerUserRepository.findPowerUsersWithCursor(
-            period, direction, size + 1, cursor, after);
+            period, direction, size, cursor, after);
 
-        // 다음 페이지 존재 여부 확인
-        boolean hasNext = powerUsers.size() > size;
-        if (hasNext) {
-            powerUsers = powerUsers.subList(0, size);
-        }
-
-        // PowerUserDto 변환
-        List<PowerUserDto> content = powerUsers.stream()
+        List<PowerUserDto> dtos = powerUsers.stream()
             .map(this::convertToDto)
             .toList();
 
-        // 다음 커서 정보 생성
-        String nextCursor = null;
-        String nextAfter = null;
-        if (hasNext && !powerUsers.isEmpty()) {
-            PowerUser lastUser = powerUsers.get(powerUsers.size() - 1);
-            nextCursor = lastUser.getRank().toString();
-            nextAfter = lastUser.getCreatedAt().toString();
-        }
+        long totalElements = powerUserRepository.countByPeriod(period);
+        boolean hasNext = powerUsers.size() == size;
 
-        // 전체 개수 조회
-        Long totalElements = powerUserRepository.countByPeriod(period);
+        String nextCursor = hasNext && !powerUsers.isEmpty()
+            ? String.valueOf(powerUsers.get(powerUsers.size() - 1).getRank())
+            : null;
 
-        return new CursorPageResponse<>(
-            content,
-            nextCursor,
-            nextAfter,
-            size,
-            totalElements,
-            hasNext
-        );
+        String nextAfter = hasNext && !powerUsers.isEmpty()
+            ? powerUsers.get(powerUsers.size() - 1).getCreatedAt().toString()
+            : null;
+
+        return new CursorPageResponse<>(dtos, nextCursor, nextAfter, size, totalElements, hasNext);
     }
 
     /**
      * 파워 유저 조회 입력값 검증
-     * */
+     */
     private void validateGetPowerUserInput(int limit, String direction, PeriodType period) {
         if (limit < 1 || limit > 100) {
             throw new IllegalArgumentException("limit은 1 이상 100 이하여야 합니다.");
@@ -154,7 +188,7 @@ public class PowerUserService {
             .createdAt(powerUser.getCreatedAt())
             .rank(powerUser.getRank())
             .score(powerUser.getScore())
-            .reviewScoreSum(powerUser.getReviewScoreSum())
+            .reviewScoreSum(0.0) // 임시로 0 반환 ( 인기 리뷰 점수 로직 구현 전까지 )
             .likeCount(powerUser.getLikeCount())
             .commentCount(powerUser.getCommentCount())
             .build();
