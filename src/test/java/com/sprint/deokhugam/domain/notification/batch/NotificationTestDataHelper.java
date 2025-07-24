@@ -6,7 +6,6 @@ import com.sprint.deokhugam.domain.notification.repository.NotificationRepositor
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.user.entity.User;
 import jakarta.persistence.EntityManager;
-import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -79,14 +78,6 @@ public class NotificationTestDataHelper {
         notificationRepository.saveAll(List.of(oldConfirmed, recentConfirmed, oldUnconfirmed));
         em.flush();
 
-        setUpdatedAt(oldConfirmed, now.minus(8, ChronoUnit.DAYS));
-        setUpdatedAt(recentConfirmed, now.minus(2, ChronoUnit.DAYS));
-        setUpdatedAt(oldUnconfirmed, now.minus(8, ChronoUnit.DAYS));
-
-        notificationRepository.saveAll(List.of(oldConfirmed, recentConfirmed, oldUnconfirmed));
-        em.flush();
-        em.clear();
-
         em.createQuery("update Notification n set n.updatedAt = :time where n.id = :id")
             .setParameter("time", now.minus(8, ChronoUnit.DAYS))
             .setParameter("id", oldConfirmed.getId())
@@ -103,15 +94,6 @@ public class NotificationTestDataHelper {
             .executeUpdate();
     }
 
-    private void setUpdatedAt(Notification notification, Instant updatedAt) {
-        try {
-            Field field = notification.getClass().getSuperclass().getDeclaredField("updatedAt");
-            field.setAccessible(true);
-            field.set(notification, updatedAt);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Transactional
     public void clearTestData() {
