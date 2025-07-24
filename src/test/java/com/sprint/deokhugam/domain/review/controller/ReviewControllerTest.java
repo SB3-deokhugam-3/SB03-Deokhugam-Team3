@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
+import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
@@ -21,6 +23,7 @@ import com.sprint.deokhugam.domain.review.exception.ReviewNotFoundException;
 import com.sprint.deokhugam.domain.review.exception.ReviewUnauthorizedAccessException;
 import com.sprint.deokhugam.domain.review.service.ReviewService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -45,6 +49,9 @@ class ReviewControllerTest {
 
     @MockitoBean
     private ReviewService reviewService;
+
+    @MockitoBean
+    private PopularReviewService popularReviewService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -369,6 +376,76 @@ class ReviewControllerTest {
         // then
         result.andExpect(status().isBadRequest())
             .andDo(print());
+    }
+
+    @Test
+    @DisplayName("인기 리뷰 목록 조회 - 성공")
+    void getPopularReviews_성공() throws Exception {
+        // given
+        UUID reviewId = UUID.randomUUID();
+        UUID bookId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Instant createdAt = Instant.now();
+
+        PopularReviewDto dto = new PopularReviewDto(
+            UUID.randomUUID(),
+            reviewId,
+            bookId,
+            "책 제목",
+            "https://s3.bucket/thumbnail.jpg",
+            userId,
+            "사용자닉네임",
+            "왕 굳~!",
+            4.5,
+            PeriodType.DAILY,
+            createdAt,
+            1L,
+            9.9,
+            12L,
+            7L
+        );
+
+        CursorPageResponse<PopularReviewDto> response = new CursorPageResponse<>(
+            List.of(dto),
+            "encodedCursor123",
+            createdAt.toString(),
+            1,
+            null,
+            false
+        );
+
+        given(popularReviewService.getPopularReviews(
+            PeriodType.DAILY,
+            Sort.Direction.ASC,
+            null,
+            null,
+            50
+        )).willReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/reviews/popular")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content[0].reviewId").value(reviewId.toString()))
+            .andExpect(jsonPath("$.content[0].bookId").value(bookId.toString()))
+            .andExpect(jsonPath("$.content[0].bookTitle").value("책 제목"))
+            .andExpect(jsonPath("$.content[0].bookThumbnailUrl").value("https://s3.bucket/thumbnail.jpg"))
+            .andExpect(jsonPath("$.content[0].userId").value(userId.toString()))
+            .andExpect(jsonPath("$.content[0].userNickname").value("사용자닉네임"))
+            .andExpect(jsonPath("$.content[0].reviewContent").value("왕 굳~!"))
+            .andExpect(jsonPath("$.content[0].reviewRating").value(4.5))
+            .andExpect(jsonPath("$.content[0].period").value("DAILY"))
+            .andExpect(jsonPath("$.content[0].createdAt").value(createdAt.toString()))
+            .andExpect(jsonPath("$.content[0].rank").value(1))
+            .andExpect(jsonPath("$.content[0].score").value(9.9))
+            .andExpect(jsonPath("$.content[0].likeCount").value(12))
+            .andExpect(jsonPath("$.content[0].commentCount").value(7))
+            .andExpect(jsonPath("$.nextCursor").value("encodedCursor123"))
+            .andExpect(jsonPath("$.hasNext").value(false));
+
     }
 
     private ReviewCreateRequest createRequest() {

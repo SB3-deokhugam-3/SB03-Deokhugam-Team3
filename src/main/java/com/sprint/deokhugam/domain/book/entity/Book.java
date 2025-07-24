@@ -84,6 +84,10 @@ public class Book extends BaseUpdatableEntity  {
         this.thumbnailUrl = thumbnailUrl;
     }
 
+    public void updateRating(Double newRating) {
+        this.rating = newRating;
+    }
+
     public void increaseReviewCount() {
         this.reviewCount++;
     }

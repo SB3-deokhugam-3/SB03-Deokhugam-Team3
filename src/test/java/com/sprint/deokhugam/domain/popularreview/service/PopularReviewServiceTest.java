@@ -6,18 +6,27 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
+import static com.sprint.deokhugam.fixture.ReviewFixture.*;
 import com.sprint.deokhugam.domain.book.entity.Book;
+import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
+import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
+import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
 import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.user.entity.User;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +34,7 @@ import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -32,59 +42,53 @@ import org.springframework.test.util.ReflectionTestUtils;
 @DisplayName("PopularReviewService 단위 테스트")
 public class PopularReviewServiceTest {
 
+    @InjectMocks
+    private PopularReviewServiceImpl popularReviewService;
+
     @Mock
     private PopularReviewRepository popularReviewRepository;
 
     @Mock
+    private PopularReviewMapper popularReviewMapper;
+
+    @Mock
+    private S3Storage s3Storage;
+
+    @Mock
     private StepContribution contribution;
 
-    @InjectMocks
-    private PopularReviewService popularReviewService;
+    private User user1;
+    private User user2;
+    private Book book1;
+    private Book book2;
+    private Review review1;
+    private Review review2;
+    private Review review3;
+    private PopularReview popularReview1;
+    private PopularReview popularReview2;
+    private PopularReview popularReview3;
+    private PopularReviewDto popularReviewDto1;
+    private PopularReviewDto popularReviewDto2;
+    private PopularReviewDto popularReviewDto3;
 
-    private PopularReview createPopularReview(Review review, String period, Long rank,
-        double score) {
-        PopularReview popularReview = PopularReview.builder()
-            .review(review)
-            .period(period)
-            .rank(rank)
-            .score(score)
-            .commentCount(review.getCommentCount())
-            .likeCount(review.getLikeCount())
-            .build();
+    @BeforeEach
+    void setup() {
+        user1 = user("user1@test.com", "유저1");
+        book1 = book("테스트 책1", "1234567890");
+        review1 = review(user1, book1, "리뷰1", 10, 5, false);
 
-        return popularReview;
-    }
+        user2 = user("user1@test.com", "유저1");
+        book2 = book("테스트 책2", "0987654321");
+        review2 = review(user1, book1, "리뷰2", 3, 2, false);
+        review3 = review(user1, book2, "삭제된 리뷰", 3, 1, true);
 
-    private Review createReview(Long commentCount, Long likeCount, String createdAt) {
-        User user = User.builder()
-            .email("user1@example.com")
-            .nickname("유저1")
-            .password("encryptedPwd1")
-            .build();
-        ReflectionTestUtils.setField(user, "id",
-            UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
+        popularReview1 = popularReview(review1, PeriodType.DAILY, 1L, 8.5);
+        popularReview2 = popularReview(review2, PeriodType.DAILY, 2L, 4.4);
+        popularReview3 = popularReview(review3, PeriodType.WEEKLY, 1L, 2.0);
 
-        Book book = Book.builder()
-            .title("책1")
-            .author("저자1")
-            .description("설명1")
-            .publisher("출판사1")
-            .publishedDate(LocalDate.parse("2022-01-01"))
-            .isbn("111-1111111111")
-            .thumbnailUrl("https://example.com/image1.jpg")
-            .reviewCount(10L)
-            .rating(4.5)
-            .isDeleted(false)
-            .build();
-        ReflectionTestUtils.setField(book, "id",
-            UUID.fromString("f6601c1d-c9b9-4ae1-a7aa-b4345921f4ca"));
-
-        Review review = new Review(4, "이 책 따봉임", book, user);
-        ReflectionTestUtils.setField(review, "likeCount", likeCount);
-        ReflectionTestUtils.setField(review, "commentCount", commentCount);
-        ReflectionTestUtils.setField(review, "createdAt", Instant.parse(createdAt));
-
-        return review;
+        popularReviewDto1 = dto(popularReview1);
+        popularReviewDto2 = dto(popularReview2);
+        popularReviewDto3 = dto(popularReview3);
     }
 
     @Test
@@ -130,11 +134,11 @@ public class PopularReviewServiceTest {
             review3
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review1, PeriodType.ALL_TIME.name(), 1L,
+            createPopularReview(review1, PeriodType.ALL_TIME, 1L,
                 review1.getCommentCount() * 0.7 + review1.getLikeCount() * 0.3),
-            createPopularReview(review2, PeriodType.ALL_TIME.name(), 2L,
+            createPopularReview(review2, PeriodType.ALL_TIME, 2L,
                 review2.getCommentCount() * 0.7 + review2.getLikeCount() * 0.3),
-            createPopularReview(review3, PeriodType.ALL_TIME.name(), 3L,
+            createPopularReview(review3, PeriodType.ALL_TIME, 3L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
         );
 
@@ -163,9 +167,9 @@ public class PopularReviewServiceTest {
             review1
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME.name(), 1L,
+            createPopularReview(review3, PeriodType.ALL_TIME, 1L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3),
-            createPopularReview(review1, PeriodType.ALL_TIME.name(), 2L,
+            createPopularReview(review1, PeriodType.ALL_TIME, 2L,
                 review1.getCommentCount() * 0.7 + review1.getLikeCount() * 0.3)
         );
 
@@ -194,7 +198,7 @@ public class PopularReviewServiceTest {
             notInPeriodReview2
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME.name(), 1L,
+            createPopularReview(review3, PeriodType.ALL_TIME, 1L,
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
         );
 
@@ -233,7 +237,227 @@ public class PopularReviewServiceTest {
         assertThat(result).hasSize(0);
         then(popularReviewRepository).should().saveAll(any());
         then(contribution).should().incrementWriteCount(expectedPopularReviews.size());
+    }
 
 
+    @Test
+    void getPopularReviews_정상작동() {
+        // given
+        PeriodType period = PeriodType.DAILY;
+        Sort.Direction direction = Sort.Direction.ASC;
+        String cursor = null;
+        Instant after = Instant.now();
+        int limit = 2;
+        when(popularReviewRepository.findByPeriodWithCursor(
+            eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
+            .thenReturn(List.of(popularReview1, popularReview2, popularReview3)); // limit+1개 반환
+        when(popularReviewMapper.toDto(eq(popularReview1), eq(s3Storage)))
+            .thenReturn(popularReviewDto1);
+        when(popularReviewMapper.toDto(eq(popularReview2), eq(s3Storage)))
+            .thenReturn(popularReviewDto2);
+
+        // when
+        CursorPageResponse<PopularReviewDto> response = popularReviewService.getPopularReviews(
+            period, direction, cursor, after, limit
+        );
+
+        // then
+        assertThat(response.content()).hasSize(2);
+        assertThat(response.content()).containsExactly(popularReviewDto1, popularReviewDto2);
+        assertThat(response.hasNext()).isTrue();
+        assertThat(response.nextCursor()).isNotNull();
+        assertThat(response.nextAfter()).isEqualTo(popularReviewDto2.createdAt().toString());
+    }
+
+    @Test
+    void getPopularReviews_hasNext가_false일때() {
+        // given
+        PeriodType period = PeriodType.DAILY;
+        Sort.Direction direction = Sort.Direction.ASC;
+        String cursor = null;
+        Instant after = Instant.now();
+        int limit = 3;
+        when(popularReviewRepository.findByPeriodWithCursor(
+            eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
+            .thenReturn(List.of(popularReview1, popularReview2));
+        when(popularReviewMapper.toDto(eq(popularReview1), eq(s3Storage)))
+            .thenReturn(popularReviewDto1);
+        when(popularReviewMapper.toDto(eq(popularReview2), eq(s3Storage)))
+            .thenReturn(popularReviewDto2);
+
+        // when
+        CursorPageResponse<PopularReviewDto> response = popularReviewService.getPopularReviews(
+            period, direction, cursor, after, limit
+        );
+
+        // then
+        assertThat(response.content()).hasSize(2);
+        assertThat(response.hasNext()).isFalse();
+        assertThat(response.nextCursor()).isNull();
+    }
+
+    @Test
+    void getPopularReviews_빈_결과일때() {
+        // given
+        PeriodType period = PeriodType.DAILY;
+        Sort.Direction direction = Sort.Direction.ASC;
+        String cursor = null;
+        Instant after = Instant.now();
+        int limit = 2;
+        when(popularReviewRepository.findByPeriodWithCursor(
+            eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
+            .thenReturn(List.of());
+
+        // when
+        CursorPageResponse<PopularReviewDto> response = popularReviewService.getPopularReviews(
+            period, direction, cursor, after, limit
+        );
+
+        // then
+        assertThat(response.content()).isEmpty();
+        assertThat(response.hasNext()).isFalse();
+        assertThat(response.nextCursor()).isNull();
+        assertThat(response.nextAfter()).isNull();
+    }
+
+    @Test
+    void generateCursor_정상작동() {
+        // given
+        PeriodType period = PeriodType.DAILY;
+        Sort.Direction direction = Sort.Direction.ASC;
+        String cursor = null;
+        Instant after = Instant.now();
+        int limit = 1;
+        when(popularReviewRepository.findByPeriodWithCursor(
+            eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
+            .thenReturn(List.of(popularReview1, popularReview2));
+        when(popularReviewMapper.toDto(eq(popularReview1), eq(s3Storage)))
+            .thenReturn(popularReviewDto1);
+
+        // when
+        CursorPageResponse<PopularReviewDto> response = popularReviewService.getPopularReviews(
+            period, direction, cursor, after, limit
+        );
+
+        // then
+        assertThat(response.nextCursor()).isNotNull();
+        assertThat(response.nextCursor()).matches("^[A-Za-z0-9+/]+=*$");
+        String decodedCursor = new String(Base64.getDecoder().decode(response.nextCursor()));
+        assertThat(decodedCursor).contains("|");
+    }
+
+    @Test
+    void 커서_페이징이_순차적으로_동작한다() {
+        // given - 첫 번째 페이지
+        PeriodType period = PeriodType.DAILY;
+        Sort.Direction direction = Sort.Direction.ASC;
+        String cursor = null;
+        Instant after = null;
+        int limit = 1;
+        when(popularReviewRepository.findByPeriodWithCursor(
+            eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
+            .thenReturn(List.of(popularReview1, popularReview2));
+        when(popularReviewMapper.toDto(eq(popularReview1), eq(s3Storage)))
+            .thenReturn(popularReviewDto1);
+
+        // when - 첫 번째 페이지 조회
+        CursorPageResponse<PopularReviewDto> firstPage = popularReviewService.getPopularReviews(
+            period, direction, cursor, after, limit
+        );
+
+        // then - 첫 번째 페이지 검증
+        assertThat(firstPage.content()).hasSize(1);
+        assertThat(firstPage.hasNext()).isTrue();
+        assertThat(firstPage.nextCursor()).isNotNull();
+
+        // given - 두 번째 페이지 (첫 번째 페이지의 커서 사용)
+        String nextCursor = firstPage.nextCursor();
+        Instant nextAfter = Instant.parse(firstPage.nextAfter());
+        when(popularReviewRepository.findByPeriodWithCursor(
+            eq(period), eq(direction), eq(nextCursor), eq(nextAfter), eq(limit + 1)))
+            .thenReturn(List.of(popularReview2)); // 마지막 페이지
+        when(popularReviewMapper.toDto(eq(popularReview2), eq(s3Storage)))
+            .thenReturn(popularReviewDto2);
+
+        // when
+        CursorPageResponse<PopularReviewDto> secondPage = popularReviewService.getPopularReviews(
+            period, direction, nextCursor, nextAfter, limit
+        );
+
+        // then
+        assertThat(secondPage.content()).hasSize(1);
+        assertThat(secondPage.hasNext()).isFalse();
+        assertThat(secondPage.nextCursor()).isNull();
+    }
+
+    @Test
+    void mapper와_s3Storage_연동이_정상작동한다() {
+        // given
+        PeriodType period = PeriodType.DAILY;
+        Sort.Direction direction = Sort.Direction.ASC;
+        String cursor = null;
+        Instant after = Instant.now();
+        int limit = 1;
+        when(popularReviewRepository.findByPeriodWithCursor(
+            eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
+            .thenReturn(List.of(popularReview1));
+        when(popularReviewMapper.toDto(eq(popularReview1), eq(s3Storage)))
+            .thenReturn(popularReviewDto1);
+
+        // when
+        CursorPageResponse<PopularReviewDto> response = popularReviewService.getPopularReviews(
+            period, direction, cursor, after, limit
+        );
+
+        // then
+        assertThat(response.content()).hasSize(1);
+        PopularReviewDto dto = response.content().get(0);
+        assertThat(dto.bookThumbnailUrl()).isEqualTo("https://s3.example.com/converted.jpg");
+    }
+
+    private PopularReview createPopularReview(Review review, PeriodType period, Long rank,
+        double score) {
+        PopularReview popularReview = PopularReview.builder()
+            .review(review)
+            .period(period)
+            .rank(rank)
+            .score(score)
+            .commentCount(review.getCommentCount())
+            .likeCount(review.getLikeCount())
+            .build();
+
+        return popularReview;
+    }
+
+    private Review createReview(Long commentCount, Long likeCount, String createdAt) {
+        User user = User.builder()
+            .email("user1@example.com")
+            .nickname("유저1")
+            .password("encryptedPwd1")
+            .build();
+        ReflectionTestUtils.setField(user, "id",
+            UUID.fromString("36404724-4603-4cf4-8a8c-ebff46deb51b"));
+
+        Book book = Book.builder()
+            .title("책1")
+            .author("저자1")
+            .description("설명1")
+            .publisher("출판사1")
+            .publishedDate(LocalDate.parse("2022-01-01"))
+            .isbn("111-1111111111")
+            .thumbnailUrl("https://example.com/image1.jpg")
+            .reviewCount(10L)
+            .rating(4.5)
+            .isDeleted(false)
+            .build();
+        ReflectionTestUtils.setField(book, "id",
+            UUID.fromString("f6601c1d-c9b9-4ae1-a7aa-b4345921f4ca"));
+
+        Review review = new Review(4, "이 책 따봉임", book, user);
+        ReflectionTestUtils.setField(review, "likeCount", likeCount);
+        ReflectionTestUtils.setField(review, "commentCount", commentCount);
+        ReflectionTestUtils.setField(review, "createdAt", Instant.parse(createdAt));
+
+        return review;
     }
 }
