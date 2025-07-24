@@ -32,7 +32,11 @@ import com.sprint.deokhugam.domain.book.exception.BookNotSoftDeletedException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookServiceImpl;
+import com.sprint.deokhugam.domain.popularbook.dto.data.PopularBookDto;
+import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest;
+import com.sprint.deokhugam.domain.popularbook.service.PopularBookServiceImpl;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -66,6 +70,9 @@ class BookControllerTest {
 
     @MockitoBean
     private NaverBookInfoProvider provider;
+
+    @MockitoBean
+    private PopularBookServiceImpl popularBookService;
 
     private CursorPageResponse<BookDto> mockResponse;
     private List<BookDto> mockBooks;
@@ -795,5 +802,64 @@ class BookControllerTest {
         // then
         result.andExpect(status().isBadRequest());
         verify(bookService, never()).hardDelete(any(UUID.class));
+    }
+
+    @Test
+    void 인기_도서_목록_조회를_하면_200을_반환한다() throws Exception {
+
+        // given
+        UUID book1Id = UUID.randomUUID();
+        UUID book2Id = UUID.randomUUID();
+        UUID book3Id = UUID.randomUUID();
+        UUID pb1Id = UUID.randomUUID();
+        UUID pb2Id = UUID.randomUUID();
+        UUID pb3Id = UUID.randomUUID();
+
+        PopularBookDto dto1 = new PopularBookDto(pb1Id, book1Id, "test book1", "test author1",
+            "test.jpg", PeriodType.DAILY, 1L,
+            4.4, 5L, 4.0, Instant.now());
+        PopularBookDto dto2 = new PopularBookDto(pb2Id, book2Id, "test book2", "test author2", null,
+            PeriodType.DAILY, 3L, 3.6, 2L, 4.0, Instant.now());
+        PopularBookDto dto3 = new PopularBookDto(pb3Id, book3Id, "test book3", "test author3", null,
+            PeriodType.DAILY, 2L, 4.0, 4L, 4.0, Instant.now());
+
+        PopularBookGetRequest request = PopularBookGetRequest.builder()
+            .period(PeriodType.DAILY)
+            .direction("ASC")
+            .limit(3)
+            .build();
+
+        CursorPageResponse<PopularBookDto> response = new CursorPageResponse<>(List.of(dto1, dto3, dto2),
+            null, null, 3, 3L, false);
+
+        given(popularBookService.getPopularBooks(request)).willReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/books/popular")
+            .param("period", "DAILY")
+            .param("direction", "ASC")
+            .param("limit", "3"));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(3))
+            .andExpect(jsonPath("$.content[1].title").value("test book3"))
+            .andExpect(jsonPath("$.content[2].title").value("test book2"))
+            .andExpect(jsonPath("$.totalElements").value(3))
+            .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void 잘못된_랭킹_기간으로_인기_도서_목록_조회를_하면_400을_반환한다() throws Exception {
+
+        // given
+        String invalidPeriod = "YEARLY";
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/books/popular?period=" + invalidPeriod));
+
+        // then
+        result.andExpect(status().isBadRequest());
     }
 }
