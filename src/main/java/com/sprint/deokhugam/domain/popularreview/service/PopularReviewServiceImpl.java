@@ -1,7 +1,6 @@
 package com.sprint.deokhugam.domain.popularreview.service;
 
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
-
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
@@ -88,16 +87,13 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         throws BatchAlreadyRunException {
         ZoneId zoneId = ZoneId.of("Asia/Seoul");
 
-        Instant startOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getStartInstant(referenceTime, zoneId);
-        Instant endOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getEndInstant(referenceTime, zoneId);
-
-        System.out.println("startOfDay = " + startOfDay);
-        System.out.println("endOfDay = " + endOfDay);
+        Instant startOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getStartInstant(
+            referenceTime, zoneId);
+        Instant endOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getEndInstant(
+            referenceTime, zoneId);
 
         Boolean isAlreadyExist = popularReviewRepository.existsByCreatedAtBetween(startOfDay,
             endOfDay);
-
-        System.out.println("isAlreadyExist = " + isAlreadyExist);
 
         if (isAlreadyExist) {
             throw new BatchAlreadyRunException("Review",
@@ -116,7 +112,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
 
         switch (period) {
             case DAILY:
-                startLocalDate = TimeUtils.toLocalDate(today).minusDays(1);
+                startLocalDate = TimeUtils.toLocalDate(today);
                 slicedReview = totalReviews.stream()
                     .filter(review -> {
                         LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
