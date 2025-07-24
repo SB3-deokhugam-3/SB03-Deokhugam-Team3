@@ -1,18 +1,27 @@
 package com.sprint.deokhugam.domain.popularreview.service;
 
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
-import com.sprint.deokhugam.domain.popularreview.PeriodType;
+
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
 import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
+import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.enums.PeriodType;
+import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
+import com.sprint.deokhugam.global.utils.TimeUtils;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.StepContribution;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,50 +82,91 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             (dto.rank() + "|" + dto.createdAt().toString()).getBytes(StandardCharsets.UTF_8)
         );
     }
-//
-//    @Override
-//    @Transactional
-//    public void updatePopularReviews(PeriodType period) {
-//        Instant now = Instant.now();
-//        Instant from = period == PeriodType.ALL_TIME ? Instant.EPOCH : now.minus(period.getDays(), ChronoUnit.DAYS);
-//
-//        log.info("[popularReview] 랭킹 계산 시작 - 기간: {}, from: {}, to: {}", period, from, now);
-//
-//        // 1. 점수 계산 및 정렬된 통계 가져오기
-//        List<PopularReviewStats> stats = popularReviewRepository.calculatePopularReviews(from, now);
-//        log.info("[popularReview] 통계 조회 완료 - {}개 리뷰 대상", stats.size());
-//
-//        // 2. 점수 기준으로 정렬 (이미 정렬되어 있다면 생략 가능)
-//        stats.sort(Comparator.comparingDouble(PopularReviewStats::score).reversed());
-//        log.debug("[popularReview] Top5 점수 샘플: {}",
-//            stats.stream().limit(5).map(PopularReviewStats::score).toList()
-//        );
-//
-//        // 3. PopularReviewService 엔티티 생성 (순위는 정렬된 순서대로)
-//        AtomicLong rank = new AtomicLong(1);
-//        List<PopularReview> popularReviews = stats.stream()
-//            .map(stat -> {
-//                UUID reviewId = stat.reviewId();
-//                Review review = reviewRepository.getReferenceById(reviewId); // Lazy reference
-//
-//                return PopularReview.builder()
-//                    .review(review)
-//                    .period(period)
-//                    .rank(rank.getAndIncrement())
-//                    .score(stat.score())
-//                    .likeCount(stat.likeCount())
-//                    .commentCount(stat.commentCount())
-//                    .build();
-//            })
-//            .toList();
-//
-//        // 4. 기존 데이터 삭제
-//        popularReviewRepository.deleteByPeriod(period);
-//        log.info("[popularReview] 기존 랭킹 삭제 완료 - period={}", period);
-//
-//        // 5. 새로 저장
-//        popularReviewRepository.saveAll(popularReviews);
-//        log.info("[popularReview] 새 랭킹 저장 완료 - {}건 저장됨", popularReviews.size());
-//    }
+
+    /* 배치에서 사용 - 오늘 이미 실행한 배치인지 검증 */
+    public void validateJobNotDuplicated(Instant referenceTime)
+        throws BatchAlreadyRunException {
+        ZoneId zoneId = ZoneId.of("Asia/Seoul");
+
+        Instant startOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getStartInstant(referenceTime, zoneId);
+        Instant endOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getEndInstant(referenceTime, zoneId);
+
+        System.out.println("startOfDay = " + startOfDay);
+        System.out.println("endOfDay = " + endOfDay);
+
+        Boolean isAlreadyExist = popularReviewRepository.existsByCreatedAtBetween(startOfDay,
+            endOfDay);
+
+        System.out.println("isAlreadyExist = " + isAlreadyExist);
+
+        if (isAlreadyExist) {
+            throw new BatchAlreadyRunException("Review",
+                Map.of("execution datetime", Instant.now()));
+        }
+    }
+
+    /* 배치에서 사용 */
+    @Transactional
+    public List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
+        PeriodType period, StepContribution contribution, Instant today) {
+        List<PopularReview> popularReviews = new ArrayList<>();
+        List<Review> slicedReview;
+        Long rank = 1L;
+        LocalDate startLocalDate;
+
+        switch (period) {
+            case DAILY:
+                startLocalDate = TimeUtils.toLocalDate(today).minusDays(1);
+                slicedReview = totalReviews.stream()
+                    .filter(review -> {
+                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
+                        return reviewDate.isEqual(startLocalDate);
+                    }).toList();
+                break;
+            case WEEKLY:
+                startLocalDate = TimeUtils.toLocalDate(today).minusWeeks(1);
+                slicedReview = totalReviews.stream()
+                    .filter(review -> {
+                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
+                        return !reviewDate.isBefore(startLocalDate);
+                    }).toList();
+
+                break;
+            case MONTHLY:
+                startLocalDate = TimeUtils.toLocalDate(today).minusMonths(1);
+                slicedReview = totalReviews.stream()
+                    .filter(review -> {
+                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
+                        return !reviewDate.isBefore(startLocalDate);
+                    }).toList();
+                break;
+            case ALL_TIME:
+            default:
+                slicedReview = totalReviews;
+                break;
+        }
+
+        for (Review review : slicedReview) {
+            Long commentCount = review.getCommentCount();
+            Long likeCount = review.getLikeCount();
+            Double score = commentCount * 0.7 + likeCount * 0.3;
+            PopularReview popularReview = PopularReview.builder()
+                .period(period.name())
+                .rank(rank)
+                .score(score)
+                .likeCount(likeCount)
+                .commentCount(commentCount)
+                .review(review)
+                .build();
+            popularReviews.add(popularReview);
+            rank++;
+        }
+        popularReviewRepository.saveAll(popularReviews);
+        //batch meda 테이블에 결과 저장
+        contribution.incrementWriteCount(popularReviews.size());
+
+        return popularReviews;
+    }
+
 
 }

@@ -8,12 +8,11 @@ import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookUpdateRequest;
 import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.service.BookService;
-import com.sprint.deokhugam.domain.popularreview.PeriodType;
-import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
+import com.sprint.deokhugam.domain.popularbook.dto.data.PopularBookDto;
+import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest;
+import com.sprint.deokhugam.domain.popularbook.service.PopularBookService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
@@ -24,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,6 +41,7 @@ public class BookController {
 
     private final BookService bookService;
     private final BookInfoProvider provider;
+    private final PopularBookService popularBookService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BookDto> create(
@@ -163,15 +164,14 @@ public class BookController {
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularReviews(
-        @RequestParam(defaultValue = "DAILY") PeriodType period,
-        @RequestParam(defaultValue = "ASC") String direction,
-        @RequestParam(required = false) String cursor,
-        @RequestParam(required = false) Instant after,
-        @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit
+    public ResponseEntity<CursorPageResponse<PopularBookDto>> getPopularBooks(
+        @ModelAttribute PopularBookGetRequest request
     ) {
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(null);
+        log.info("[BookController] 인기 도서 목록 조회 요청 - period: {}, limit: {}",
+            request.period(), request.limit());
+
+        CursorPageResponse<PopularBookDto> result = popularBookService.getPopularBooks(request);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }

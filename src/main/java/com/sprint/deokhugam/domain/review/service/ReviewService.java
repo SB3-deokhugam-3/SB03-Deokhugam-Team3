@@ -20,4 +20,5 @@ public interface ReviewService {
     void hardDelete(UUID reviewId, UUID userId);
 
     ReviewDto update(UUID reviewId, UUID userId, ReviewUpdateRequest request);
+
 }

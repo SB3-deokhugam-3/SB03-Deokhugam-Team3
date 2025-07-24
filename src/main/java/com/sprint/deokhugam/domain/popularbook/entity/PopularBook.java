@@ -1,6 +1,6 @@
-package com.sprint.deokhugam.domain.popularreview.entity;
+package com.sprint.deokhugam.domain.popularbook.entity;
 
-import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.global.base.BaseEntity;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.Column;
@@ -16,35 +16,38 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Entity
-@Table(name = "popular_review_rankings")
+@Table(name = "popular_book_rankings")
 @AllArgsConstructor
 @Builder
 @Getter
-@ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PopularReview extends BaseEntity {
+public class PopularBook extends BaseEntity {
 
-    @Enumerated(EnumType.STRING)
+    // ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')
     @Column(name = "period", length = 10, nullable = false)
-    private PeriodType period;
+    @Enumerated(EnumType.STRING)
+    private PeriodType period = PeriodType.DAILY;
 
     @Column(name = "rank", nullable = false)
     private Long rank = 0L;
 
-    //점수 = (해당 기간의 좋아요 수 * 0.3) + (해당 기간의 댓글 수 * 0.7)
+    // 점수 = (해당 기간의 리뷰 수 * 0.4) + (해당 기간의 평점 평균 * 0.6)
     @Column(name = "score", nullable = false)
     private Double score = 0.0;
 
-    @Column(name = "like_count", nullable = false)
-    private Long likeCount = 0L;
+    @Column(name = "review_count", nullable = false)
+    private Long reviewCount = 0L;
 
-    @Column(name = "comment_count", nullable = false)
-    private Long commentCount = 0L;
+    @Column(name = "rating", nullable = false)
+    private Double rating = 0.0;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_id", nullable = false)
-    private Review review;
+    @JoinColumn(name = "book_id", nullable = false)
+    private Book book;
+
+    public void updateRank(Long rank) {
+        this.rank = rank;
+    }
 }
