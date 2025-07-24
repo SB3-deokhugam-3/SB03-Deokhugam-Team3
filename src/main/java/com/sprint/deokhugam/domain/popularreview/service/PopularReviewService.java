@@ -58,7 +58,7 @@ public class PopularReviewService {
 
         switch (period) {
             case DAILY:
-                startLocalDate = TimeUtils.toLocalDate(today).minusDays(1);
+                startLocalDate = TimeUtils.toLocalDate(today);
                 slicedReview = totalReviews.stream()
                     .filter(review -> {
                         LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
