@@ -57,6 +57,6 @@ public enum PeriodType {
     };
 
     public abstract Instant getStartInstant(Instant today, ZoneId zone);
+
     public abstract Instant getEndInstant(Instant today, ZoneId zone);
 }
-

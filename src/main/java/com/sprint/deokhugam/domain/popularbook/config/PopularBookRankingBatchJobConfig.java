@@ -8,6 +8,7 @@ import com.sprint.deokhugam.domain.popularbook.reader.JpaBookScoreReader;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
 import com.sprint.deokhugam.domain.popularbook.tasklet.DeletePopularBooksTasklet;
 import com.sprint.deokhugam.domain.popularbook.writer.PopularBookRankingWriter;
+import com.sprint.deokhugam.global.batch.BatchListener;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
@@ -34,6 +35,8 @@ public class PopularBookRankingBatchJobConfig {
 
     private final EntityManager em;
     private final PopularBookRepository popularBookRepository;
+    private final BatchListener listener;
+
 
     @Bean
     public Job popularBookRankingJob(JobRepository jobRepository,
@@ -58,7 +61,9 @@ public class PopularBookRankingBatchJobConfig {
         PeriodType period = PeriodType.valueOf(periodKey.toUpperCase());
 
         return new StepBuilder("deletePopularBookStep_" + period.name(), jobRepository)
-            .tasklet(new DeletePopularBooksTasklet(popularBookRepository, period), transactionManager)
+            .tasklet(new DeletePopularBooksTasklet(popularBookRepository, period),
+                transactionManager)
+            .listener(listener)
             .build();
     }
 
@@ -87,6 +92,7 @@ public class PopularBookRankingBatchJobConfig {
             .reader(reader)
             .processor(processor)
             .writer(writer)
+            .listener(listener)
             .build();
     }
 }
