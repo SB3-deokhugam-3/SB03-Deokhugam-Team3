@@ -14,7 +14,8 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     MISSING_REQUEST_HEADER("필수 헤더값을 누락했습니다.", HttpStatus.BAD_REQUEST),
     NO_RESOURCE_FOUND("요청하신 경로를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    MISSING_REQUEST_PARAMETER("필수 요청 파라미터가 없습니다.", HttpStatus.BAD_REQUEST);
+    MISSING_REQUEST_PARAMETER("필수 요청 파라미터가 없습니다.", HttpStatus.BAD_REQUEST),
+    BATCH_ALREADY_RUN("이미 작업이 완료된 배치입니다.", null); // 배치는 http request랑 관련없음
 
     private final String message;
     private final HttpStatus httpStatus;
