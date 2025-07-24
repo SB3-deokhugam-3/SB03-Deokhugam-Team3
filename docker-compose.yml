@@ -25,8 +25,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       # Naver
-      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
-      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
+      X-Naver-Client-Id: ${NAVER_CLIENT_ID}
+      X-Naver-Client-Secret: ${NAVER_CLIENT_SECRET}
       # JVM Configuration (프리티어 고려)
       JVM_OPTS: ${JVM_OPTS}
       DJINA_LIBRARY_PATH: ${DJINA_LIBRARY_PATH}
@@ -36,3 +36,5 @@ services:
 
     ## 이미지 빌드하고 바로 compose-up 하는 명령어
     # docker compose -f docker-compose.yml up --build -d
+
+
