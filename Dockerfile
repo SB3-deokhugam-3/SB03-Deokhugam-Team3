@@ -1,4 +1,4 @@
-# 🔨 1단계: 빌드용 이미지 (Ubuntu + JDK + Tesseract)
+# 1단계: 빌드용 이미지 (Ubuntu + JDK + Tesseract)
 FROM ubuntu:20.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -26,7 +26,7 @@ RUN chmod +x gradlew
 RUN ./gradlew bootJar
 
 
-# 🚀 2단계: 실행용 이미지 (Ubuntu + 필수 라이브러리만 복사)
+# 2단계: 실행용 이미지 (Ubuntu + 필수 라이브러리만 복사)
 FROM ubuntu:20.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
