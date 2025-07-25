@@ -37,14 +37,14 @@ public class PopularBookRankingBatchJobConfig {
     private final PopularBookRepository popularBookRepository;
     private final BatchListener listener;
 
-
     @Bean
     public Job popularBookRankingJob(JobRepository jobRepository,
-        PlatformTransactionManager transactionManager) {
+        Step deletePopularBookStep,
+        Step popularBookRankingStep) {
 
         return new JobBuilder("popularBookRankingJob", jobRepository)
-            .start(deletePopularBookStep(jobRepository, transactionManager, ""))
-            .next(popularBookRankingStep(jobRepository, transactionManager, "", ""))
+            .start(deletePopularBookStep)
+            .next(popularBookRankingStep)
             .build();
     }
 

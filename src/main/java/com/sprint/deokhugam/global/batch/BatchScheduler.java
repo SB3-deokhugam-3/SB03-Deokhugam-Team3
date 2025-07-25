@@ -30,7 +30,7 @@ public class BatchScheduler {
         jobLauncher.run(popularReviewJob, params);
     }
 
-    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 6 0 * * *", zone = "Asia/Seoul")
     public void runPopularBookRankingJob() {
         Instant today = Instant.now();
 

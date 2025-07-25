@@ -1,15 +1,19 @@
 package com.sprint.deokhugam.domain.popularreview.service;
 
+import static com.sprint.deokhugam.fixture.ReviewFixture.book;
+import static com.sprint.deokhugam.fixture.ReviewFixture.dto;
+import static com.sprint.deokhugam.fixture.ReviewFixture.popularReview;
+import static com.sprint.deokhugam.fixture.ReviewFixture.review;
+import static com.sprint.deokhugam.fixture.ReviewFixture.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import static com.sprint.deokhugam.fixture.ReviewFixture.*;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
@@ -34,8 +38,8 @@ import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Sort;
 import org.springframework.batch.core.StepContribution;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -187,54 +191,85 @@ public class PopularReviewServiceTest {
     }
 
     @Test
+    @DisplayName("주간 인기리뷰:7/18~7/24일 데이터를 가져온다(한국시간기준)")
     void 주기간_기준으로_인기리뷰를_저장한다() {
         //given
-        Review notInPeriodReview = createReview(1L, 1L, "2025-07-03T00:00:00Z");
-        Review notInPeriodReview2 = createReview(3L, 3L, "2025-06-01T00:00:00Z");
-        Review review3 = createReview(2L, 2L, "2025-07-22T00:00:00Z");
+        Instant currentTime = Instant.parse("2025-07-24T15:05:00Z"); // 한국시간 7/25일 00:05
+        Review notInPeriodReview1 = createReview(3L, 3L, "2025-06-01T00:00:00Z");
+        Review notInPeriodReview2 = createReview(2L, 2L,
+            "2025-07-17T14:49:00Z"); // 한국시간 7/17일 23:59
+        Review notInPeriodReview3 = createReview(2L, 2L,
+            "2025-07-25T15:00:00Z"); // 한국시간 7/26일 00:00
+
+        Review review1 = createReview(1L, 1L, "2025-07-17T15:00:00Z");  // 한국시간 7/18일 00:00
+        Review review2 = createReview(2L, 2L, "2025-07-24T14:49:00Z");  // 한국시간 7/24일 23:59
+        Review reviewToday1 = createReview(3L, 3L, "2025-07-24T15:00:00Z");  // 한국시간 7/25일 00:00
+        Review reviewToday2 = createReview(4L, 4L, "2025-07-25T14:59:59Z");  // 한국시간 7/25일 23:59
+
         List<Review> totalReviews = List.of(
-            review3,
-            notInPeriodReview,
-            notInPeriodReview2
+            notInPeriodReview1,
+            notInPeriodReview2,
+            notInPeriodReview3,
+            reviewToday2,
+            reviewToday1,
+            review2,
+            review1
         );
         List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME, 1L,
-                review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
+            createPopularReview(review2, PeriodType.WEEKLY, 1L, 2.0),
+            createPopularReview(review1, PeriodType.WEEKLY, 2L, 1.0)
         );
 
         // when
         List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.WEEKLY, contribution, Instant.parse("2025-07-23T00:00:00Z"));
+            PeriodType.WEEKLY, contribution, currentTime);
 
         // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getRank()).isEqualTo(1L);
-        assertThat(result.get(0).getScore()).isEqualTo(
-            review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3);
+        assertThat(result).hasSize(2);
+        assertThat(result.get(1).getRank()).isEqualTo(2L);
+        assertThat(result.get(1).getScore()).isEqualTo(1.0);
         then(popularReviewRepository).should().saveAll(any());
         then(contribution).should().incrementWriteCount(expectedPopularReviews.size());
 
     }
 
     @Test
+    @DisplayName("일간 인기리뷰:7/24일 데이터를 가져온다(한국시간기준)")
     void 일기간_기준으로_인기리뷰를_저장한다() {
+
         //given
-        Review notInPeriodReview = createReview(1L, 1L, "2025-07-03T00:00:00Z");
-        Review notInPeriodReview2 = createReview(3L, 3L, "2025-06-01T00:00:00Z");
-        Review notInPeriodReview3 = createReview(2L, 2L, "2025-07-20T00:00:00Z");
+        Instant currentTime = Instant.parse("2025-07-24T15:05:00Z"); // 한국시간 7/25일 00:05
+        Review notInPeriodReview1 = createReview(3L, 3L, "2025-06-01T00:00:00Z");
+        Review notInPeriodReview2 = createReview(2L, 2L,
+            "2025-07-23T14:59:00Z"); // 한국시간 7/23일 23:59
+        Review reviewYesterday1 = createReview(1L, 1L, "2025-07-23T15:00:00Z");  // 한국시간 7/24일 00:00
+        Review reviewYesterday2 = createReview(2L, 2L, "2025-07-24T14:59:00Z");  // 한국시간 7/24일 23:59
+        Review reviewToday1 = createReview(3L, 3L, "2025-07-24T15:00:00Z");  // 한국시간 7/25일 00:00
+        Review reviewToday2 = createReview(4L, 4L, "2025-07-25T14:59:59Z");  // 한국시간 7/25일 23:59
+
         List<Review> totalReviews = List.of(
-            notInPeriodReview3,
-            notInPeriodReview,
-            notInPeriodReview2
+            notInPeriodReview1,
+            notInPeriodReview2,
+            reviewYesterday2,
+            reviewYesterday1,
+            reviewToday1,
+            reviewToday2
         );
-        List<PopularReview> expectedPopularReviews = List.of();
+        List<PopularReview> expectedPopularReviews = List.of(
+            createPopularReview(reviewYesterday2, PeriodType.DAILY, 1L, 2.0),
+            createPopularReview(reviewYesterday1, PeriodType.DAILY, 2L, 1.0)
+        );
 
         // when
         List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.DAILY, contribution, Instant.parse("2025-07-23T00:00:00Z"));
+            PeriodType.DAILY, contribution, currentTime);
 
         // then
-        assertThat(result).hasSize(0);
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getRank()).isEqualTo(1L);
+        assertThat(result.get(0).getScore()).isEqualTo(2.0);
+        assertThat(result.get(1).getRank()).isEqualTo(2L);
+        assertThat(result.get(1).getScore()).isEqualTo(1.0);
         then(popularReviewRepository).should().saveAll(any());
         then(contribution).should().incrementWriteCount(expectedPopularReviews.size());
     }
