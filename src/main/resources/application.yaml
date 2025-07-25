@@ -52,8 +52,8 @@ deokhugam:
 books:
   api:
     naver:
-      client-id: ${X-Naver-Client-Id}
-      client-secret: ${X-Naver-Client-Secret}
+      client-id: ${NAVER_CLIENT_ID}
+      client-secret: ${NAVER_CLIENT_SECRET}
 
 # Swagger UI
 springdoc:

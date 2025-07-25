@@ -1,0 +1,40 @@
+#// 근데 도커 컴포즈파일 필요한가여>???!
+#아 생각해보니까, 로컬에서 이미지 잘 돌아가는지 확인한다음 aws에 올리는게 낫겠네요su
+# 서비스 정의
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: deokhugam-app:local-slim
+    container_name: deokhugam_app
+    env_file: .env
+    # 환경 변수 설정
+    environment:
+      # Storage 설정
+      STORAGE_TYPE: ${STORAGE_TYPE}
+      # AWS S3 설정
+      AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
+      AWS_S3_REGION: ${AWS_S3_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_S3_PRESIGNED_URL_EXPIRATION: ${AWS_S3_PRESIGNED_URL_EXPIRATION:-600}
+      # 스프링 앱 설정
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      # Naver
+      X-Naver-Client-Id: ${NAVER_CLIENT_ID}
+      X-Naver-Client-Secret: ${NAVER_CLIENT_SECRET}
+      # JVM Configuration (프리티어 고려)
+      JVM_OPTS: ${JVM_OPTS}
+      DJINA_LIBRARY_PATH: ${DJINA_LIBRARY_PATH}
+    ports:
+      - "8081:80"
+    restart: always
+
+    ## 이미지 빌드하고 바로 compose-up 하는 명령어
+    # docker compose -f docker-compose.yml up --build -d
+
+
