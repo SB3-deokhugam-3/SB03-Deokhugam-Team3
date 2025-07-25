@@ -42,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -269,7 +270,7 @@ public class CommentServiceImplTest {
         given(reviewRepository.existsById(reviewId)).willReturn(false);
 
         // when
-        Throwable thrown = catchThrowable(() -> commentService.findAll(reviewId, null, "DESC", 10));
+        Throwable thrown = catchThrowable(() -> commentService.findAll(reviewId, null, null, "DESC", 10));
 
         // then
         assertThat(thrown)
@@ -288,19 +289,18 @@ public class CommentServiceImplTest {
         Comment comment2 = create(review1, user1, "댓2");
         CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
         CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
-        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2),
-            false);
+        List<Comment> list = List.of(comment1, comment2);
 
         given(reviewRepository.existsById(reviewId)).willReturn(true);
-        given(commentRepository.findByReviewId(eq(reviewId), any()))
-            .willReturn(slice);
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+            .willReturn(list);
         given(commentMapper.toDto(comment1)).willReturn(dto1);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
         given(commentRepository.countByReviewId(reviewId)).willReturn(10L);
 
         // when
         CursorPageResponse<CommentDto> result =
-            commentService.findAll(reviewId, null, "DESC", limit);
+            commentService.findAll(reviewId, null, null, "DESC", limit);
 
         // then
         assertThat(result.content()).containsExactly(dto1, dto2);
@@ -319,21 +319,22 @@ public class CommentServiceImplTest {
         Instant createdAt2 = now.minusSeconds(20);
         Comment comment1 = create(review1, user1, "댓1");
         Comment comment2 = create(review1, user1, "댓2");
+        Comment comment3 = create(review1, user1, "댓3");
         CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
         CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
-        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2),
-            true);
-
+        CommentDto dto3 = createDto(reviewId, "댓3", now.minusSeconds(10));
+        List<Comment> list = List.of(comment1, comment2, comment3);
         given(reviewRepository.existsById(reviewId)).willReturn(true);
-        given(commentRepository.findByReviewIdAndCreatedAtLessThan(eq(reviewId), any(), any()))
-            .willReturn(slice);
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+            .willReturn(list);
         given(commentMapper.toDto(comment1)).willReturn(dto1);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
+        given(commentMapper.toDto(comment3)).willReturn(dto3);
         given(commentRepository.countByReviewId(reviewId)).willReturn(10L);
 
         // when
         CursorPageResponse<CommentDto> result =
-            commentService.findAll(reviewId, cursor, "DESC", limit);
+            commentService.findAll(reviewId, cursor, cursor, "DESC", limit);
 
         // then
         assertThat(result.content()).containsExactly(dto1, dto2);
@@ -351,7 +352,7 @@ public class CommentServiceImplTest {
 
         // when
         Throwable thrown = catchThrowable(
-            () -> commentService.findAll(reviewId, invalidCursor, "DESC", 10));
+            () -> commentService.findAll(reviewId, invalidCursor, null, "DESC", 10));
 
         // then
         assertThat(thrown)
