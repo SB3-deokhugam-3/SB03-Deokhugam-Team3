@@ -1,7 +1,6 @@
 package com.sprint.deokhugam.domain.popularreview.service;
 
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
-
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
@@ -10,10 +9,8 @@ import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
-import com.sprint.deokhugam.global.utils.TimeUtils;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -88,16 +85,13 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         throws BatchAlreadyRunException {
         ZoneId zoneId = ZoneId.of("Asia/Seoul");
 
-        Instant startOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getStartInstant(referenceTime, zoneId);
-        Instant endOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getEndInstant(referenceTime, zoneId);
-
-        System.out.println("startOfDay = " + startOfDay);
-        System.out.println("endOfDay = " + endOfDay);
+        Instant startOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getStartInstant(
+            referenceTime, zoneId);
+        Instant endOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getEndInstant(
+            referenceTime, zoneId);
 
         Boolean isAlreadyExist = popularReviewRepository.existsByCreatedAtBetween(startOfDay,
             endOfDay);
-
-        System.out.println("isAlreadyExist = " + isAlreadyExist);
 
         if (isAlreadyExist) {
             throw new BatchAlreadyRunException("Review",
@@ -112,33 +106,32 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         List<PopularReview> popularReviews = new ArrayList<>();
         List<Review> slicedReview;
         Long rank = 1L;
-        LocalDate startLocalDate;
+        ZoneId zoneId = ZoneId.of("Asia/Seoul");
+        Instant start;
+        Instant end;
 
         switch (period) {
             case DAILY:
-                startLocalDate = TimeUtils.toLocalDate(today).minusDays(1);
+                start = PeriodType.DAILY.getStartInstant(today, zoneId);
+                end = PeriodType.DAILY.getEndInstant(today, zoneId);
+
                 slicedReview = totalReviews.stream()
-                    .filter(review -> {
-                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
-                        return reviewDate.isEqual(startLocalDate);
-                    }).toList();
+                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
+                    ).toList();
                 break;
             case WEEKLY:
-                startLocalDate = TimeUtils.toLocalDate(today).minusWeeks(1);
+                start = PeriodType.WEEKLY.getStartInstant(today, zoneId);
+                end = PeriodType.WEEKLY.getEndInstant(today, zoneId);
                 slicedReview = totalReviews.stream()
-                    .filter(review -> {
-                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
-                        return !reviewDate.isBefore(startLocalDate);
-                    }).toList();
-
+                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
+                    ).toList();
                 break;
             case MONTHLY:
-                startLocalDate = TimeUtils.toLocalDate(today).minusMonths(1);
+                start = PeriodType.MONTHLY.getStartInstant(today, zoneId);
+                end = PeriodType.MONTHLY.getEndInstant(today, zoneId);
                 slicedReview = totalReviews.stream()
-                    .filter(review -> {
-                        LocalDate reviewDate = TimeUtils.toLocalDate(review.getCreatedAt());
-                        return !reviewDate.isBefore(startLocalDate);
-                    }).toList();
+                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
+                    ).toList();
                 break;
             case ALL_TIME:
             default:
@@ -162,11 +155,15 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             rank++;
         }
         popularReviewRepository.saveAll(popularReviews);
-        //batch meda 테이블에 결과 저장
+        //batch meta 테이블에 결과 저장
         contribution.incrementWriteCount(popularReviews.size());
 
         return popularReviews;
     }
 
+    private Boolean isBetween(Instant referenceTime, Instant start, Instant end) {
+        // startTime 포함, endTime 미포함
+        return !referenceTime.isBefore(start) && referenceTime.isBefore(end);
+    }
 
 }
