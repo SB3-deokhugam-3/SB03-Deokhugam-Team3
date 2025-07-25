@@ -6,6 +6,7 @@ import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
+import jakarta.persistence.EntityManager;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class PowerUserService {
 
     private final PowerUserRepository powerUserRepository;
     private final PopularReviewService popularReviewService;
+    private final EntityManager entityManager;
 
     public static final double REVIEW_SCORE_WEIGHT = 0.5;  // 현재 0으로 처리하므로 실질적으로 미적용
     public static final double LIKE_COUNT_WEIGHT = 0.2;
@@ -66,24 +68,37 @@ public class PowerUserService {
      */
     @Transactional
     public void replacePowerUsers(List<PowerUser> powerUsers) {
-        if (powerUsers == null || powerUsers.isEmpty()) {
-            log.warn("교체할 PowerUser 데이터가 없습니다.");
+        if (powerUsers.isEmpty()) {
+            log.warn("저장할 파워 유저가 없습니다.");
             return;
         }
 
-        // 기간 정보 추출 (모든 powerUser가 같은 period를 가진다고 가정)
         PeriodType period = powerUsers.get(0).getPeriod();
+        log.info("=== PowerUser 교체 시작 - {} 기간, {} 건 ===", period, powerUsers.size());
 
-        log.info("기존 {} PowerUser 데이터 삭제 시작", period);
-        powerUserRepository.deleteByPeriod(period);
-        log.info("기존 {} PowerUser 데이터 삭제 완료", period);
+        try {
+            // 1. 기존 데이터 삭제 (더 명확한 삭제 로직)
+            long deletedCount = powerUserRepository.deleteByPeriod(period);
+            log.info("기존 {} 기간 데이터 삭제 완료: {} 건", period, deletedCount);
 
-        // 점수 기준 내림차순 정렬 후 순위 재할당
-        List<PowerUser> sortedUsers = sortAndAssignRanks(powerUsers);
+            // 2. 트랜잭션 내에서 flush 하여 삭제가 확실히 적용되도록 함
+            entityManager.flush();
+            entityManager.clear();
 
-        log.info("{} PowerUser 새 데이터 저장 시작 - {} 건", period, sortedUsers.size());
-        powerUserRepository.saveAll(sortedUsers);
-        log.info("{} PowerUser 새 데이터 저장 완료 - {} 건", period, sortedUsers.size());
+            // 3. 점수 기준 정렬 및 순위 할당
+            List<PowerUser> sortedUsers = sortAndAssignRanks(powerUsers);
+
+            // 4. 배치 저장
+            List<PowerUser> savedUsers = powerUserRepository.saveAll(sortedUsers);
+            log.info("새로운 {} 기간 데이터 저장 완료: {} 건", period, savedUsers.size());
+
+            // 5. 저장 후 flush
+            entityManager.flush();
+
+        } catch (Exception e) {
+            log.error("PowerUser 교체 중 오류 발생 - {} 기간", period, e);
+            throw e;
+        }
     }
 
     /**

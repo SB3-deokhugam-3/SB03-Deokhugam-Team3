@@ -3,7 +3,6 @@ package com.sprint.deokhugam.domain.poweruser.dto.batch;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -24,6 +23,20 @@ public record DateRange(
         LocalDateTime endTime = LocalDateTime.now(KOREA_ZONE)
             .withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime startTime = endTime.minusDays(1);
+
+        return new DateRange(
+            startTime.atZone(KOREA_ZONE).toInstant(),
+            endTime.atZone(KOREA_ZONE).toInstant()
+        );
+    }
+
+    /**
+     * 테스트용 - 오늘 전체 범위
+     */
+    public static DateRange today() {
+        LocalDateTime now = LocalDateTime.now(KOREA_ZONE);
+        LocalDateTime startTime = now.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endTime = now.withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
 
         return new DateRange(
             startTime.atZone(KOREA_ZONE).toInstant(),

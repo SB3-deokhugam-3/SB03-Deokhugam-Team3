@@ -1,6 +1,7 @@
 package com.sprint.deokhugam.domain.poweruser.repository;
 
 import static com.sprint.deokhugam.domain.comment.entity.QComment.comment;
+import static com.sprint.deokhugam.domain.popularreview.entity.QPopularReview.popularReview;
 import static com.sprint.deokhugam.domain.poweruser.entity.QPowerUser.powerUser;
 import static com.sprint.deokhugam.domain.review.entity.QReview.review;
 import static com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike.reviewLike;
@@ -10,14 +11,19 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.sprint.deokhugam.domain.comment.entity.QComment;
 import com.sprint.deokhugam.domain.poweruser.dto.batch.PowerUserData;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.service.PowerUserService;
+import com.sprint.deokhugam.domain.review.entity.QReview;
+import com.sprint.deokhugam.domain.user.entity.QUser;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -38,15 +44,61 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
     @Override
     @Transactional(readOnly = true)
     public List<PowerUserData> findUserActivityData(PeriodType period, Instant startDate, Instant endDate) {
-        log.debug("사용자 활동 데이터 조회 시작 - 기간: {}, 시작: {}, 종료: {}", period, startDate, endDate);
+        log.info("=== 사용자 활동 데이터 조회 시작 ===");
+        log.info("기간: {}", period);
+        log.info("시작: {}", startDate);
+        log.info("종료: {}", endDate);
 
-        return queryFactory
+        // 먼저 기본 사용자 수 확인
+        Long totalUsers = queryFactory
+            .select(user.count())
+            .from(user)
+            .fetchOne();
+        log.info("전체 사용자 수: {}", totalUsers);
+
+        // 기간 내 리뷰 수 확인
+        Long reviewCount = queryFactory
+            .select(review.count())
+            .from(review)
+            .where(createDateCondition(review.createdAt, startDate, endDate))
+            .fetchOne();
+        log.info("기간 내 리뷰 수: {}", reviewCount);
+
+        // 기간 내 댓글 수 확인
+        Long commentCount = queryFactory
+            .select(comment.count())
+            .from(comment)
+            .where(createDateCondition(comment.createdAt, startDate, endDate))
+            .fetchOne();
+        log.info("기간 내 댓글 수: {}", commentCount);
+
+        // 기간 내 좋아요 수 확인
+        Long likeCount = queryFactory
+            .select(reviewLike.count())
+            .from(reviewLike)
+            .where(createDateCondition(reviewLike.createdAt, startDate, endDate))
+            .fetchOne();
+        log.info("기간 내 좋아요 수: {}", likeCount);
+
+        // 원래 쿼리 실행
+        List<PowerUserData> result = queryFactory
             .select(Projections.constructor(PowerUserData.class,
                 user,
-                Expressions.constant(period), // PeriodType을 상수로 전달
-                Expressions.numberTemplate(Double.class, "0.0"), // 리뷰 점수는 임시로 0.0으로 설정
-                review.id.count().coalesce(0L), // 실제로는 리뷰 수 ( 임시 )
-                comment.id.count().coalesce(0L) // 댓글 수
+                Expressions.constant(period),
+                // PopularReview에서 해당 사용자의 점수 합계 조회 (서브쿼리)
+                JPAExpressions.select(popularReview.score.sum().coalesce(0.0))
+                    .from(popularReview)
+                    .join(popularReview.review, QReview.review)
+                    .where(QReview.review.user.eq(user)
+                        .and(popularReview.period.eq(period))),
+                // 좋아요 수 (ReviewLike 테이블에서 조회)
+                JPAExpressions.select(reviewLike.id.count().coalesce(0L))
+                    .from(reviewLike)
+                    .join(reviewLike.review, QReview.review)
+                    .where(QReview.review.user.eq(user)
+                        .and(createDateCondition(reviewLike.createdAt, startDate, endDate))),
+                // 댓글 수
+                comment.id.count().coalesce(0L)
             ))
             .from(user)
             .leftJoin(review).on(review.user.eq(user)
@@ -55,10 +107,68 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
                 .and(createDateCondition(comment.createdAt, startDate, endDate)))
             .groupBy(user.id)
             .having(
-                // 리뷰 수 + 댓글 수 > 0인 활성 사용자만 조회
+                // 활동이 있는 사용자만 (리뷰, 댓글, 좋아요 중 하나라도 있으면)
                 review.id.count().coalesce(0L)
-                    .add(comment.id.count().coalesce(0L)).gt(0))
+                    .add(comment.id.count().coalesce(0L)).gt(0)
+                    // 또는 PopularReview 점수가 있으면
+                    .or(JPAExpressions.select(popularReview.score.sum().coalesce(0.0))
+                        .from(popularReview)
+                        .join(popularReview.review, QReview.review)
+                        .where(QReview.review.user.eq(user)
+                            .and(popularReview.period.eq(period))).gt(0.0))
+            )
             .fetch();
+
+        log.info("=== 쿼리 결과 ===");
+        log.info("조회된 PowerUserData 수: {}", result.size());
+        result.stream()
+            .limit(5)
+            .forEach(data -> log.info("샘플 데이터: 사용자={}, 기간={}, 점수={}, 좋아요={}, 댓글={}",
+                data.user().getNickname(), data.period(), data.reviewScoreSum(), data.likeCount(), data.commentCount()));
+
+        return result;
+    }
+
+    /**
+     * 테스트용 간단한 쿼리 - 복잡한 서브쿼리 없이 기본 활동만 조회
+     */
+    public List<PowerUserData> findUserActivityDataSimple(PeriodType period, Instant startDate, Instant endDate) {
+        log.info("=== 간단한 사용자 활동 데이터 조회 시작 ===");
+        log.info("기간: {}, 시작: {}, 종료: {}", period, startDate, endDate);
+
+        // 전체 사용자 수 확인
+        Long totalUsers = queryFactory
+            .select(user.count())
+            .from(user)
+            .fetchOne();
+        log.info("전체 사용자 수: {}", totalUsers);
+
+        // 랜덤 점수로 사용자 데이터 생성 (테스트용)
+        List<PowerUserData> result = queryFactory
+            .select(Projections.constructor(PowerUserData.class,
+                user,
+                Expressions.constant(period),
+                Expressions.numberTemplate(Double.class, "RANDOM() * 100"), // 랜덤 점수 0-100
+                Expressions.numberTemplate(Long.class, "CAST(RANDOM() * 50 AS BIGINT)"), // 랜덤 좋아요 0-50
+                Expressions.numberTemplate(Long.class, "CAST(RANDOM() * 30 AS BIGINT)")  // 랜덤 댓글 0-30
+            ))
+            .from(user)
+            .limit(10) // 10명만
+            .fetch();
+
+        log.info("랜덤 테스트 결과: {} 건", result.size());
+
+        // 결과 샘플 출력
+        result.forEach(data ->
+            log.info("샘플: {} - 점수:{}, 좋아요:{}, 댓글:{}",
+                data.user().getNickname(),
+                data.reviewScoreSum(),
+                data.likeCount(),
+                data.commentCount()
+            )
+        );
+
+        return result;
     }
 
     @Override
@@ -95,7 +205,7 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
                     .period(period)
                     .rank(1L) // 임시 순위, 나중에 재계산됨
                     .score(score)
-                    .reviewScoreSum(tempReviewScore) // 임시로 0.0 저장
+                    .reviewScoreSum(tempReviewScore)
                     .likeCount(actualLikeCount)
                     .commentCount(actualCommentCount)
                     .build();

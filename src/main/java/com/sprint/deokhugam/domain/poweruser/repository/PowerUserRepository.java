@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,11 +31,6 @@ public interface PowerUserRepository extends JpaRepository<PowerUser, UUID>, Pow
     boolean existsByUserIdAndPeriod(UUID userId, PeriodType period);
 
     /**
-     *  기간별 총 파워유저 수 조회
-     *  */
-    Long countByPeriod(PeriodType period);
-
-    /**
      *  특정 순위 범위 내의 파워유저 조회
      *  */
     @Query("SELECT p FROM PowerUser p WHERE p.period = :period AND p.rank BETWEEN :startRank AND :endRank ORDER BY p.rank ASC")
@@ -47,8 +43,10 @@ public interface PowerUserRepository extends JpaRepository<PowerUser, UUID>, Pow
      */
     List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit, String cursor, String after);
 
-    /**
-     *  기간별 삭제
-     *  */
-    void deleteByPeriod(PeriodType period);
+    @Modifying
+    @Query("DELETE FROM PowerUser p WHERE p.period = :period")
+    int deleteByPeriod(@Param("period") PeriodType period);
+
+    @Query("SELECT COUNT(p) FROM PowerUser p WHERE p.period = :period")
+    long countByPeriod(@Param("period") PeriodType period);
 }
