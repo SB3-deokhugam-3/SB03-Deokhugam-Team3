@@ -9,7 +9,7 @@ spring:
       max-request-size: 10MB
   batch:
     job:
-      enabled: true
+      enabled: false
     jdbc:
       initialize-schema: never
 
