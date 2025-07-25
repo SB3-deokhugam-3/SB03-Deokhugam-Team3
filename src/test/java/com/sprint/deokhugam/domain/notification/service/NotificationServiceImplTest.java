@@ -218,26 +218,15 @@ class NotificationServiceImplTest {
             .isConfirmed(false)
             .build();
 
-        NotificationDto expectedDto = NotificationDto.builder()
-            .id(notificationId)
-            .userId(mockUser.getId())
-            .reviewId(mockReview.getId())
-            .content("알림 내용")
-            .confirmed(true)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-
-        when(notificationRepository.findById(notificationId)).thenReturn(
-            Optional.of(mockNotification));
-        when(notificationMapper.toDto(mockNotification)).thenReturn(expectedDto);
+        when(notificationRepository.findById(notificationId))
+            .thenReturn(Optional.of(mockNotification));
 
         // when
         notificationService.updateNotification(notificationId);
 
         // then
         verify(notificationRepository).findById(notificationId);
-        verify(notificationMapper).toDto(mockNotification);
+        assertThat(mockNotification.isConfirmed()).isTrue();
     }
 
     @Test
