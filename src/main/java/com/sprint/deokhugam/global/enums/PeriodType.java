@@ -8,13 +8,15 @@ public enum PeriodType {
     DAILY {
         @Override
         public Instant getStartInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone);
+            LocalDate date = LocalDate.ofInstant(today, zone).minusDays(1);
+            //LocalDate date = LocalDate.ofInstant(today, zone); // 로컬 테스트용 오늘 날짜
             return date.atStartOfDay(zone).toInstant();
         }
 
         @Override
         public Instant getEndInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone).plusDays(1);
+            LocalDate date = LocalDate.ofInstant(today, zone);
+            //LocalDate date = LocalDate.ofInstant(today, zone).plusDays(1);
             return date.atStartOfDay(zone).toInstant();
         }
     },
