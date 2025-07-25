@@ -8,10 +8,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   batch:
+    job:
+      enabled: false
     jdbc:
       initialize-schema: never
-    job:
-      enabled: false # job 자동실행해제
+
 
 # OCR 구현체 설정
 ocr:
@@ -51,8 +52,8 @@ deokhugam:
 books:
   api:
     naver:
-      client-id: ${X-Naver-Client-Id}
-      client-secret: ${X-Naver-Client-Secret}
+      client-id: ${NAVER_CLIENT_ID}
+      client-secret: ${NAVER_CLIENT_SECRET}
 
 # Swagger UI
 springdoc:

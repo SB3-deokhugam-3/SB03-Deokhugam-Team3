@@ -19,9 +19,11 @@ public class BookScoreProcessor implements ItemProcessor<BookScoreDto, PopularBo
 
     @Override
     public PopularBook process(BookScoreDto dto) {
-        Book book = em.find(Book.class, dto.bookId());
-        if (book == null)
+        if (dto.bookId() == null) {
             return null;
+        }
+
+        Book book = em.find(Book.class, dto.bookId());
 
         return PopularBook.builder()
             .period(period)

@@ -48,6 +48,7 @@ bin/
 **/generated/*
 /.env.*
 *.env
+!.env.sample
 
 ## log
 logs/

@@ -24,6 +24,7 @@ public interface PopularReviewService {
 
     void validateJobNotDuplicated(Instant referenceTime);
 
+
     List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
         PeriodType period, StepContribution contribution, Instant today);
 
