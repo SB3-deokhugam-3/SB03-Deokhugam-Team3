@@ -29,7 +29,7 @@ public enum PeriodType {
 
         @Override
         public Instant getEndInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone).plusDays(1);
+            LocalDate date = LocalDate.ofInstant(today, zone);
             return date.atStartOfDay(zone).toInstant();
         }
     },
@@ -42,7 +42,7 @@ public enum PeriodType {
 
         @Override
         public Instant getEndInstant(Instant today, ZoneId zone) {
-            LocalDate date = LocalDate.ofInstant(today, zone).plusDays(1);
+            LocalDate date = LocalDate.ofInstant(today, zone);
             return date.atStartOfDay(zone).toInstant();
         }
     },
