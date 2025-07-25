@@ -24,14 +24,6 @@ public record PowerUserData(
     }
 
     /**
-     * 총 점수 계산 (파워 유저 점수 공식)
-     * 리뷰 점수 + 좋아요 수 + 댓글 수
-     */
-    public double totalScore() {
-        return reviewScoreSum + (likeCount * 1.0) + (commentCount * 0.5);
-    }
-
-    /**
      * 총 활동 건수 계산
      */
     public long getTotalActivityCount() {

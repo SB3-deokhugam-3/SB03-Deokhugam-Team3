@@ -22,7 +22,6 @@ public class BatchScheduler {
 
 
     @Scheduled(cron = "0/25 * * * * *", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0/10 * * * * *", zone = "Asia/Seoul") // 10초마다 실행(테스트용)
     public void runPopularReviewJob() throws Exception {
         JobParameters params = new JobParametersBuilder()
             .addLong("timestamp", System.currentTimeMillis())
