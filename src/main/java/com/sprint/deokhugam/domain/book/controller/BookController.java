@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.book.controller;
 
 import com.sprint.deokhugam.domain.api.BookInfoProvider;
 import com.sprint.deokhugam.domain.api.dto.NaverBookDto;
+import com.sprint.deokhugam.domain.book.controller.api.BookApi;
 import com.sprint.deokhugam.domain.book.dto.data.BookDto;
 import com.sprint.deokhugam.domain.book.dto.request.BookCreateRequest;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
@@ -37,12 +38,13 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
 @Slf4j
-public class BookController {
+public class BookController implements BookApi {
 
     private final BookService bookService;
     private final BookInfoProvider provider;
     private final PopularBookService popularBookService;
 
+    @Override
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BookDto> create(
         @Valid @RequestPart("bookData") BookCreateRequest bookData,
@@ -64,6 +66,7 @@ public class BookController {
      * @return 도서 목록 응답
      * */
 
+    @Override
     @GetMapping
     public ResponseEntity<CursorPageResponse<BookDto>> getBooks(
         @RequestParam(required = false) String keyword,
@@ -91,6 +94,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Override
     @GetMapping("/{bookId}")
     public ResponseEntity<BookDto> getBook(@PathVariable UUID bookId) {
         log.info("[BookController] 도서 상세 정보 요청 - id: {}", bookId);
@@ -100,6 +104,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @Override
     @GetMapping("/info")
     public ResponseEntity<NaverBookDto> getBookInfoByIsbn(@RequestParam String isbn) {
         log.info("[BookController] 도서 정보 조회 요청 - isbn: {}", isbn);
@@ -109,7 +114,8 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
-    @PatchMapping("/{bookId}")
+    @Override
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, path ="/{bookId}")
     public ResponseEntity<BookDto> update(
         @PathVariable UUID bookId,
         @Valid @RequestPart("bookData") BookUpdateRequest bookData,
@@ -130,6 +136,7 @@ public class BookController {
      * @return 인식된 ISBN 문자열
      * @throws OcrException OCR 처리 중 오류 발생 시
      * */
+    @Override
     @PostMapping("/isbn/ocr")
     public ResponseEntity<String> extractIsbnFromImage(
         @RequestPart(value = "image") MultipartFile image
@@ -147,6 +154,7 @@ public class BookController {
             .body(extractedIsbn);
     }
 
+    @Override
     @DeleteMapping("/{bookId}")
     public ResponseEntity<Void> delete(@PathVariable UUID bookId) {
         log.info("[BookController] 도서 논리 삭제 요청 - id: {}", bookId);
@@ -156,6 +164,7 @@ public class BookController {
         return ResponseEntity.noContent().build();
     }
 
+    @Override
     @DeleteMapping("/{bookId}/hard")
     public ResponseEntity<Void> hardDelete(@PathVariable UUID bookId) {
         log.info("[BookController] 도서 물리 삭제 요청 - id: {}", bookId);
@@ -163,6 +172,7 @@ public class BookController {
         return ResponseEntity.noContent().build();
     }
 
+    @Override
     @GetMapping("/popular")
     public ResponseEntity<CursorPageResponse<PopularBookDto>> getPopularBooks(
         @ModelAttribute PopularBookGetRequest request
