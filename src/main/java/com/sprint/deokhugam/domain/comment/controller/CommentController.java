@@ -69,14 +69,15 @@ public class CommentController {
     }
 
     @GetMapping
-    ResponseEntity<CursorPageResponse<CommentDto>> getCommentsByReviewId(
+    public ResponseEntity<CursorPageResponse<CommentDto>> getCommentsByReviewId(
         @RequestParam UUID reviewId,
         @RequestParam(required = false, defaultValue = "DESC") String direction,
         @RequestParam(required = false) String cursor,
+        @RequestParam(required = false) String after,
         @RequestParam(required = false, defaultValue = "50") int limit
     ) {
         CursorPageResponse<CommentDto> response = commentService.findAll(
-            reviewId, cursor, direction, limit
+            reviewId, cursor, after, direction, limit
         );
 
         return ResponseEntity
