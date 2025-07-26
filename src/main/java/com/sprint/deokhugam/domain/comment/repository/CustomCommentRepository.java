@@ -8,10 +8,10 @@ import org.springframework.data.domain.Sort;
 
 public interface CustomCommentRepository {
 
-     List<Comment> fetchComments(
+    List<Comment> fetchComments(
         UUID reviewId,
         Instant cursor,
-        Instant after,
+        UUID after,
         Sort.Direction direction,
         int fetchSize
     );

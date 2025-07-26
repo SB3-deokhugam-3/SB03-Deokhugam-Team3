@@ -22,7 +22,7 @@ public class CustomCommentRepositoryImpl implements CustomCommentRepository {
     public List<Comment> fetchComments(
         UUID reviewId,
         Instant cursor,
-        Instant after,
+        UUID after,
         Sort.Direction direction,
         int fetchSize
     ) {
@@ -37,12 +37,12 @@ public class CustomCommentRepositoryImpl implements CustomCommentRepository {
             if (direction.isAscending()) {
                 where.and(
                     comment.createdAt.gt(cursor)
-                        .or(comment.createdAt.eq(cursor).and(comment.createdAt.gt(after)))
+                        .or(comment.createdAt.eq(cursor).and(comment.id.gt(after)))
                 );
             } else {
                 where.and(
                     comment.createdAt.lt(cursor)
-                        .or(comment.createdAt.eq(cursor).and(comment.createdAt.lt(after)))
+                        .or(comment.createdAt.eq(cursor).and(comment.id.gt(after)))
                 );
             }
         }

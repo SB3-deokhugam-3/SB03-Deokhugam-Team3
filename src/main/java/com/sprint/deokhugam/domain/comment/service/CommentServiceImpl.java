@@ -99,8 +99,10 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CursorPageResponse<CommentDto> findAll(UUID reviewId, String cursor, String after, String direction, int limit) {
-        log.info("[CommentService] 댓글 목록 조회 시작 - reviewId={}, cursor={}, after={}, direction={}, limit={}",
+    public CursorPageResponse<CommentDto> findAll(UUID reviewId, String cursor, String after,
+        String direction, int limit) {
+        log.info(
+            "[CommentService] 댓글 목록 조회 시작 - reviewId={}, cursor={}, after={}, direction={}, limit={}",
             reviewId, cursor, after, direction, limit);
 
         if (!reviewRepository.existsById(reviewId)) {
@@ -110,10 +112,11 @@ public class CommentServiceImpl implements CommentService {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
 
         Instant cursorTime = parseInstant(cursor);
-        Instant afterTime = parseInstant(after);
+        UUID afterId = parseUUID(after);
 
         int fetchSize = limit + 1;
-        List<Comment> comments = commentRepository.fetchComments(reviewId, cursorTime, afterTime, sortDirection, fetchSize);
+        List<Comment> comments = commentRepository.fetchComments(reviewId, cursorTime, afterId,
+            sortDirection, fetchSize);
 
         boolean hasNext = comments.size() > limit;
         if (hasNext) {
@@ -137,7 +140,8 @@ public class CommentServiceImpl implements CommentService {
             hasNext
         );
 
-        log.info("[CommentService] 댓글 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(), response.hasNext());
+        log.info("[CommentService] 댓글 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(),
+            response.hasNext());
         return response;
     }
 
@@ -182,11 +186,24 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private Instant parseInstant(String value) {
-        if (value == null || value.isBlank()) return null;
+        if (value == null || value.isBlank()) {
+            return null;
+        }
         try {
             return Instant.parse(value);
         } catch (DateTimeParseException e) {
             throw new InvalidCursorTypeException(value, e.getMessage());
+        }
+    }
+
+    private UUID parseUUID(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("올바르지 않은 after(UUID) 형식입니다: " + value);
         }
     }
 }
