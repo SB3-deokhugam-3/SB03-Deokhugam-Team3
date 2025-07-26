@@ -31,7 +31,11 @@ public class LogFileUploadScheduler {
             return;
         }
 
-        String key = s3Storage.uploadFile(logFile);
-        log.info("[LogFileUploader] - 로그 파일 업로드 성공: {}", key);
+        try {
+            String key = s3Storage.uploadFile(logFile);
+            log.info("[LogFileUploader] - 로그 파일 업로드 성공: {}", key);
+        } catch (Exception e) {
+            log.error("[LogFileUploader] - 로그 파일 업로드 실패: {}", logFile.getName(), e);
+        }
     }
 }
