@@ -84,19 +84,18 @@ public class PopularReviewServiceImpl implements PopularReviewService {
     /* 배치에서 사용 - 오늘 이미 실행한 배치인지 검증 */
     public void validateJobNotDuplicated(Instant referenceTime)
         throws BatchAlreadyRunException {
-        ZoneId zoneId = ZoneId.of("Asia/Seoul");
-
-        Instant startOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getStartInstant(
-            referenceTime, zoneId);
-        Instant endOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getEndInstant(
-            referenceTime, zoneId);
-
-        Boolean isAlreadyExist = popularReviewRepository.existsByCreatedAtBetween(startOfDay,
-            endOfDay);
-
-        if (isAlreadyExist) {
-            throw new BatchAlreadyRunException("Review",
-                Map.of("execution datetime", Instant.now()));
+        // 모든 기간에 대해 체크
+        for (PeriodType period : PeriodType.values()) {
+            long existingCount = popularReviewRepository.countByPeriod(period);
+            if (existingCount > 0) {
+                log.info("기간 {} 배치 이미 실행됨 ({}건 존재)", period, existingCount);
+                throw new BatchAlreadyRunException("PopularReview",
+                    Map.of(
+                        "period", period.toString(),
+                        "existing_count", existingCount,
+                        "execution_datetime", Instant.now()
+                    ));
+            }
         }
     }
 
@@ -104,6 +103,18 @@ public class PopularReviewServiceImpl implements PopularReviewService {
     @Transactional
     public List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
         PeriodType period, StepContribution contribution, Instant today) {
+        // 🎯 핵심: 기존 데이터 존재 여부만 확인
+        long existingCount = popularReviewRepository.countByPeriod(period);
+        if (existingCount > 0) {
+            log.info("기간 {} 인기 리뷰 데이터가 이미 존재합니다. ({}건) 배치 건너뜀",
+                period, existingCount);
+
+            // 기존 데이터 반환하여 배치 정상 완료 처리
+            return popularReviewRepository.findByPeriod(period);
+        }
+
+        log.info("기간 {} 인기 리뷰 데이터 생성 시작", period);
+
         List<PopularReview> popularReviews = new ArrayList<>();
         List<Review> slicedReview;
         Long rank = 1L;

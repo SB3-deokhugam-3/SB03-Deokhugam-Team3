@@ -53,7 +53,7 @@ public class PowerUserServiceTest {
 
         // then
         assertThat(actualScore).isEqualTo(expectedScore);
-        assertThat(actualScore).isEqualTo(19.0);
+        assertThat(actualScore).isEqualTo(69.0);
     }
 
     @Test

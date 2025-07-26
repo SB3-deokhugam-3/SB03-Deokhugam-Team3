@@ -1,14 +1,15 @@
 package com.sprint.deokhugam.domain.poweruser.service;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.sprint.deokhugam.global.enums.PeriodType;
+import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,12 +35,16 @@ class PowerUserBatchServiceTest {
     @Mock
     private JobExecution jobExecution;
 
+    @Mock
+    private PopularReviewService popularReviewService;
+
     @InjectMocks
     private PowerUserBatchService powerUserBatchService;
 
     @Test
     void 일간_파워유저_배치_정상_실행() throws Exception {
         // given
+        doNothing().when(popularReviewService).validateJobNotDuplicated(any());
         doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         doReturn(BatchStatus.COMPLETED).when(jobExecution).getStatus();
 
@@ -47,9 +52,11 @@ class PowerUserBatchServiceTest {
         powerUserBatchService.calculateDailyPowerUsers();
 
         // then
+        verify(popularReviewService).validateJobNotDuplicated(any());
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution).getStatus();
     }
+
 
     @Test
     void 주간_파워유저_배치_정상_실행() throws Exception {
@@ -96,6 +103,7 @@ class PowerUserBatchServiceTest {
     @Test
     void 일간_파워유저_배치_실행_실패_상태() throws Exception {
         // given
+        doNothing().when(popularReviewService).validateJobNotDuplicated(any());
         doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         doReturn(BatchStatus.FAILED).when(jobExecution).getStatus();
 
@@ -105,6 +113,7 @@ class PowerUserBatchServiceTest {
         });
 
         // then
+        verify(popularReviewService).validateJobNotDuplicated(any());
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus();
         assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
@@ -164,6 +173,7 @@ class PowerUserBatchServiceTest {
     @Test
     void 일간_파워유저_배치_실행_예외_발생() throws Exception {
         // given
+        doNothing().when(popularReviewService).validateJobNotDuplicated(any());
         RuntimeException testException = new RuntimeException("배치 실행 중 예외 발생");
         doThrow(testException).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
 
@@ -173,6 +183,7 @@ class PowerUserBatchServiceTest {
         });
 
         // then
+        verify(popularReviewService).validateJobNotDuplicated(any());
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
         assert(exception.getCause() == testException);
@@ -232,6 +243,7 @@ class PowerUserBatchServiceTest {
     @Test
     void 배치_실행_상태_진행중() throws Exception {
         // given
+        doNothing().when(popularReviewService).validateJobNotDuplicated(any());
         doReturn(jobExecution).when(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         doReturn(BatchStatus.STARTED).when(jobExecution).getStatus();
 
@@ -241,6 +253,7 @@ class PowerUserBatchServiceTest {
         });
 
         // then
+        verify(popularReviewService).validateJobNotDuplicated(any());
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus(); // 2번 호출 허용
         assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));

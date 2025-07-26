@@ -3,6 +3,7 @@ package com.sprint.deokhugam.domain.popularreview.repository;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,4 +27,14 @@ public interface PopularReviewRepository extends JpaRepository<PopularReview, UU
         AND pr.period = :period
         """)
     Double findScoreSumByUserIdAndPeriod(@Param("userId") UUID userId, @Param("period") PeriodType period);
+
+    /**
+     * 기간별 인기 리뷰 개수 조회 (중복 검증용)
+     */
+    long countByPeriod(PeriodType period);
+
+    /**
+     * 기간별 인기 리뷰 조회
+     */
+    List<PopularReview> findByPeriod(PeriodType period);
 }
