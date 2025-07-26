@@ -42,7 +42,7 @@ public class CustomCommentRepositoryImpl implements CustomCommentRepository {
             } else {
                 where.and(
                     comment.createdAt.lt(cursor)
-                        .or(comment.createdAt.eq(cursor).and(comment.id.gt(after)))
+                        .or(comment.createdAt.eq(cursor).and(comment.id.lt(after)))
                 );
             }
         }
