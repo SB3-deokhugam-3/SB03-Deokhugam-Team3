@@ -363,6 +363,7 @@ public class PopularReviewServiceTest {
         String cursor = null;
         Instant after = Instant.now();
         int limit = 1;
+
         when(popularReviewRepository.findByPeriodWithCursor(
             eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
             .thenReturn(List.of(popularReview1, popularReview2));
@@ -375,10 +376,13 @@ public class PopularReviewServiceTest {
         );
 
         // then
-        assertThat(response.nextCursor()).isNotNull();
-        assertThat(response.nextCursor()).matches("^[A-Za-z0-9+/]+=*$");
-        String decodedCursor = new String(Base64.getDecoder().decode(response.nextCursor()));
-        assertThat(decodedCursor).contains("|");
+        assertThat(response.nextCursor())
+            .isEqualTo(String.valueOf(popularReviewDto1.rank()));
+        assertThat(response.nextAfter())
+            .isEqualTo(popularReviewDto1.createdAt().toString());
+        assertThat(response.content())
+            .containsExactly(popularReviewDto1);
+        assertThat(response.hasNext()).isTrue();
     }
 
     @Test

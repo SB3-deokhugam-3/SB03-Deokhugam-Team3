@@ -31,7 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 @DataJpaTest
 @Import({QueryDslConfig.class, JpaAuditingConfig.class})
 @ActiveProfiles("test")
-public class PopularReviewRepositoryImplTest {
+public class  PopularReviewRepositoryImplTest {
 
     @Autowired
     private PopularReviewRepositoryImpl popularReviewRepositoryImpl;

@@ -333,7 +333,38 @@ public class CommentServiceImplTest {
 
         // when
         CursorPageResponse<CommentDto> result =
-            commentService.findAll(reviewId, cursor, cursor, "DESC", limit);
+            commentService.findAll(reviewId, cursor, null, "DESC", limit);
+
+        // then
+        assertThat(result.content()).containsExactly(dto3, dto2);
+        assertThat(result.totalElements()).isEqualTo(3L);
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextCursor()).isEqualTo(dto2.createdAt().toString());
+    }
+
+    @Test
+    void 댓글의_커서값이_중복되면_Id로_비교_정렬할_수_있다() {
+        // given
+        UUID reviewId = review1.getId();
+        Instant now = Instant.now();
+        String cursor = now.minusSeconds(40).toString();
+        int limit = 2;
+        Comment comment1 = createWithTime(review1, user1, "댓1", now);
+        Comment comment2 = createWithTime(review1, user1, "댓2", now);
+        Comment comment3 = createWithTime(review1, user1, "댓3", now);
+        CommentDto dto2 = createDto(reviewId, "댓2", now);
+        CommentDto dto3 = createDto(reviewId, "댓3", now);
+        List<Comment> list = List.of(comment3, comment2, comment1);
+        given(reviewRepository.existsById(reviewId)).willReturn(true);
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+            .willReturn(list);
+        given(commentMapper.toDto(comment2)).willReturn(dto2);
+        given(commentMapper.toDto(comment3)).willReturn(dto3);
+        given(commentRepository.countByReviewId(reviewId)).willReturn(3L);
+
+        // when
+        CursorPageResponse<CommentDto> result =
+            commentService.findAll(reviewId, cursor, null, "DESC", limit);
 
         // then
         assertThat(result.content()).containsExactly(dto3, dto2);
