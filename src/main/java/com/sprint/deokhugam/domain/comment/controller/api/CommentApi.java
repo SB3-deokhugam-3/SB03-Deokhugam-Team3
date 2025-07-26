@@ -214,7 +214,7 @@ public interface CommentApi {
         )
     })
     ResponseEntity<CommentDto> updateComment(
-        @Parameter(description = "댓글 ID", required = true) UUID commentId,
+        @PathVariable @Parameter(description = "댓글 ID", required = true) UUID commentId,
         @RequestBody @Valid CommentUpdateRequest request,
         @Parameter(description = "요청자 ID", required = true)
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId

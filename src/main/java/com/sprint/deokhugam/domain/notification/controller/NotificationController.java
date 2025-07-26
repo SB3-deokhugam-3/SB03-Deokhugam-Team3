@@ -52,7 +52,7 @@ public class NotificationController implements NotificationApi {
         return ResponseEntity.noContent().build();
     }
 
-    public ResponseEntity<?> readNotifications(UUID notificationId, UUID requestUserId) {
+    public ResponseEntity<?> readNotifications(UUID notificationId) {
 
         notificationService.updateNotification(notificationId);
         return ResponseEntity.noContent().build();

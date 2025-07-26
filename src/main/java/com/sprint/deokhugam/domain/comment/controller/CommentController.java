@@ -65,7 +65,7 @@ public class CommentController implements CommentApi {
     }
 
     public ResponseEntity<CursorPageResponse<CommentDto>> getCommentsByReviewId(
-        UUID reviewId, String direction, String cursor, String after, int limit
+        UUID reviewId, String cursor, String after, String direction, int limit
     ) {
         CursorPageResponse<CommentDto> response = commentService.findAll(
             reviewId, cursor, after, direction, limit

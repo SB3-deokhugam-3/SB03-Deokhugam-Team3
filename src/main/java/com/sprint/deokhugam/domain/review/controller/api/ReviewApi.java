@@ -231,7 +231,7 @@ public interface ReviewApi {
         )
     })
     ResponseEntity<ReviewDto> updateReview(
-        @Parameter(description = "리뷰 ID", required = true) UUID reviewId,
+        @PathVariable @Parameter(description = "리뷰 ID", required = true) UUID reviewId,
         @Parameter(description = "요청자 ID", required = true)
         @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId,
         @RequestBody @Valid ReviewUpdateRequest request

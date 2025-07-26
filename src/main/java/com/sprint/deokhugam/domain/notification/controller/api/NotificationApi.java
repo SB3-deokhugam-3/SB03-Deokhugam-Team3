@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 @Tag(name = "알림 관리")
@@ -60,9 +61,7 @@ public interface NotificationApi {
         )
     })
     ResponseEntity<?> readNotifications(
-        @Parameter(description = "알림 ID", required = true) UUID notificationId,
-        @Parameter(description = "요청자 ID", required = true)
-        @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId
+        @PathVariable @Parameter(description = "알림 ID", required = true) UUID notificationId
     );
 
     @PatchMapping("/read-all")
