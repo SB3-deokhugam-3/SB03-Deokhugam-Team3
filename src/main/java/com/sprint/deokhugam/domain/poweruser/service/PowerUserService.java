@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.poweruser.service;
 
+import com.sprint.deokhugam.domain.popularbook.exception.InvalidSortDirectionException;
 import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
@@ -166,7 +167,7 @@ public class PowerUserService {
         }
 
         if (!direction.equalsIgnoreCase("ASC") && !direction.equalsIgnoreCase("DESC")) {
-            throw new IllegalArgumentException("direction은 ASC 또는 DESC여야 합니다.");
+            throw new InvalidSortDirectionException("direction은 ASC 또는 DESC여야 합니다.");
         }
 
         if (period == null) {

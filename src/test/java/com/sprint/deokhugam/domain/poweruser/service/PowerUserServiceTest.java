@@ -45,7 +45,7 @@ public class PowerUserServiceTest {
         Long likeCount = 50L;
         Long commentCount = 30L;
         // 현재 공식: (0.0 * 0.5) + (50 * 0.2) + (30 * 0.3) = 19.0
-        Double expectedScore = (0.0 * 0.5) + (50 * 0.2) + (30 * 0.3);
+        Double expectedScore = (100.0 * 0.5) + (50 * 0.2) + (30 * 0.3);
 
         // when
         Double actualScore = PowerUserService.calculateActivityScore(

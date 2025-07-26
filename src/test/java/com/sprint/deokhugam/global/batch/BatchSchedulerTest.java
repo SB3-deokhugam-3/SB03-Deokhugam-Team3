@@ -1,4 +1,3 @@
-
 package com.sprint.deokhugam.global.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +53,13 @@ class BatchSchedulerTest {
 
         // then - 실제 코드에서는 popularReviewJob을 실행
         verify(jobLauncher, times(1)).run(eq(popularReviewJob), any(JobParameters.class));
+
+        // JobParameters 검증 - timestamp 파라미터가 포함되어야 함
+        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
+        verify(jobLauncher).run(eq(popularReviewJob), parametersCaptor.capture());
+
+        JobParameters capturedParams = parametersCaptor.getValue();
+        assertThat(capturedParams.getLong("timestamp")).isNotNull();
     }
 
     @Test
@@ -65,12 +71,12 @@ class BatchSchedulerTest {
         // when
         scheduler.runPowerUserJob();
 
-        // then - 실제 코드에서는 popularReviewJob을 실행
-        verify(jobLauncher, times(1)).run(eq(popularReviewJob), any(JobParameters.class));
+        // then - 실제 코드에서는 powerUserJob을 실행
+        verify(jobLauncher, times(1)).run(eq(powerUserJob), any(JobParameters.class));
 
         // JobParameters 검증 - today와 timestamp 파라미터가 포함되어야 함
         ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
-        verify(jobLauncher).run(eq(popularReviewJob), parametersCaptor.capture());
+        verify(jobLauncher).run(eq(powerUserJob), parametersCaptor.capture());
 
         JobParameters capturedParams = parametersCaptor.getValue();
         assertThat(capturedParams.getString("today")).isNotNull();
@@ -86,8 +92,7 @@ class BatchSchedulerTest {
         // when
         scheduler.runPopularBookRankingJob();
 
-        // then - 실제로 어떤 Job을 몇 번 실행하는지에 따라 수정 필요
-        // 현재는 각 기간별로 popularBookRankingJob을 실행한다고 가정
+        // then - 각 기간별로 popularBookRankingJob을 실행
         verify(jobLauncher, times(PeriodType.values().length))
             .run(eq(popularBookRankingJob), any(JobParameters.class));
 
@@ -106,5 +111,11 @@ class BatchSchedulerTest {
             .collect(Collectors.toSet());
 
         assertEquals(expectedPeriods, actualPeriods);
+
+        // 모든 파라미터에 today와 timestamp가 포함되어야 함
+        for (JobParameters params : capturedParameters) {
+            assertThat(params.getString("today")).isNotNull();
+            assertThat(params.getLong("timestamp")).isNotNull();
+        }
     }
 }

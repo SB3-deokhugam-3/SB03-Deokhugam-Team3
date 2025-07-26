@@ -103,7 +103,6 @@ public class PopularReviewServiceImpl implements PopularReviewService {
     @Transactional
     public List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
         PeriodType period, StepContribution contribution, Instant today) {
-        // 🎯 핵심: 기존 데이터 존재 여부만 확인
         long existingCount = popularReviewRepository.countByPeriod(period);
         if (existingCount > 0) {
             log.info("기간 {} 인기 리뷰 데이터가 이미 존재합니다. ({}건) 배치 건너뜀",
