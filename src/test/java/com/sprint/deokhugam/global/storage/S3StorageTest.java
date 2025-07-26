@@ -2,6 +2,7 @@ package com.sprint.deokhugam.global.storage;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
@@ -130,13 +132,16 @@ class S3StorageTest {
     }
 
     @Test
-    void 로그_파일_업로드_테스트() {
+    void 로그_파일_업로드_테스트() throws IOException {
 
         // given
-        File file = new File("test.log");
+        File tmpFile = File.createTempFile("test", ".log");
+        try (FileWriter writer = new FileWriter(tmpFile)) {
+            writer.write("log file for test");
+        }
 
         // when
-        String key = s3Storage.uploadFile(file);
+        String key = s3Storage.uploadFile(tmpFile);
 
         // then
         ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
@@ -145,6 +150,8 @@ class S3StorageTest {
         assertThat(capturedRequest.bucket()).isEqualTo("test-bucket");
         assertThat(capturedRequest.key()).startsWith("logs/");
         assertThat(key).isEqualTo(capturedRequest.key());
+        // 테스트 후 파일 삭제
+        assertTrue(tmpFile.delete(), "임시 파일 삭제 완료");
     }
 
     @Test
