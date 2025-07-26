@@ -1,6 +1,7 @@
 package com.sprint.deokhugam.domain.poweruser.repository;
 
 import static com.sprint.deokhugam.domain.comment.entity.QComment.comment;
+import static com.sprint.deokhugam.domain.popularreview.entity.QPopularReview.popularReview;
 import static com.sprint.deokhugam.domain.poweruser.entity.QPowerUser.powerUser;
 import static com.sprint.deokhugam.domain.review.entity.QReview.review;
 import static com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike.reviewLike;
@@ -43,28 +44,41 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
         return queryFactory
             .select(Projections.constructor(PowerUserData.class,
                 user,
-                Expressions.constant(period), // PeriodType을 상수로 전달
-                Expressions.numberTemplate(Double.class, "0.0"), // 리뷰 점수는 임시로 0.0으로 설정
-                review.id.count().coalesce(0L), // 실제로는 리뷰 수 ( 임시 )
-                comment.id.count().coalesce(0L) // 댓글 수
+                Expressions.constant(period),
+                // 인기 리뷰 점수 합계 조회
+                queryFactory.select(popularReview.score.sum().coalesce(0.0))
+                    .from(popularReview)
+                    .where(popularReview.review.user.eq(user)
+                        .and(popularReview.period.eq(period))),
+                // 사용자가 한 좋아요 수 (기간별)
+                queryFactory.select(reviewLike.id.count().coalesce(0L))
+                    .from(reviewLike)
+                    .where(reviewLike.user.eq(user)
+                        .and(createDateCondition(reviewLike.createdAt, startDate, endDate))),
+                // 사용자가 작성한 댓글 수 (기간별)
+                queryFactory.select(comment.id.count().coalesce(0L))
+                    .from(comment)
+                    .where(comment.user.eq(user)
+                        .and(createDateCondition(comment.createdAt, startDate, endDate)))
             ))
             .from(user)
-            .leftJoin(review).on(review.user.eq(user)
-                .and(createDateCondition(review.createdAt, startDate, endDate)))
-            .leftJoin(comment).on(comment.user.eq(user)
-                .and(createDateCondition(comment.createdAt, startDate, endDate)))
-            .groupBy(user.id)
-            .having(
-                // 리뷰 수 + 댓글 수 > 0인 활성 사용자만 조회
-                review.id.count().coalesce(0L)
-                    .add(comment.id.count().coalesce(0L)).gt(0))
-            .fetch();
+            .where(user.isDeleted.isFalse()) // 삭제되지 않은 사용자만
+            .fetch()
+            .stream()
+            .filter(data -> {
+                // 활동이 있는 사용자만 필터링
+                return data.reviewScoreSum() > 0 ||
+                    data.likeCount() > 0 ||
+                    data.commentCount() > 0;
+            })
+            .toList();
     }
+
 
     @Override
     @Transactional
     public List<PowerUser> calculateAndCreatePowerUsers(PeriodType period, Instant startDate, Instant endDate) {
-        log.info("파워 유저 계산 시작 - 기간: {} (리뷰 인기 점수는 임시로 0 처리)", period);
+        log.info("파워 유저 계산 시작 - 기간: {}", period);
 
         // 1. 사용자 활동 데이터 조회
         List<PowerUserData> activityData = findUserActivityData(period, startDate, endDate);
@@ -77,25 +91,23 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
         // 2. PowerUser 엔티티 생성 및 점수 계산
         List<PowerUser> powerUsers = activityData.stream()
             .map(data -> {
-                // 실제 좋아요 수와 댓글 수 조회
-                Long actualLikeCount = getLikeCountForUser(data.user().getId(), startDate, endDate);
-                Long actualCommentCount = getCommentCountForUser(data.user().getId(), startDate, endDate);
-
-                // 리뷰 인기 점수는 임시로 0.0으로 설정
-                Double tempReviewScore = 0.0;
+                // 실제 인기 리뷰 점수 사용 (0.0으로 하드코딩하지 말고)
+                Double actualReviewScore = data.reviewScoreSum(); // 실제 조회된 값 사용
+                Long actualLikeCount = data.likeCount();
+                Long actualCommentCount = data.commentCount();
 
                 Double score = PowerUserService.calculateActivityScore(
-                    tempReviewScore, actualLikeCount, actualCommentCount);
+                    actualReviewScore, actualLikeCount, actualCommentCount);
 
-                log.debug("사용자 {} 점수 계산: 리뷰점수={} (임시0), 좋아요={}, 댓글={}, 총점={}",
-                    data.user().getNickname(), tempReviewScore, actualLikeCount, actualCommentCount, score);
+                log.debug("사용자 {} 점수 계산: 리뷰점수={}, 좋아요={}, 댓글={}, 총점={}",
+                    data.user().getNickname(), actualReviewScore, actualLikeCount, actualCommentCount, score);
 
                 return PowerUser.builder()
                     .user(data.user())
                     .period(period)
                     .rank(1L) // 임시 순위, 나중에 재계산됨
                     .score(score)
-                    .reviewScoreSum(tempReviewScore) // 임시로 0.0 저장
+                    .reviewScoreSum(actualReviewScore) // 실제 인기 리뷰 점수 저장
                     .likeCount(actualLikeCount)
                     .commentCount(actualCommentCount)
                     .build();
@@ -108,12 +120,13 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
             Long rank = (long) (i + 1);
             powerUsers.get(i).updateRank(rank);
 
-            log.debug("순위 할당: {} 순위, {} 점수 (좋아요:{}, 댓글:{}), {} 사용자",
-                rank, powerUsers.get(i).getScore(), powerUsers.get(i).getLikeCount(),
-                powerUsers.get(i).getCommentCount(), powerUsers.get(i).getUser().getNickname());
+            log.debug("순위 할당: {} 순위, {} 점수 (리뷰:{}, 좋아요:{}, 댓글:{}), {} 사용자",
+                rank, powerUsers.get(i).getScore(), powerUsers.get(i).getReviewScoreSum(),
+                powerUsers.get(i).getLikeCount(), powerUsers.get(i).getCommentCount(),
+                powerUsers.get(i).getUser().getNickname());
         }
 
-        log.info("파워 유저 계산 완료 - 총 {}명 (리뷰 점수는 임시로 0 처리됨)", powerUsers.size());
+        log.info("파워 유저 계산 완료 - 총 {}명", powerUsers.size());
         return powerUsers;
     }
 

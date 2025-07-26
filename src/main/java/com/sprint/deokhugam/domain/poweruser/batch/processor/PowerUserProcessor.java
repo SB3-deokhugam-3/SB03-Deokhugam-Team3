@@ -24,27 +24,27 @@ public class PowerUserProcessor implements ItemProcessor<PowerUserData, PowerUse
 
         log.debug("PowerUser 처리 시작: {}", userData.getUserSummary());
 
-        // 1. 실제 인기 리뷰 점수 조회
-        Double reviewScoreSum = popularReviewService.getUserPopularityScoreSum(
-            userData.user().getId(), userData.period());
+        // 이미 Reader에서 조회한 데이터를 그대로 사용 (중복 조회 제거)
+        Double reviewScoreSum = userData.reviewScoreSum();
+        Long likeCount = userData.likeCount();
+        Long commentCount = userData.commentCount();
 
-        // 2. 총 활동 점수 계산 (실제 인기 리뷰 점수 반영)
+        // 총 활동 점수 계산
         Double totalScore = PowerUserService.calculateActivityScore(
-            reviewScoreSum, userData.likeCount(), userData.commentCount());
+            reviewScoreSum, likeCount, commentCount);
 
         log.debug("점수 계산 완료 - userId: {}, 인기리뷰점수: {}, 좋아요: {}, 댓글: {}, 총점: {}",
-            userData.user().getId(), reviewScoreSum, userData.likeCount(),
-            userData.commentCount(), totalScore);
+            userData.user().getId(), reviewScoreSum, likeCount, commentCount, totalScore);
 
-        // 3. PowerUser 객체 생성
+        // PowerUser 객체 생성
         return PowerUser.builder()
             .user(userData.user())
             .period(userData.period())
             .rank(1L) // 임시 순위 (Writer에서 재정렬됨)
             .score(totalScore)
             .reviewScoreSum(reviewScoreSum) // 실제 인기 리뷰 점수 저장
-            .likeCount(userData.likeCount())
-            .commentCount(userData.commentCount())
+            .likeCount(likeCount)
+            .commentCount(commentCount)
             .build();
     }
 }

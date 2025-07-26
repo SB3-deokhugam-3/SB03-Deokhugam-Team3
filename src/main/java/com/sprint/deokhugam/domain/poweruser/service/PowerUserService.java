@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PowerUserService {
 
     private final PowerUserRepository powerUserRepository;
-    private final PopularReviewService popularReviewService;
 
     public static final double REVIEW_SCORE_WEIGHT = 0.5;  // 현재 0으로 처리하므로 실질적으로 미적용
     public static final double LIKE_COUNT_WEIGHT = 0.2;
@@ -190,17 +189,5 @@ public class PowerUserService {
             .likeCount(powerUser.getLikeCount())
             .commentCount(powerUser.getCommentCount())
             .build();
-    }
-
-    /**
-     * 특정 사용자의 기간별 인기 리뷰 점수 합계를 조회
-     */
-    public Double getUserReviewScoreSum(UUID userId, PeriodType period) {
-        try {
-            return popularReviewService.getUserPopularityScoreSum(userId, period);
-        } catch (Exception e) {
-            log.error("인기 리뷰 점수 조회 중 오류 발생 - userId: {}, period: {}", userId, period, e);
-            return 0.0;
-        }
     }
 }

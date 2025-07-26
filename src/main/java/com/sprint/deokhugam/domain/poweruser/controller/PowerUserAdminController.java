@@ -114,14 +114,4 @@ public class PowerUserAdminController {
         return ResponseEntity.ok(result);
     }
 
-    @DeleteMapping("/clear/{period}")
-    public ResponseEntity<String> clearData(@PathVariable PeriodType period) {
-        try {
-            long deletedCount = powerUserRepository.deleteByPeriod(period);
-            return ResponseEntity.ok(period + " 데이터 " + deletedCount + "건 삭제 완료");
-        } catch (Exception e) {
-            log.error("데이터 삭제 실패", e);
-            return ResponseEntity.status(500).body("삭제 실패: " + e.getMessage());
-        }
-    }
 }

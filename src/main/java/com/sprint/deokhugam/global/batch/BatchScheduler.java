@@ -19,6 +19,7 @@ public class BatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job popularReviewJob;
     private final Job popularBookRankingJob;
+    private final Job powerUserJob;
 
 
     @Scheduled(cron = "0/25 * * * * *", zone = "Asia/Seoul")
@@ -48,6 +49,23 @@ public class BatchScheduler {
             } catch (Exception e) {
                 log.warn("[PopularBookRankingScheduler] 인기 도서 랭킹 배치 실패 : {}", e.getMessage());
             }
+        }
+    }
+
+    // PowerUser Job 스케줄링 추가
+    @Scheduled(cron = "30/59 * * * * *", zone = "Asia/Seoul") // 1분마다 실행
+    public void runPowerUserJob() {
+        try {
+            JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("timestamp", System.currentTimeMillis()) // 유니크 파라미터
+                .addString("today", Instant.now().toString())
+                .toJobParameters();
+
+            log.info("[PowerUserScheduler] 파워 유저 배치 실행 시작");
+            jobLauncher.run(powerUserJob, jobParameters);
+            log.info("[PowerUserScheduler] 파워 유저 배치 실행 완료");
+        } catch (Exception e) {
+            log.error("[PowerUserScheduler] 파워 유저 배치 실패: {}", e.getMessage(), e);
         }
     }
 }
