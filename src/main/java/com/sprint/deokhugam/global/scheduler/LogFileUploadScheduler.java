@@ -17,13 +17,17 @@ public class LogFileUploadScheduler {
 
     @Scheduled(cron = "0 0 1 * * *")
     //@Scheduled(cron = "*/10 * * * * *")
-    public void uploadYesterdayLogFile() {
+    public void uploadSchedule() {
+        uploadYesterdayLogFile("logs");
+    }
+
+    public void uploadYesterdayLogFile(String baseDir) {
         LocalDate yesterday = LocalDate.now().minusDays(1);
-        String logFilePath = String.format("logs/app.%s.log", yesterday);
-        File logFile = new File(logFilePath);
+        String fileName = String.format("app.%s.log", yesterday);
+        File logFile = new File(baseDir, fileName);
 
         if (!logFile.exists()) {
-            log.info("[LogFileUploader] - 파일 없음: {}", logFilePath);
+            log.info("[LogFileUploader] - 파일 없음: {}", logFile);
             return;
         }
 
