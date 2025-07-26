@@ -1,16 +1,15 @@
-package com.sprint.deokhugam.domain.book.storage.s3;
+package com.sprint.deokhugam.global.storage;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
@@ -108,7 +107,7 @@ class S3StorageTest {
     }
 
     @Test
-    void generatePresignedUrl() {
+    void presigned_url_생성_테스트() {
 
         // given
         String key = "image/test.jpg";
@@ -128,5 +127,37 @@ class S3StorageTest {
         ArgumentCaptor<GetObjectPresignRequest> captor = ArgumentCaptor.forClass(GetObjectPresignRequest.class);
         verify(s3Presigner).presignGetObject(captor.capture());
         assertThat(captor.getValue().signatureDuration()).isEqualTo(Duration.ofMinutes(10));
+    }
+
+    @Test
+    void 로그_파일_업로드_테스트() {
+
+        // given
+        File file = new File("test.log");
+
+        // when
+        String key = s3Storage.uploadFile(file);
+
+        // then
+        ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
+        verify(s3Client).putObject(requestCaptor.capture(), any(RequestBody.class));
+        PutObjectRequest capturedRequest = requestCaptor.getValue();
+        assertThat(capturedRequest.bucket()).isEqualTo("test-bucket");
+        assertThat(capturedRequest.key()).startsWith("logs/");
+        assertThat(key).isEqualTo(capturedRequest.key());
+    }
+
+    @Test
+    void 로그_파일이_아닌_경우_업로드에_실패한다() {
+
+        // given
+        File file = new File("test.txt");
+
+        // when
+        Throwable thrown = catchThrowable(() -> s3Storage.uploadFile(file));
+
+        // then
+        assertThat(thrown)
+            .isInstanceOf(InvalidFileTypeException.class);
     }
 }

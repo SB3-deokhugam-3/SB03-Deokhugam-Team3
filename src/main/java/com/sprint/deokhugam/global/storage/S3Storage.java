@@ -1,4 +1,4 @@
-package com.sprint.deokhugam.domain.book.storage.s3;
+package com.sprint.deokhugam.global.storage;
 
 import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
