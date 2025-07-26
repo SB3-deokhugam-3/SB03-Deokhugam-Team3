@@ -30,16 +30,16 @@ public class UserController implements UserApi {
         UserCreateRequest userCreateRequest
     ) {
         log.info("[UserController] 사용자 회원가입 요청: email: {}, nickname: {}",
-                userCreateRequest.email(), userCreateRequest.nickname());
+            userCreateRequest.email(), userCreateRequest.nickname());
 
         UserDto createdUser = userService.createUser(userCreateRequest);
 
         log.info("[UserController] 사용자 회원가입 완료: id: {}, email: {}",
-                createdUser.id(), createdUser.email());
+            createdUser.id(), createdUser.email());
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(createdUser);
+            .status(HttpStatus.CREATED)
+            .body(createdUser);
     }
 
     public ResponseEntity<UserDto> find(UUID userId) {
@@ -48,11 +48,11 @@ public class UserController implements UserApi {
         UserDto user = userService.findUser(userId);
 
         log.info("[UserController] 사용자 조회 완료: id: {}, email: {}",
-                user.id(), user.email());
+            user.id(), user.email());
 
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(user);
+            .status(HttpStatus.OK)
+            .body(user);
     }
 
     public ResponseEntity<UserDto> login(UserLoginRequest userLoginRequest) {
@@ -61,25 +61,27 @@ public class UserController implements UserApi {
         UserDto loginUser = userService.loginUser(userLoginRequest);
 
         log.info("[UserController] 사용자 로그인 성공: id: {}, email: {}",
-                loginUser.id(), loginUser.email());
+            loginUser.id(), loginUser.email());
 
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(loginUser);
+            .status(HttpStatus.OK)
+            .body(loginUser);
     }
 
     public ResponseEntity<UserDto> update(UUID userId, UserUpdateRequest userUpdateRequest) {
-        log.info("[UserController] 사용자 닉네임 수정: userId: {}, nickname: {}", userId, userUpdateRequest.nickname());
+        log.info("[UserController] 사용자 닉네임 수정: userId: {}, nickname: {}", userId,
+            userUpdateRequest.nickname());
 
         UserDto updateUser = userService.updateUserNickName(userUpdateRequest, userId);
 
-        log.info("[UserController] 사용자 닉네임 수정 성공: userId: {}, nickname: {}", userId, userUpdateRequest.nickname());
+        log.info("[UserController] 사용자 닉네임 수정 성공: userId: {}, nickname: {}", userId,
+            userUpdateRequest.nickname());
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(updateUser);
+            .status(HttpStatus.OK)
+            .body(updateUser);
     }
 
-    public ResponseEntity<UserDto> hardDelete(UUID userId) {
+    public ResponseEntity<Void> hardDelete(UUID userId) {
         log.info("[UserController] 물리 삭제 요청: userId: {}", userId);
 
         userService.hardDeleteUser(userId);
@@ -87,8 +89,8 @@ public class UserController implements UserApi {
         log.info("[UserController] 물리 삭제 성공: userId: {}", userId);
 
         return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .build();
+            .status(HttpStatus.NO_CONTENT)
+            .build();
     }
 
     public ResponseEntity<UserDto> deleted(UUID userId) {
@@ -98,8 +100,8 @@ public class UserController implements UserApi {
 
         log.info("[UserController] 논리 삭제 성공: userId: {}", userId);
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(deletedUser);
+            .status(HttpStatus.OK)
+            .body(deletedUser);
     }
 
     public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularUsers(

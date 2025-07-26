@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -31,7 +32,8 @@ public interface CommentApi {
     @Operation(
         summary = "리뷰 댓글 목록 조회",
         description = "특정 리뷰에 달린 댓글 목록을 시간순으로 조회합니다.",
-        operationId = "getCommentsByReviewId"
+        operationId = "getCommentsByReviewId",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -75,7 +77,8 @@ public interface CommentApi {
     @Operation(
         summary = "댓글 등록",
         description = "새로운 댓글을 등록합니다.",
-        operationId = "createComment"
+        operationId = "createComment",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -141,10 +144,11 @@ public interface CommentApi {
     @Operation(
         summary = "댓글 논리 삭제",
         description = "본인이 작성한 댓글을 논리적으로 삭제합니다.",
-        operationId = "deleteComment"
+        operationId = "deleteComment",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
+        @ApiResponse(responseCode = "204", description = "댓글 삭제 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 (요청자 ID 누락)"),
         @ApiResponse(responseCode = "404", description = "댓글 정보 없음"),
         @ApiResponse(responseCode = "403", description = "댓글 삭제 권한 없음"),
@@ -160,10 +164,11 @@ public interface CommentApi {
     @Operation(
         summary = "댓글 물리 삭제",
         description = "본인이 작성한 댓글을 물리적으로 삭제합니다.",
-        operationId = "permanentDeleteComment"
+        operationId = "permanentDeleteComment",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
+        @ApiResponse(responseCode = "204", description = "댓글 삭제 성공"),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 (요청자 ID 누락)"),
         @ApiResponse(responseCode = "404", description = "댓글 정보 없음"),
         @ApiResponse(responseCode = "403", description = "댓글 삭제 권한 없음"),
@@ -179,7 +184,8 @@ public interface CommentApi {
     @Operation(
         summary = "댓글 수정",
         description = "본인이 작성한 댓글을 수정합니다.",
-        operationId = "updateComment"
+        operationId = "updateComment",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(

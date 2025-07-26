@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -104,7 +105,8 @@ public interface UserApi {
     @Operation(
         summary = "사용자 상세 정보 조회",
         description = "사용자 ID로 상세 정보를 조회합니다.",
-        operationId = "getUser"
+        operationId = "getUser",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -134,7 +136,8 @@ public interface UserApi {
     @Operation(
         summary = "사용자 논리 삭제",
         description = "본인이 작성한 사용자을 논리적으로 삭제합니다.",
-        operationId = "deleteUser"
+        operationId = "deleteUser",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "사용자 삭제 성공"),
@@ -150,15 +153,16 @@ public interface UserApi {
     @Operation(
         summary = "사용자 물리 삭제",
         description = "사용자을 물리적으로 삭제합니다.",
-        operationId = "permanentDeleteUser"
+        operationId = "permanentDeleteUser",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "사용자 삭제 성공"),
+        @ApiResponse(responseCode = "204", description = "사용자 삭제 성공"),
         @ApiResponse(responseCode = "404", description = "사용자 정보 없음"),
         @ApiResponse(responseCode = "403", description = "사용자 삭제 권한 없음"),
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    ResponseEntity<UserDto> hardDelete(
+    ResponseEntity<Void> hardDelete(
         @PathVariable @Parameter(description = "사용자 ID", required = true) UUID userId
     );
 
@@ -166,7 +170,8 @@ public interface UserApi {
     @Operation(
         summary = "사용자 정보 수정",
         description = "사용자의 닉네임을 수정합니다.",
-        operationId = "updateUser"
+        operationId = "updateUser",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(

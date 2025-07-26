@@ -7,9 +7,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -21,7 +23,8 @@ public interface ReviewLikeApi {
     @Operation(
         summary = "리뷰 좋아요",
         description = "리뷰에 좋아요를 추가하거나 취소합니다.",
-        operationId = "likeReview"
+        operationId = "likeReview",
+        security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -34,19 +37,19 @@ public interface ReviewLikeApi {
             responseCode = "400", description = "잘못된 요청 (요청자 ID 누락)",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = ReviewLikeDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "404", description = "리뷰 정보 없음",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = ReviewLikeDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "500", description = "서버 내부 오류",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = ReviewLikeDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         )
     })
     ResponseEntity<ReviewLikeDto> toggleLike(

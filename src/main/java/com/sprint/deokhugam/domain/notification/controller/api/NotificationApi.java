@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -26,7 +27,7 @@ public interface NotificationApi {
     @Operation(
         summary = "알림 읽음 상태 업데이트",
         description = "특정 알림의 읽음 상태를 업데이트합니다.",
-        operationId = "udpateNotification"
+        operationId = "updateNotification"
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -39,25 +40,25 @@ public interface NotificationApi {
             responseCode = "200", description = "알림 상태 업데이트 성공",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "400", description = "잘못된 요청 (입력값 검증 실패, 요청자 ID 누락)",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "404", description = "알림 정보 없음",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "500", description = "서버 내부 오류",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         )
     })
     ResponseEntity<?> readNotifications(
@@ -102,19 +103,19 @@ public interface NotificationApi {
             responseCode = "400", description = "잘못된 요청 (정렬 방향 오류, 페이지네이션 파라미터 오류, 사용자 ID 누락)",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "404", description = "사용자 정보 없음",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "500", description = "서버 내부 오류",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = NotificationDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         )
     })
     ResponseEntity<CursorPageResponse<NotificationDto>> getNotifications(
