@@ -6,6 +6,7 @@ import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.dto.response.ErrorResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +42,7 @@ public interface UserApi {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "201", description = "회원가입 성공",
+            responseCode = "200", description = "회원가입 성공",
             content = @Content(
                 mediaType = "*/*",
                 schema = @Schema(implementation = UserDto.class))
@@ -50,7 +51,7 @@ public interface UserApi {
             responseCode = "409", description = "이메일 중복",
             content = @Content(
                 mediaType = "*/*",
-                schema = @Schema(implementation = UserDto.class))
+                schema = @Schema(implementation = ErrorResponse.class))
         ),
         @ApiResponse(
             responseCode = "400", description = "잘못된 요청 (입력값 검증 실패)",
