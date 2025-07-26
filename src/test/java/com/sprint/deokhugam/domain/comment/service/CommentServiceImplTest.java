@@ -313,32 +313,31 @@ public class CommentServiceImplTest {
         // given
         UUID reviewId = review1.getId();
         Instant now = Instant.now();
-        String cursor = now.toString();
+        String cursor = now.minusSeconds(40).toString();
         int limit = 2;
         Instant createdAt1 = now.minusSeconds(30);
         Instant createdAt2 = now.minusSeconds(20);
-        Comment comment1 = create(review1, user1, "댓1");
-        Comment comment2 = create(review1, user1, "댓2");
-        Comment comment3 = create(review1, user1, "댓3");
-        CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
+        Instant createdAt3 = now.minusSeconds(10);
+        Comment comment1 = createWithTime(review1, user1, "댓1", createdAt1);
+        Comment comment2 = createWithTime(review1, user1, "댓2", createdAt2);
+        Comment comment3 = createWithTime(review1, user1, "댓3", createdAt3);
         CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
-        CommentDto dto3 = createDto(reviewId, "댓3", now.minusSeconds(10));
-        List<Comment> list = List.of(comment1, comment2, comment3);
+        CommentDto dto3 = createDto(reviewId, "댓3", createdAt3);
+        List<Comment> list = List.of(comment3, comment2, comment1);
         given(reviewRepository.existsById(reviewId)).willReturn(true);
         given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
             .willReturn(list);
-        given(commentMapper.toDto(comment1)).willReturn(dto1);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
         given(commentMapper.toDto(comment3)).willReturn(dto3);
-        given(commentRepository.countByReviewId(reviewId)).willReturn(10L);
+        given(commentRepository.countByReviewId(reviewId)).willReturn(3L);
 
         // when
         CursorPageResponse<CommentDto> result =
             commentService.findAll(reviewId, cursor, cursor, "DESC", limit);
 
         // then
-        assertThat(result.content()).containsExactly(dto1, dto2);
-        assertThat(result.totalElements()).isEqualTo(10L);
+        assertThat(result.content()).containsExactly(dto3, dto2);
+        assertThat(result.totalElements()).isEqualTo(3L);
         assertThat(result.hasNext()).isTrue();
         assertThat(result.nextCursor()).isEqualTo(dto2.createdAt().toString());
     }
@@ -489,4 +488,12 @@ public class CommentServiceImplTest {
         return comment;
     }
 
+    private Comment createWithTime(Review review, User user, String content, Instant createdAt) {
+        Comment comment = new Comment(review, user, content);
+        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(comment, "createdAt", createdAt);
+        ReflectionTestUtils.setField(comment, "updatedAt", createdAt);
+        ReflectionTestUtils.setField(comment, "isDeleted", false);
+        return comment;
+    }
 }

@@ -143,17 +143,13 @@ class CommentRepositoryTest {
     @Test
     void  ASC_정렬로_댓글을_조회하면_오래된_순으로_반환된다() {
         // given
-        Instant t1 = Instant.parse("2025-07-26T00:00:00Z");
-        Instant t2 = Instant.parse("2025-07-26T00:00:10Z");
-        Instant t3 = Instant.parse("2025-07-26T00:00:20Z");
-        Comment c1 = createCommentWithTime("댓글1", t1);
-        Comment c2 = createCommentWithTime("댓글2", t2);
-        Comment c3 = createCommentWithTime("댓글3", t3);
-        em.persist(c1);
-        em.persist(c2);
-        em.persist(c3);
-        em.flush();
-        em.clear();
+        Instant baseTime = Instant.now();
+        Comment comment1 = createCommentWithTime("댓1", baseTime.minusSeconds(300));
+        Comment comment2 = createCommentWithTime("댓2", baseTime.minusSeconds(180));
+        Comment comment3 = createCommentWithTime("댓3", baseTime.minusSeconds(50));
+        em.persistAndFlush(comment1);
+        em.persistAndFlush(comment2);
+        em.persistAndFlush(comment3);
 
         // when
         List<Comment> result = commentRepository.fetchComments(
@@ -166,23 +162,19 @@ class CommentRepositoryTest {
 
         // then
         assertThat(result).extracting(Comment::getContent)
-            .containsExactly("댓글1", "댓글2", "댓글3");
+            .containsExactly("댓1", "댓2", "댓3");
     }
 
     @Test
     void DESC_정렬로_댓글을_조회하면_최신_순으로_반환된다() {
         // given
-        Instant t1 = Instant.parse("2025-07-26T00:00:00Z");
-        Instant t2 = Instant.parse("2025-07-26T00:00:10Z");
-        Instant t3 = Instant.parse("2025-07-26T00:00:20Z");
-        Comment c1 = createCommentWithTime("댓글1", t1);
-        Comment c2 = createCommentWithTime("댓글2", t2);
-        Comment c3 = createCommentWithTime("댓글3", t3);
-        em.persist(c1);
-        em.persist(c2);
-        em.persist(c3);
-        em.flush();
-        em.clear();
+        Instant baseTime = Instant.now();
+        Comment comment1 = createCommentWithTime("댓1", baseTime.minusSeconds(300));
+        Comment comment2 = createCommentWithTime("댓2", baseTime.minusSeconds(180));
+        Comment comment3 = createCommentWithTime("댓3", baseTime.minusSeconds(50));
+        em.persistAndFlush(comment1);
+        em.persistAndFlush(comment2);
+        em.persistAndFlush(comment3);
 
         // when
         List<Comment> result = commentRepository.fetchComments(
@@ -195,7 +187,7 @@ class CommentRepositoryTest {
 
         // then
         assertThat(result).extracting(Comment::getContent)
-            .containsExactly("댓글3", "댓글2", "댓글1");
+            .containsExactly("댓3", "댓2", "댓1");
     }
 
     private Comment createCommentWithTime(String content, Instant createdAt) {
