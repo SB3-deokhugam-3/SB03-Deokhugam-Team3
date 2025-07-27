@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.comment.repository;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
@@ -11,6 +12,7 @@ import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -189,6 +191,25 @@ class CommentRepositoryTest {
         // Then
         assertThat(result).isPresent();
         assertThat(result.get().getIsDeleted()).isTrue();
+    }
+
+    @Test
+    void 특정_기간_동안_추가_된_댓글_개수_테스트() {
+
+        // given
+        Instant start = Instant.MIN;
+        Instant end = Instant.MAX;
+        Comment comment = createComment("테스트용", Instant.now());
+        em.persist(comment);
+        em.flush();
+        em.clear();
+
+        // when
+        Map<UUID, Long> result = commentRepository.countByReviewIdBetween(start, end);
+
+        // then
+        assertEquals(1, result.size());
+        assert(result.values().contains(1L));
     }
 
     private Comment createComment(String content, Instant createdAt) {
