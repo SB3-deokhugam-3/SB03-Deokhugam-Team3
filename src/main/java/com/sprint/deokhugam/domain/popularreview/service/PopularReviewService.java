@@ -2,7 +2,6 @@ package com.sprint.deokhugam.domain.popularreview.service;
 
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
-import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
@@ -26,6 +25,6 @@ public interface PopularReviewService {
     void validateJobNotDuplicated(Instant referenceTime);
 
 
-    void savePopularReviewsByPeriod(PeriodType period, Instant today,
+    List<PopularReview> savePopularReviewsByPeriod(PeriodType period, Instant today,
         Map<UUID, Long> commentMap, Map<UUID, Long> likeMap, StepContribution contribution);
 }

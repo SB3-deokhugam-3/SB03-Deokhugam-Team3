@@ -14,7 +14,6 @@ import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -23,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -110,7 +108,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
 
     /* 배치에서 사용 */
     @Transactional
-    public void savePopularReviewsByPeriod(PeriodType period, Instant today,
+    public List<PopularReview> savePopularReviewsByPeriod(PeriodType period, Instant today,
         Map<UUID, Long> commentMap, Map<UUID, Long> likeMap, StepContribution contribution) {
 
         Set<UUID> reviewIds = new HashSet<>();
@@ -148,5 +146,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         popularReviewRepository.saveAll(result);
         //batch meta 테이블에 결과 저장
         contribution.incrementWriteCount(result.size());
+
+        return result;
     }
 }

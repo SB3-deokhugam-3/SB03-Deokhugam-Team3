@@ -2,15 +2,12 @@ package com.sprint.deokhugam.domain.popularreview.batch;
 
 import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
 import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
-import com.sprint.deokhugam.domain.review.entity.Review;
-import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.reviewlike.repository.ReviewLikeRepository;
 import com.sprint.deokhugam.global.batch.BatchListener;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
