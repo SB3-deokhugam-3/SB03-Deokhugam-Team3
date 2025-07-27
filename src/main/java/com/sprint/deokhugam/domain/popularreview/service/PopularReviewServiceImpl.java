@@ -78,35 +78,39 @@ public class PopularReviewServiceImpl implements PopularReviewService {
     /* 배치에서 사용 - 오늘 이미 실행한 배치인지 검증 */
     public void validateJobNotDuplicated(Instant referenceTime)
         throws BatchAlreadyRunException {
-        // 모든 기간에 대해 체크
+        // 모든 기간에 대해 체크 ( referenceTime 기준으로 )
         for (PeriodType period : PeriodType.values()) {
-            long existingCount = popularReviewRepository.countByPeriod(period);
+            long existingCount = popularReviewRepository.countByPeriodAndCreatedDate(period, referenceTime);
             if (existingCount > 0) {
-                log.info("기간 {} 배치 이미 실행됨 ({}건 존재)", period, existingCount);
+                log.info("기간 {} 배치 이미 실행됨 - 날짜: {}, {}건 존재",
+                    period, referenceTime, existingCount);
                 throw new BatchAlreadyRunException("PopularReview",
                     Map.of(
                         "period", period.toString(),
+                        "reference_date", referenceTime.toString(),
                         "existing_count", existingCount,
                         "execution_datetime", Instant.now()
                     ));
             }
         }
+        log.info("배치 중복 검증 통과 - 날짜: {}", referenceTime);
     }
 
-    /* 배치에서 사용 */
     @Transactional
     public List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
         PeriodType period, StepContribution contribution, Instant today) {
-        long existingCount = popularReviewRepository.countByPeriod(period);
-        if (existingCount > 0) {
-            log.info("기간 {} 인기 리뷰 데이터가 이미 존재합니다. ({}건) 배치 건너뜀",
-                period, existingCount);
 
-            // 기존 데이터 반환하여 배치 정상 완료 처리
-            return popularReviewRepository.findByPeriod(period);
+        // 해당 기간과 날짜에 대한 중복 검증
+        long existingCount = popularReviewRepository.countByPeriodAndCreatedDate(period, today);
+        if (existingCount > 0) {
+            log.info("기간 {} 날짜 {} 인기 리뷰 데이터가 이미 존재합니다. ({}건) 배치 건너뜀",
+                period, today, existingCount);
+
+            // 해당 날짜의 기존 데이터 반환
+            return getExistingPopularReviewsByPeriodAndDate(period, today);
         }
 
-        log.info("기간 {} 인기 리뷰 데이터 생성 시작", period);
+        log.info("기간 {} 날짜 {} 인기 리뷰 데이터 생성 시작", period, today);
 
         List<PopularReview> popularReviews = new ArrayList<>();
         List<Review> slicedReview;
@@ -119,30 +123,38 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             case DAILY:
                 start = PeriodType.DAILY.getStartInstant(today, zoneId);
                 end = PeriodType.DAILY.getEndInstant(today, zoneId);
-
                 slicedReview = totalReviews.stream()
-                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
-                    ).toList();
+                    .filter(review -> isBetween(review.getCreatedAt(), start, end))
+                    .toList();
                 break;
             case WEEKLY:
                 start = PeriodType.WEEKLY.getStartInstant(today, zoneId);
                 end = PeriodType.WEEKLY.getEndInstant(today, zoneId);
                 slicedReview = totalReviews.stream()
-                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
-                    ).toList();
+                    .filter(review -> isBetween(review.getCreatedAt(), start, end))
+                    .toList();
                 break;
             case MONTHLY:
                 start = PeriodType.MONTHLY.getStartInstant(today, zoneId);
                 end = PeriodType.MONTHLY.getEndInstant(today, zoneId);
                 slicedReview = totalReviews.stream()
-                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
-                    ).toList();
+                    .filter(review -> isBetween(review.getCreatedAt(), start, end))
+                    .toList();
                 break;
             case ALL_TIME:
             default:
                 slicedReview = totalReviews;
                 break;
         }
+
+        // 점수순으로 정렬 (높은 점수부터)
+        slicedReview = slicedReview.stream()
+            .sorted((r1, r2) -> {
+                double score1 = r1.getCommentCount() * 0.7 + r1.getLikeCount() * 0.3;
+                double score2 = r2.getCommentCount() * 0.7 + r2.getLikeCount() * 0.3;
+                return Double.compare(score2, score1); // 내림차순
+            })
+            .toList();
 
         for (Review review : slicedReview) {
             Long commentCount = review.getCommentCount();
@@ -159,8 +171,8 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             popularReviews.add(popularReview);
             rank++;
         }
+
         popularReviewRepository.saveAll(popularReviews);
-        //batch meta 테이블에 결과 저장
         contribution.incrementWriteCount(popularReviews.size());
 
         return popularReviews;
@@ -188,5 +200,12 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             userId, period, scoreSum);
 
         return scoreSum != null ? scoreSum : 0.0;
+    }
+
+    /**
+     * 특정 기간과 날짜의 기존 인기 리뷰 데이터 조회
+     */
+    private List<PopularReview> getExistingPopularReviewsByPeriodAndDate(PeriodType period, Instant date) {
+        return popularReviewRepository.findByPeriodAndCreatedDate(period, date);
     }
 }
