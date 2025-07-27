@@ -135,11 +135,13 @@ class NotificationControllerTest {
     void 알림_ID를_통한_읽음_처리_요청이_성공하면_204를_반환한다() throws Exception {
         // given
         UUID notificationId = UUID.randomUUID();
+        UUID requestUserId = UUID.randomUUID();
         doNothing().when(notificationService).updateNotification(notificationId);
 
         // when
         ResultActions result = mockMvc.perform(
             patch("/api/notifications/{notificationId}", notificationId)
+                .header("Deokhugam-Request-User-ID", requestUserId.toString())
         );
 
         // then
@@ -148,7 +150,6 @@ class NotificationControllerTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 알림 ID로 읽음 처리 요청 시 400 에러를 반환한다")
     void 존재하지_않는_알림_ID로_읽음_처리_요청_시_400_에러를_반환한다() throws Exception {
         // given
         UUID notificationId = UUID.randomUUID();

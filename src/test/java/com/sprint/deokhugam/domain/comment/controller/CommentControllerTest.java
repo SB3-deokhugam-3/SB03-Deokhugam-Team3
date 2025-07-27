@@ -283,7 +283,7 @@ class CommentControllerTest {
             true
         );
 
-        given(commentService.findAll(eq(reviewId), isNull(), eq(direction), eq(limit)))
+        given(commentService.findAll(eq(reviewId), isNull(), isNull(), eq(direction), eq(limit)))
             .willReturn(response);
 
         // when
@@ -309,14 +309,14 @@ class CommentControllerTest {
         // then
         result.andExpect(status().isBadRequest())
             .andDo(print());
-        verify(commentService, never()).findAll(any(), any(), any(), anyInt());
+        verify(commentService, never()).findAll(any(), any(), any(), any(), anyInt());
     }
 
     @Test
     void 댓글_목록_조회시_존재하지_않는_리뷰면_404_반환() throws Exception {
         // given
         UUID reviewId = UUID.randomUUID();
-        given(commentService.findAll(any(), any(), any(), anyInt()))
+        given(commentService.findAll(any(), any(), any(), any(), anyInt()))
             .willThrow(new ReviewNotFoundException(reviewId));
 
         // when
@@ -333,7 +333,7 @@ class CommentControllerTest {
         // given
         UUID reviewId = UUID.randomUUID();
         String invalidCursor = "invalid-cursor-format";
-        given(commentService.findAll(any(), eq(invalidCursor), any(), anyInt()))
+        given(commentService.findAll(any(), eq(invalidCursor), any(), any(), anyInt()))
             .willThrow(new InvalidCursorTypeException(invalidCursor, "잘못된 형식"));
 
         // when
@@ -351,7 +351,7 @@ class CommentControllerTest {
         // given
         UUID reviewId = UUID.randomUUID();
         String invalidDirection = "INVALID";
-        given(commentService.findAll(any(), any(), eq(invalidDirection), anyInt()))
+        given(commentService.findAll(any(), any(), any(), eq(invalidDirection), anyInt()))
             .willThrow(new IllegalArgumentException("잘못된 정렬 방향"));
 
         // when
@@ -377,7 +377,7 @@ class CommentControllerTest {
             false
         );
 
-        given(commentService.findAll(any(), any(), any(), anyInt()))
+        given(commentService.findAll(any(), any(), any(), any(), anyInt()))
             .willReturn(emptyResponse);
 
         // when

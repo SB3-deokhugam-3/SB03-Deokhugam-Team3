@@ -42,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -269,7 +270,7 @@ public class CommentServiceImplTest {
         given(reviewRepository.existsById(reviewId)).willReturn(false);
 
         // when
-        Throwable thrown = catchThrowable(() -> commentService.findAll(reviewId, null, "DESC", 10));
+        Throwable thrown = catchThrowable(() -> commentService.findAll(reviewId, null, null, "DESC", 10));
 
         // then
         assertThat(thrown)
@@ -288,19 +289,18 @@ public class CommentServiceImplTest {
         Comment comment2 = create(review1, user1, "댓2");
         CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
         CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
-        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2),
-            false);
+        List<Comment> list = List.of(comment1, comment2);
 
         given(reviewRepository.existsById(reviewId)).willReturn(true);
-        given(commentRepository.findByReviewId(eq(reviewId), any()))
-            .willReturn(slice);
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+            .willReturn(list);
         given(commentMapper.toDto(comment1)).willReturn(dto1);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
         given(commentRepository.countByReviewId(reviewId)).willReturn(10L);
 
         // when
         CursorPageResponse<CommentDto> result =
-            commentService.findAll(reviewId, null, "DESC", limit);
+            commentService.findAll(reviewId, null, null, "DESC", limit);
 
         // then
         assertThat(result.content()).containsExactly(dto1, dto2);
@@ -313,31 +313,62 @@ public class CommentServiceImplTest {
         // given
         UUID reviewId = review1.getId();
         Instant now = Instant.now();
-        String cursor = now.toString();
+        String cursor = now.minusSeconds(40).toString();
         int limit = 2;
         Instant createdAt1 = now.minusSeconds(30);
         Instant createdAt2 = now.minusSeconds(20);
-        Comment comment1 = create(review1, user1, "댓1");
-        Comment comment2 = create(review1, user1, "댓2");
-        CommentDto dto1 = createDto(reviewId, "댓1", createdAt1);
+        Instant createdAt3 = now.minusSeconds(10);
+        Comment comment1 = createWithTime(review1, user1, "댓1", createdAt1);
+        Comment comment2 = createWithTime(review1, user1, "댓2", createdAt2);
+        Comment comment3 = createWithTime(review1, user1, "댓3", createdAt3);
         CommentDto dto2 = createDto(reviewId, "댓2", createdAt2);
-        Slice<Comment> slice = new SliceImpl<>(List.of(comment1, comment2), PageRequest.of(0, 2),
-            true);
-
+        CommentDto dto3 = createDto(reviewId, "댓3", createdAt3);
+        List<Comment> list = List.of(comment3, comment2, comment1);
         given(reviewRepository.existsById(reviewId)).willReturn(true);
-        given(commentRepository.findByReviewIdAndCreatedAtLessThan(eq(reviewId), any(), any()))
-            .willReturn(slice);
-        given(commentMapper.toDto(comment1)).willReturn(dto1);
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+            .willReturn(list);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
-        given(commentRepository.countByReviewId(reviewId)).willReturn(10L);
+        given(commentMapper.toDto(comment3)).willReturn(dto3);
+        given(commentRepository.countByReviewId(reviewId)).willReturn(3L);
 
         // when
         CursorPageResponse<CommentDto> result =
-            commentService.findAll(reviewId, cursor, "DESC", limit);
+            commentService.findAll(reviewId, cursor, null, "DESC", limit);
 
         // then
-        assertThat(result.content()).containsExactly(dto1, dto2);
-        assertThat(result.totalElements()).isEqualTo(10L);
+        assertThat(result.content()).containsExactly(dto3, dto2);
+        assertThat(result.totalElements()).isEqualTo(3L);
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextCursor()).isEqualTo(dto2.createdAt().toString());
+    }
+
+    @Test
+    void 댓글의_커서값이_중복되면_Id로_비교_정렬할_수_있다() {
+        // given
+        UUID reviewId = review1.getId();
+        Instant now = Instant.now();
+        String cursor = now.minusSeconds(40).toString();
+        int limit = 2;
+        Comment comment1 = createWithTime(review1, user1, "댓1", now);
+        Comment comment2 = createWithTime(review1, user1, "댓2", now);
+        Comment comment3 = createWithTime(review1, user1, "댓3", now);
+        CommentDto dto2 = createDto(reviewId, "댓2", now);
+        CommentDto dto3 = createDto(reviewId, "댓3", now);
+        List<Comment> list = List.of(comment3, comment2, comment1);
+        given(reviewRepository.existsById(reviewId)).willReturn(true);
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+            .willReturn(list);
+        given(commentMapper.toDto(comment2)).willReturn(dto2);
+        given(commentMapper.toDto(comment3)).willReturn(dto3);
+        given(commentRepository.countByReviewId(reviewId)).willReturn(3L);
+
+        // when
+        CursorPageResponse<CommentDto> result =
+            commentService.findAll(reviewId, cursor, null, "DESC", limit);
+
+        // then
+        assertThat(result.content()).containsExactly(dto3, dto2);
+        assertThat(result.totalElements()).isEqualTo(3L);
         assertThat(result.hasNext()).isTrue();
         assertThat(result.nextCursor()).isEqualTo(dto2.createdAt().toString());
     }
@@ -351,7 +382,7 @@ public class CommentServiceImplTest {
 
         // when
         Throwable thrown = catchThrowable(
-            () -> commentService.findAll(reviewId, invalidCursor, "DESC", 10));
+            () -> commentService.findAll(reviewId, invalidCursor, null, "DESC", 10));
 
         // then
         assertThat(thrown)
@@ -488,4 +519,12 @@ public class CommentServiceImplTest {
         return comment;
     }
 
+    private Comment createWithTime(Review review, User user, String content, Instant createdAt) {
+        Comment comment = new Comment(review, user, content);
+        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(comment, "createdAt", createdAt);
+        ReflectionTestUtils.setField(comment, "updatedAt", createdAt);
+        ReflectionTestUtils.setField(comment, "isDeleted", false);
+        return comment;
+    }
 }

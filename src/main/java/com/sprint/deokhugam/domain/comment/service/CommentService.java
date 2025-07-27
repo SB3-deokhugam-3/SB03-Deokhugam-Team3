@@ -10,7 +10,7 @@ public interface CommentService {
 
     CommentDto create(CommentCreateRequest request);
 
-    CursorPageResponse<CommentDto> findAll(UUID reviewId, String cursor, String direction, int limit);
+    CursorPageResponse<CommentDto> findAll(UUID reviewId, String cursor, String after, String direction, int limit);
 
     CommentDto findById(UUID commentId);
 

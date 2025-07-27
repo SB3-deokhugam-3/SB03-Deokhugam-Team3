@@ -6,7 +6,6 @@ import com.sprint.deokhugam.domain.book.repository.BookRepository;
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
-import com.sprint.deokhugam.domain.review.dto.request.ReviewFeature;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewUpdateRequest;
 import com.sprint.deokhugam.domain.review.entity.Review;
@@ -143,7 +142,7 @@ public class ReviewServiceImpl implements ReviewService {
     public void delete(UUID reviewId, UUID userId) {
         Review review = findByReviewId(reviewId);
 
-        validateAuthorizedUser(review, userId, ReviewFeature.SOFT_DELETE);
+        validateAuthorizedUser(review, userId);
 
         review.softDelete();
         review.getBook().decreaseReviewCount();
@@ -160,7 +159,7 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new ReviewNotSoftDeletedException(reviewId);
             });
 
-        validateAuthorizedUser(review, userId, ReviewFeature.HARD_DELETE);
+        validateAuthorizedUser(review, userId);
 
         reviewRepository.delete(review);
 
@@ -170,7 +169,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public ReviewDto update(UUID reviewId, UUID userId, ReviewUpdateRequest request) {
         Review review = findByReviewId(reviewId);
-        validateAuthorizedUser(review, userId, ReviewFeature.UPDATE);
+        validateAuthorizedUser(review, userId);
         log.info("[review] 수정 요청 - reviewId: {}, userId: {}", reviewId, userId);
 
         review.update(request.content(), request.rating());
@@ -207,11 +206,10 @@ public class ReviewServiceImpl implements ReviewService {
             });
     }
 
-    private void validateAuthorizedUser(Review review, UUID userId, ReviewFeature feature) {
+    private void validateAuthorizedUser(Review review, UUID userId) {
         if (!review.getUser().getId().equals(userId)) {
-            log.warn("[review] {} - 해당 유저는 권한이 없음: reviewId={}, userId={}", feature.getMessage(),
-                review.getId(),
-                userId);
+            log.warn("[review] 권한 검증 실패 - 해당 유저는 권한이 없음: reviewId={}, userId={}",
+                review.getId(), userId);
             throw new ReviewUnauthorizedAccessException(review.getId(), userId);
         }
     }

@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.comment.repository;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
@@ -11,6 +10,7 @@ import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,6 @@ class CommentRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        // 테스트 데이터 설정
         user1 = User.builder()
             .email("test@example.com")
             .nickname("테스트유저")
@@ -81,62 +80,11 @@ class CommentRepositoryTest {
     }
 
     @Test
-    void findByReviewId_정상_조회() {
-        // given
-        Instant baseTime = Instant.now();
-        Comment comment1 = createComment("댓1", baseTime.minusSeconds(20));
-        Comment comment2 = createComment("댓2", baseTime.minusSeconds(10));
-        Comment comment3 = createComment("댓3", baseTime);
-        em.persistAndFlush(comment1);
-        em.persistAndFlush(comment2);
-        em.persistAndFlush(comment3);
-        
-        em.clear();
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        // when - 첫 페이지 조회
-        Slice<Comment> result = commentRepository.findByReviewId(
-            review1.getId(), pageable);
-
-        // then
-        assertThat(result.getContent()).hasSize(3);
-        // 최신 순으로 정렬되므로 마지막에 저장된 comment3가 첫 번째
-        assertThat(result.getContent().get(0).getContent()).isEqualTo("댓3");
-        assertThat(result.getContent().get(1).getContent()).isEqualTo("댓2");
-        assertThat(result.getContent().get(2).getContent()).isEqualTo("댓1");
-    }
-
-    @Test
-    void findByReviewIdAndCreatedAtLessThan_커서_이후_조회() {
-        // given
-        Instant baseTime = Instant.parse("2024-01-01T12:00:00Z");
-        Comment comment1 = createComment("댓1", baseTime.minusSeconds(300)); // 5분 전
-        Comment comment2 = createComment("댓2", baseTime.minusSeconds(180)); // 3분 전  
-        Comment comment3 = createComment("댓3", baseTime.minusSeconds(60));  // 1분 전
-        commentRepository.save(comment1);
-        Comment savedComment2 = commentRepository.save(comment2);
-        commentRepository.save(comment3);
-        em.flush();
-        em.clear();
-        UUID comment2Id = savedComment2.getId();
-        Instant cursorTime = commentRepository.findById(comment2Id).get().getCreatedAt();
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        // when
-        Slice<Comment> result = commentRepository.findByReviewIdAndCreatedAtLessThan(
-            review1.getId(), cursorTime, pageable);
-
-        // then
-        assertThat(result.getContent()).hasSize(1); // 커서 이후 시점의(더 앞선 시간) 댓글만 조회
-        assertThat(result.getContent().get(0).getContent()).isEqualTo("댓1");
-    }
-
-    @Test
     void countByReviewId_정상_카운트() {
         // given
         Instant baseTime = Instant.now();
-        Comment comment1 = createComment("댓1", baseTime.minusSeconds(300));
-        Comment comment2 = createComment("댓2", baseTime.minusSeconds(180));
+        Comment comment1 = createCommentWithTime("댓1", baseTime.minusSeconds(300));
+        Comment comment2 = createCommentWithTime("댓2", baseTime.minusSeconds(180));
         em.persistAndFlush(comment1);
         em.persistAndFlush(comment2);
 
@@ -160,25 +108,26 @@ class CommentRepositoryTest {
     }
 
     @Test
-    void findByReviewIdAndCreatedAtLessThan_빈_결과() {
-        // given
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+    void 기본_조회에서_논리삭제된_댓글은_조회되지_않는다() {
+        // Given
+        Comment comment = create("삭제된 댓글");
+        comment.softDelete();
+        em.persist(comment);
+        em.flush();
+        em.clear();
 
-        // when
-        Slice<Comment> result = commentRepository.findByReviewIdAndCreatedAtLessThan(
-            review1.getId(), Instant.now(), pageable);
+        // When
+        Optional<Comment> result = commentRepository.findById(comment.getId());
 
-        // then
-        assertThat(result.getContent()).isEmpty();
-        assertThat(result.hasNext()).isFalse();
+        // Then
+        assertThat(result).isEmpty();
     }
 
     @Test
-    @DisplayName("findByIdIncludingDeleted - 삭제 여부 상관없이 댓글을 조회할 수 있다")
-    void findByIdIncludingDeleted_논리삭제된_댓글_조회() {
+    void 논리삭제된_댓글을_포함해서도_조회할_수_있다() {
         // Given
         Comment comment = create("삭제된 댓글");
-        comment.softDelete(); // 논리삭제
+        comment.softDelete();
         em.persist(comment);
         em.flush();
         em.clear();
@@ -191,7 +140,57 @@ class CommentRepositoryTest {
         assertThat(result.get().getIsDeleted()).isTrue();
     }
 
-    private Comment createComment(String content, Instant createdAt) {
+    @Test
+    void  ASC_정렬로_댓글을_조회하면_오래된_순으로_반환된다() {
+        // given
+        Instant baseTime = Instant.now();
+        Comment comment1 = createCommentWithTime("댓1", baseTime.minusSeconds(300));
+        Comment comment2 = createCommentWithTime("댓2", baseTime.minusSeconds(180));
+        Comment comment3 = createCommentWithTime("댓3", baseTime.minusSeconds(50));
+        em.persistAndFlush(comment1);
+        em.persistAndFlush(comment2);
+        em.persistAndFlush(comment3);
+
+        // when
+        List<Comment> result = commentRepository.fetchComments(
+            review1.getId(),
+            null,
+            null,
+            Sort.Direction.ASC,
+            10
+        );
+
+        // then
+        assertThat(result).extracting(Comment::getContent)
+            .containsExactly("댓1", "댓2", "댓3");
+    }
+
+    @Test
+    void DESC_정렬로_댓글을_조회하면_최신_순으로_반환된다() {
+        // given
+        Instant baseTime = Instant.now();
+        Comment comment1 = createCommentWithTime("댓1", baseTime.minusSeconds(300));
+        Comment comment2 = createCommentWithTime("댓2", baseTime.minusSeconds(180));
+        Comment comment3 = createCommentWithTime("댓3", baseTime.minusSeconds(50));
+        em.persistAndFlush(comment1);
+        em.persistAndFlush(comment2);
+        em.persistAndFlush(comment3);
+
+        // when
+        List<Comment> result = commentRepository.fetchComments(
+            review1.getId(),
+            null,
+            null,
+            Sort.Direction.DESC,
+            10
+        );
+
+        // then
+        assertThat(result).extracting(Comment::getContent)
+            .containsExactly("댓3", "댓2", "댓1");
+    }
+
+    private Comment createCommentWithTime(String content, Instant createdAt) {
         Comment comment = new Comment(review1, user1, content);
         ReflectionTestUtils.setField(comment, "createdAt", createdAt);
         ReflectionTestUtils.setField(comment, "updatedAt", createdAt);

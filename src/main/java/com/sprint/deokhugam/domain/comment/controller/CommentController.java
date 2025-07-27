@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.comment.controller;
 
+import com.sprint.deokhugam.domain.comment.controller.api.CommentApi;
 import com.sprint.deokhugam.domain.comment.dto.data.CommentDto;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentCreateRequest;
 import com.sprint.deokhugam.domain.comment.dto.request.CommentUpdateRequest;
@@ -29,12 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping("/api/comments")
-public class CommentController {
+public class CommentController implements CommentApi {
 
     private final CommentService commentService;
 
-    @PostMapping
-    ResponseEntity<CommentDto> createComment(@RequestBody @Valid CommentCreateRequest request) {
+    public ResponseEntity<CommentDto> createComment(CommentCreateRequest request) {
         log.info("[CommentController] 댓글 생성 요청 - reviewId: {}, userId: {}", request.reviewId(),
             request.userId());
 
@@ -43,11 +43,9 @@ public class CommentController {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(commentDto);
-
     }
 
-    @GetMapping("/{commentId}")
-    ResponseEntity<CommentDto> getComment(@PathVariable UUID commentId) {
+    public ResponseEntity<CommentDto> getComment(UUID commentId) {
         log.info("[CommentController] 댓글 상세 조회 요청 - commentId: {}", commentId);
         CommentDto commentDto = commentService.findById(commentId);
 
@@ -56,10 +54,8 @@ public class CommentController {
             .body(commentDto);
     }
 
-    @PatchMapping("/{commentId}")
-    ResponseEntity<CommentDto> updateComment(@PathVariable UUID commentId,
-        @RequestBody @Valid CommentUpdateRequest request,
-        @RequestHeader("Deokhugam-Request-User-ID") UUID requestUserId) {
+    public ResponseEntity<CommentDto> updateComment(
+        UUID commentId, CommentUpdateRequest request, UUID requestUserId) {
         log.info("[CommentController] 댓글 업데이트 요청 - commentId: {}", commentId);
         CommentDto commentDto = commentService.updateById(commentId, request, requestUserId);
 
@@ -68,15 +64,11 @@ public class CommentController {
             .body(commentDto);
     }
 
-    @GetMapping
-    ResponseEntity<CursorPageResponse<CommentDto>> getCommentsByReviewId(
-        @RequestParam UUID reviewId,
-        @RequestParam(required = false, defaultValue = "DESC") String direction,
-        @RequestParam(required = false) String cursor,
-        @RequestParam(required = false, defaultValue = "50") int limit
+    public ResponseEntity<CursorPageResponse<CommentDto>> getCommentsByReviewId(
+        UUID reviewId, String cursor, String after, String direction, int limit
     ) {
         CursorPageResponse<CommentDto> response = commentService.findAll(
-            reviewId, cursor, direction, limit
+            reviewId, cursor, after, direction, limit
         );
 
         return ResponseEntity
@@ -84,10 +76,8 @@ public class CommentController {
             .body(response);
     }
 
-    @DeleteMapping("/{commentId}")
-    ResponseEntity<Void> softDeleteComment(
-        @PathVariable @NotNull UUID commentId,
-        @RequestHeader("Deokhugam-Request-User-ID") @NotNull UUID requestUserId
+    public ResponseEntity<Void> softDeleteComment(
+        UUID commentId, UUID requestUserId
     ) {
         commentService.softDelete(commentId, requestUserId);
 
@@ -96,10 +86,8 @@ public class CommentController {
             .build();
     }
 
-    @DeleteMapping("/{commentId}/hard")
-    ResponseEntity<Void> hardDeleteComment(
-        @PathVariable @NotNull UUID commentId,
-        @RequestHeader("Deokhugam-Request-User-ID") @NotNull UUID requestUserId
+    public ResponseEntity<Void> hardDeleteComment(
+        UUID commentId, UUID requestUserId
     ) {
         commentService.hardDelete(commentId, requestUserId);
 
