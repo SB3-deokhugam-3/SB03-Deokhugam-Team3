@@ -115,7 +115,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         reviewIds.addAll(commentMap.keySet());
         reviewIds.addAll(likeMap.keySet());
 
-        List<Review> reviews = reviewRepository.findAllById(reviewIds);
+        List<Review> reviews = reviewRepository.findAllByIdInAndIsDeletedFalse(reviewIds);
 
         AtomicLong rank = new AtomicLong(1);
 
@@ -129,7 +129,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             })
             .filter(s -> s.score() > 0)
             .sorted(Comparator
-                .comparing(ReviewScoreDto::score, Comparator.reverseOrder())
+                .comparingDouble(ReviewScoreDto::score).reversed()
                 .thenComparing(ReviewScoreDto::commentCount, Comparator.reverseOrder())
                 .thenComparing(s -> s.review().getCreatedAt())
             )

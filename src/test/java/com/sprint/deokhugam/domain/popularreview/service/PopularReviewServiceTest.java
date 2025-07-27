@@ -162,7 +162,7 @@ public class PopularReviewServiceTest {
             review3.getId(), 2L
         );
 
-        given(reviewRepository.findAllById(any())).willReturn(totalReviews);
+        given(reviewRepository.findAllByIdInAndIsDeletedFalse(any())).willReturn(totalReviews);
 
         // when
         List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(
