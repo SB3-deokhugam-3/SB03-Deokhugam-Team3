@@ -61,7 +61,7 @@ public class PopularReviewServiceImpl implements PopularReviewService {
 
         // 커서 생성
         String nextCursor = hasNext && !dtos.isEmpty()
-            ? generateCursor(dtos.get(dtos.size() - 1))
+            ? String.valueOf(dtos.get(dtos.size() - 1).rank())
             : null;
 
         return new CursorPageResponse<>(
@@ -71,12 +71,6 @@ public class PopularReviewServiceImpl implements PopularReviewService {
             dtos.size(),
             null,
             hasNext
-        );
-    }
-
-    private String generateCursor(PopularReviewDto dto) {
-        return Base64.getEncoder().encodeToString(
-            (dto.rank() + "|" + dto.createdAt().toString()).getBytes(StandardCharsets.UTF_8)
         );
     }
 

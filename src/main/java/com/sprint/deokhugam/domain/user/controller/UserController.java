@@ -1,6 +1,7 @@
 package com.sprint.deokhugam.domain.user.controller;
 
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
+import com.sprint.deokhugam.domain.user.controller.api.UserApi;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
@@ -8,102 +9,79 @@ import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.service.UserService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
 @Slf4j
-public class UserController {
+public class UserController implements UserApi {
 
     private final UserService userService;
 
-    @PostMapping
     public ResponseEntity<UserDto> create(
-            @Valid @RequestBody UserCreateRequest userCreateRequest
+        UserCreateRequest userCreateRequest
     ) {
         log.info("[UserController] 사용자 회원가입 요청: email: {}, nickname: {}",
-                userCreateRequest.email(), userCreateRequest.nickname());
+            userCreateRequest.email(), userCreateRequest.nickname());
 
         UserDto createdUser = userService.createUser(userCreateRequest);
 
         log.info("[UserController] 사용자 회원가입 완료: id: {}, email: {}",
-                createdUser.id(), createdUser.email());
+            createdUser.id(), createdUser.email());
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(createdUser);
+            .status(HttpStatus.CREATED)
+            .body(createdUser);
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> find(
-            @PathVariable("userId") UUID userId
-    ) {
+    public ResponseEntity<UserDto> find(UUID userId) {
         log.info("[UserController] 사용자 조회 요청: userId: {}", userId);
 
         UserDto user = userService.findUser(userId);
 
         log.info("[UserController] 사용자 조회 완료: id: {}, email: {}",
-                user.id(), user.email());
+            user.id(), user.email());
 
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(user);
+            .status(HttpStatus.OK)
+            .body(user);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<UserDto> login(
-            @Valid @RequestBody UserLoginRequest userLoginRequest
-    ) {
+    public ResponseEntity<UserDto> login(UserLoginRequest userLoginRequest) {
         log.info("[UserController] 사용자 로그인 요청: email: {}", userLoginRequest.email());
 
         UserDto loginUser = userService.loginUser(userLoginRequest);
 
         log.info("[UserController] 사용자 로그인 성공: id: {}, email: {}",
-                loginUser.id(), loginUser.email());
+            loginUser.id(), loginUser.email());
 
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(loginUser);
+            .status(HttpStatus.OK)
+            .body(loginUser);
     }
 
-    @PatchMapping("/{userId}")
-    public ResponseEntity<UserDto> update(
-            @PathVariable UUID userId,
-            @Valid @RequestBody UserUpdateRequest userUpdateRequest
-    ) {
-
-        log.info("[UserController] 사용자 닉네임 수정: userId: {}, nickname: {}", userId, userUpdateRequest.nickname());
+    public ResponseEntity<UserDto> update(UUID userId, UserUpdateRequest userUpdateRequest) {
+        log.info("[UserController] 사용자 닉네임 수정: userId: {}, nickname: {}", userId,
+            userUpdateRequest.nickname());
 
         UserDto updateUser = userService.updateUserNickName(userUpdateRequest, userId);
 
-        log.info("[UserController] 사용자 닉네임 수정 성공: userId: {}, nickname: {}", userId, userUpdateRequest.nickname());
+        log.info("[UserController] 사용자 닉네임 수정 성공: userId: {}, nickname: {}", userId,
+            userUpdateRequest.nickname());
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(updateUser);
+            .status(HttpStatus.OK)
+            .body(updateUser);
     }
 
-    @DeleteMapping("/{userId}/hard")
-    public ResponseEntity<UserDto> hardDelete(
-            @PathVariable UUID userId
-    ) {
+    public ResponseEntity<Void> hardDelete(UUID userId) {
         log.info("[UserController] 물리 삭제 요청: userId: {}", userId);
 
         userService.hardDeleteUser(userId);
@@ -111,31 +89,23 @@ public class UserController {
         log.info("[UserController] 물리 삭제 성공: userId: {}", userId);
 
         return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .build();
+            .status(HttpStatus.NO_CONTENT)
+            .build();
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<UserDto> deleted(
-            @PathVariable UUID userId
-    ) {
+    public ResponseEntity<UserDto> deleted(UUID userId) {
         log.info("[UserController] 논리 삭제 요청: userId: {}", userId);
 
         UserDto deletedUser = userService.deleteUser(userId);
 
         log.info("[UserController] 논리 삭제 성공: userId: {}", userId);
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(deletedUser);
+            .status(HttpStatus.OK)
+            .body(deletedUser);
     }
 
-    @GetMapping("/power")
-    public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularReviews(
-        @RequestParam(defaultValue = "DAILY") PeriodType period,
-        @RequestParam(defaultValue = "ASC") String direction,
-        @RequestParam(required = false) String cursor,
-        @RequestParam(required = false) Instant after,
-        @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit
+    public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularUsers(
+        PeriodType period, String direction, String cursor, Instant after, int limit
     ) {
 
         return ResponseEntity

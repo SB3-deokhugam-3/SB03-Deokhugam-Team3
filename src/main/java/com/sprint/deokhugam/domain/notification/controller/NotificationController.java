@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.notification.controller;
 
+import com.sprint.deokhugam.domain.notification.controller.api.NotificationApi;
 import com.sprint.deokhugam.domain.notification.dto.data.NotificationDto;
 import com.sprint.deokhugam.domain.notification.dto.request.NotificationGetRequest;
 import com.sprint.deokhugam.domain.notification.service.NotificationService;
@@ -22,13 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/notifications")
 @Slf4j
-public class NotificationController {
+public class NotificationController implements NotificationApi {
 
     private final NotificationService notificationService;
 
-    @GetMapping
     public ResponseEntity<CursorPageResponse<NotificationDto>> getNotifications(
-        @Valid @ModelAttribute NotificationGetRequest request
+        NotificationGetRequest request
     ) {
         // after가 null이면 현재 시각으로 보정
         if (request.after() == null) {
@@ -46,19 +46,15 @@ public class NotificationController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/read-all")
-    public ResponseEntity<?> readAllNotifications(
-        @RequestHeader("Deokhugam-Request-User-ID") UUID userId) {
+    public ResponseEntity<?> readAllNotifications(UUID requestUserId) {
 
-        notificationService.markAllAsRead(userId);
+        notificationService.markAllAsRead(requestUserId);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{notificationId}")
-    public ResponseEntity<?> readNotifications(
-        @PathVariable(name = "notificationId") UUID id) {
+    public ResponseEntity<?> readNotifications(UUID notificationId) {
 
-        notificationService.updateNotification(id);
+        notificationService.updateNotification(notificationId);
         return ResponseEntity.noContent().build();
     }
 
