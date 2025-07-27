@@ -7,6 +7,8 @@ import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.data.domain.Sort;
 
@@ -24,6 +26,6 @@ public interface PopularReviewService {
     void validateJobNotDuplicated(Instant referenceTime);
 
 
-    List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
-        PeriodType period, StepContribution contribution, Instant today);
+    void savePopularReviewsByPeriod(PeriodType period, Instant today,
+        Map<UUID, Long> commentMap, Map<UUID, Long> likeMap, StepContribution contribution);
 }

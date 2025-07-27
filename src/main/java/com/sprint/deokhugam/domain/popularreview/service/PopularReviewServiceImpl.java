@@ -2,10 +2,12 @@ package com.sprint.deokhugam.domain.popularreview.service;
 
 import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
+import com.sprint.deokhugam.domain.popularreview.dto.data.ReviewScoreDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
 import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
@@ -14,8 +16,14 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -30,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PopularReviewServiceImpl implements PopularReviewService {
 
     private final PopularReviewRepository popularReviewRepository;
+    private final ReviewRepository reviewRepository;
     private final S3Storage s3Storage;
     private final PopularReviewMapper popularReviewMapper;
 
@@ -101,69 +110,43 @@ public class PopularReviewServiceImpl implements PopularReviewService {
 
     /* 배치에서 사용 */
     @Transactional
-    public List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
-        PeriodType period, StepContribution contribution, Instant today) {
-        List<PopularReview> popularReviews = new ArrayList<>();
-        List<Review> slicedReview;
-        Long rank = 1L;
-        ZoneId zoneId = ZoneId.of("Asia/Seoul");
-        Instant start;
-        Instant end;
+    public void savePopularReviewsByPeriod(PeriodType period, Instant today,
+        Map<UUID, Long> commentMap, Map<UUID, Long> likeMap, StepContribution contribution) {
 
-        switch (period) {
-            case DAILY:
-                start = PeriodType.DAILY.getStartInstant(today, zoneId);
-                end = PeriodType.DAILY.getEndInstant(today, zoneId);
+        Set<UUID> reviewIds = new HashSet<>();
+        reviewIds.addAll(commentMap.keySet());
+        reviewIds.addAll(likeMap.keySet());
 
-                slicedReview = totalReviews.stream()
-                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
-                    ).toList();
-                break;
-            case WEEKLY:
-                start = PeriodType.WEEKLY.getStartInstant(today, zoneId);
-                end = PeriodType.WEEKLY.getEndInstant(today, zoneId);
-                slicedReview = totalReviews.stream()
-                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
-                    ).toList();
-                break;
-            case MONTHLY:
-                start = PeriodType.MONTHLY.getStartInstant(today, zoneId);
-                end = PeriodType.MONTHLY.getEndInstant(today, zoneId);
-                slicedReview = totalReviews.stream()
-                    .filter(review -> isBetween(review.getCreatedAt(), start, end)
-                    ).toList();
-                break;
-            case ALL_TIME:
-            default:
-                slicedReview = totalReviews;
-                break;
-        }
+        List<Review> reviews = reviewRepository.findAllById(reviewIds);
 
-        for (Review review : slicedReview) {
-            Long commentCount = review.getCommentCount();
-            Long likeCount = review.getLikeCount();
-            Double score = commentCount * 0.7 + likeCount * 0.3;
-            PopularReview popularReview = PopularReview.builder()
+        AtomicLong rank = new AtomicLong(1);
+
+        List<PopularReview> result = reviews.stream()
+            .map(r -> {
+                UUID id = r.getId();
+                long c = commentMap.getOrDefault(id, 0L);
+                long l = likeMap.getOrDefault(id, 0L);
+                double score = c * 0.7 + l * 0.3;
+                return new ReviewScoreDto(r, c, l, score);
+            })
+            .filter(s -> s.score() > 0)
+            .sorted(Comparator
+                .comparing(ReviewScoreDto::score, Comparator.reverseOrder())
+                .thenComparing(ReviewScoreDto::commentCount, Comparator.reverseOrder())
+                .thenComparing(s -> s.review().getCreatedAt())
+            )
+            .map(s -> PopularReview.builder()
                 .period(period)
-                .rank(rank)
-                .score(score)
-                .likeCount(likeCount)
-                .commentCount(commentCount)
-                .review(review)
-                .build();
-            popularReviews.add(popularReview);
-            rank++;
-        }
-        popularReviewRepository.saveAll(popularReviews);
+                .rank(rank.getAndIncrement())
+                .score(s.score())
+                .likeCount(s.likeCount())
+                .commentCount(s.commentCount())
+                .review(s.review())
+                .build())
+            .toList();
+
+        popularReviewRepository.saveAll(result);
         //batch meta 테이블에 결과 저장
-        contribution.incrementWriteCount(popularReviews.size());
-
-        return popularReviews;
+        contribution.incrementWriteCount(result.size());
     }
-
-    private Boolean isBetween(Instant referenceTime, Instant start, Instant end) {
-        // startTime 포함, endTime 미포함
-        return !referenceTime.isBefore(start) && referenceTime.isBefore(end);
-    }
-
 }

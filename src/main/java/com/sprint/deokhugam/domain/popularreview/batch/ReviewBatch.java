@@ -1,13 +1,18 @@
 package com.sprint.deokhugam.domain.popularreview.batch;
 
+import com.sprint.deokhugam.domain.comment.repository.CommentRepository;
 import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
+import com.sprint.deokhugam.domain.reviewlike.repository.ReviewLikeRepository;
 import com.sprint.deokhugam.global.batch.BatchListener;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -32,7 +37,8 @@ public class ReviewBatch {
     private final BatchListener listener;
 
     private final PopularReviewService popularReviewService;
-    private final ReviewRepository reviewRepository;
+    private final CommentRepository commentRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
 
     @Bean
     public Job popularReviewJob() {
@@ -58,17 +64,19 @@ public class ReviewBatch {
                 /* 오늘 이미 실행한 배치인지 검증 */
                 popularReviewService.validateJobNotDuplicated(currentTime);
 
-                List<Review> totalReviews = reviewRepository.findAllByCommentCountAndLikeCountWithSorting();
+                for (PeriodType period : PeriodType.values()) {
+                    ZoneId zoneId = ZoneId.of("Asia/Seoul");
+                    Instant start = period.getStartInstant(currentTime, zoneId);
+                    Instant end = period.getEndInstant(currentTime, zoneId);
 
-                popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.ALL_TIME, stepContribution, currentTime);
-                popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.MONTHLY, stepContribution, currentTime);
-                popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.WEEKLY, stepContribution, currentTime);
-                popularReviewService.savePopularReviewsByPeriod(totalReviews,
-                    PeriodType.DAILY, stepContribution, currentTime);
-
+                    // 특정 기간 동안 추가된 댓글 / 좋아요 수
+                    Map<UUID, Long> commentMap = commentRepository.countByReviewIdBetween(start, end);
+                    Map<UUID, Long> likeMap = reviewLikeRepository.countByReviewIdBetween(start, end);
+                    
+                    popularReviewService.savePopularReviewsByPeriod(
+                        period, currentTime, commentMap, likeMap, stepContribution
+                    );
+                }
             } catch (BatchAlreadyRunException e) {
                 log.error(e.getMessage(), e);
                 stepContribution.incrementProcessSkipCount();
@@ -80,5 +88,4 @@ public class ReviewBatch {
             return RepeatStatus.FINISHED;
         };
     }
-
 }
