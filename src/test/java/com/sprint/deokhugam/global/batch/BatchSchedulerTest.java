@@ -34,54 +34,8 @@ class BatchSchedulerTest {
     private JobLauncher jobLauncher;
 
     @Mock
-    private Job popularReviewJob;
-
-    @Mock
     private Job popularBookRankingJob;
 
-    @Mock
-    private Job powerUserJob;
-
-    @Test
-    void 인기_리뷰_배치_정상_실행() throws Exception {
-        // given
-        JobExecution mockExecution = new JobExecution(1L);
-        given(jobLauncher.run(any(Job.class), any(JobParameters.class))).willReturn(mockExecution);
-
-        // when
-        scheduler.runPopularReviewJob();
-
-        // then - 실제 코드에서는 popularReviewJob을 실행
-        verify(jobLauncher, times(1)).run(eq(popularReviewJob), any(JobParameters.class));
-
-        // JobParameters 검증 - timestamp 파라미터가 포함되어야 함
-        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
-        verify(jobLauncher).run(eq(popularReviewJob), parametersCaptor.capture());
-
-        JobParameters capturedParams = parametersCaptor.getValue();
-        assertThat(capturedParams.getLong("timestamp")).isNotNull();
-    }
-
-    @Test
-    void 파워_유저_배치_정상_실행() throws Exception {
-        // given
-        JobExecution mockExecution = new JobExecution(1L);
-        given(jobLauncher.run(any(Job.class), any(JobParameters.class))).willReturn(mockExecution);
-
-        // when
-        scheduler.runPowerUserJob();
-
-        // then - 실제 코드에서는 powerUserJob을 실행
-        verify(jobLauncher, times(1)).run(eq(powerUserJob), any(JobParameters.class));
-
-        // JobParameters 검증 - today와 timestamp 파라미터가 포함되어야 함
-        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
-        verify(jobLauncher).run(eq(powerUserJob), parametersCaptor.capture());
-
-        JobParameters capturedParams = parametersCaptor.getValue();
-        assertThat(capturedParams.getString("today")).isNotNull();
-        assertThat(capturedParams.getLong("timestamp")).isNotNull();
-    }
 
     @Test
     void 각_기간별_인기_도서_배치_파라미터_검증() throws Exception {

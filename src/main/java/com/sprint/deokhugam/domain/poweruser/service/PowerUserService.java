@@ -22,7 +22,7 @@ public class PowerUserService {
 
     private final PowerUserRepository powerUserRepository;
 
-    public static final double REVIEW_SCORE_WEIGHT = 0.5;  // 현재 0으로 처리하므로 실질적으로 미적용
+    public static final double REVIEW_SCORE_WEIGHT = 0.5;
     public static final double LIKE_COUNT_WEIGHT = 0.2;
     public static final double COMMENT_COUNT_WEIGHT = 0.3;
 

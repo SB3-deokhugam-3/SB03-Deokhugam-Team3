@@ -41,7 +41,7 @@ public class PowerUserServiceTest {
     @Test
     void 활동_점수_정상_계산() {
         // given
-        Double reviewScoreSum = 100.0; // 실제로는 0으로 처리됨
+        Double reviewScoreSum = 100.0;
         Long likeCount = 50L;
         Long commentCount = 30L;
         // 현재 공식: (0.0 * 0.5) + (50 * 0.2) + (30 * 0.3) = 19.0
