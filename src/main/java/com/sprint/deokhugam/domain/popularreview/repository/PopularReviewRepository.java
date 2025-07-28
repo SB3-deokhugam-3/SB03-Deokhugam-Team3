@@ -18,7 +18,7 @@ public interface PopularReviewRepository extends JpaRepository<PopularReview, UU
 
     /**
      * 특정 날짜와 기간 타입으로 count 조회
-     * */
+     */
     @Query("SELECT COUNT(p) FROM PopularReview p WHERE p.period = :period " +
         "AND p.createdAt >= :startOfDay AND p.createdAt < :endOfDay")
     long countByPeriodAndCreatedDate(@Param("period") PeriodType period,
@@ -26,7 +26,7 @@ public interface PopularReviewRepository extends JpaRepository<PopularReview, UU
 
     /**
      * 특정 기간과 날짜의 인기 리뷰 조회
-     * */
+     */
     @Query("SELECT p FROM PopularReview p WHERE p.period = :period " +
         "AND p.createdAt >= :startOfDay AND p.createdAt < :endOfDay ORDER BY p.rank ASC")
     List<PopularReview> findByPeriodAndCreatedDate(@Param("period") PeriodType period,
@@ -42,7 +42,8 @@ public interface PopularReviewRepository extends JpaRepository<PopularReview, UU
         WHERE r.user.id = :userId 
         AND pr.period = :period
         """)
-    Double findScoreSumByUserIdAndPeriod(@Param("userId") UUID userId, @Param("period") PeriodType period);
+    Double findScoreSumByUserIdAndPeriod(@Param("userId") UUID userId,
+        @Param("period") PeriodType period);
 
     /**
      * 기간별 인기 리뷰 개수 조회 (중복 검증용)

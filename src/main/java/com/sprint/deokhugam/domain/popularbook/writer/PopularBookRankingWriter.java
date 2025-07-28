@@ -28,10 +28,14 @@ public class PopularBookRankingWriter implements ItemWriter<PopularBook> {
         try {
             List<? extends PopularBook> rankingList = popularBooks.stream()
                 .sorted(Comparator
-                    .comparingDouble((PopularBook p) -> Optional.ofNullable(p.getScore()).orElse(0.0)).reversed()
-                    .thenComparing(p -> Optional.ofNullable(p.getReviewCount()).orElse(0L), Comparator.reverseOrder())
-                    .thenComparing(p -> Optional.ofNullable(p.getRating()).orElse(0.0), Comparator.reverseOrder())
-                    .thenComparing(PopularBook::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                    .comparingDouble(
+                        (PopularBook p) -> Optional.ofNullable(p.getScore()).orElse(0.0)).reversed()
+                    .thenComparing(p -> Optional.ofNullable(p.getReviewCount()).orElse(0L),
+                        Comparator.reverseOrder())
+                    .thenComparing(p -> Optional.ofNullable(p.getRating()).orElse(0.0),
+                        Comparator.reverseOrder())
+                    .thenComparing(PopularBook::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder()))
                 ).toList();
 
             // 랭킹 부여

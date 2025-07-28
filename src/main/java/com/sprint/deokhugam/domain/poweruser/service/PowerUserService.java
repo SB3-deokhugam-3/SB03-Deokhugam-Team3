@@ -1,7 +1,6 @@
 package com.sprint.deokhugam.domain.poweruser.service;
 
 import com.sprint.deokhugam.domain.popularbook.exception.InvalidSortDirectionException;
-import com.sprint.deokhugam.domain.popularreview.service.PopularReviewService;
 import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
@@ -9,7 +8,6 @@ import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,21 +18,27 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PowerUserService {
 
-    private final PowerUserRepository powerUserRepository;
-
     public static final double REVIEW_SCORE_WEIGHT = 0.5;
     public static final double LIKE_COUNT_WEIGHT = 0.2;
     public static final double COMMENT_COUNT_WEIGHT = 0.3;
+    private final PowerUserRepository powerUserRepository;
 
     /**
      * 활동 점수 계산 - 인기 리뷰 점수를 실제로 반영
-     *
+     * <p>
      * 공식: 활동 점수 = (리뷰 인기 점수 * 0.5) + (좋아요 수 * 0.2) + (댓글 수 * 0.3)
      */
-    public static Double calculateActivityScore(Double reviewScoreSum, Long likeCount, Long commentCount) {
-        if (reviewScoreSum == null) reviewScoreSum = 0.0;
-        if (likeCount == null) likeCount = 0L;
-        if (commentCount == null) commentCount = 0L;
+    public static Double calculateActivityScore(Double reviewScoreSum, Long likeCount,
+        Long commentCount) {
+        if (reviewScoreSum == null) {
+            reviewScoreSum = 0.0;
+        }
+        if (likeCount == null) {
+            likeCount = 0L;
+        }
+        if (commentCount == null) {
+            commentCount = 0L;
+        }
 
         log.debug("활동 점수 계산 - 리뷰점수: {}, 좋아요: {}, 댓글: {}",
             reviewScoreSum, likeCount, commentCount);

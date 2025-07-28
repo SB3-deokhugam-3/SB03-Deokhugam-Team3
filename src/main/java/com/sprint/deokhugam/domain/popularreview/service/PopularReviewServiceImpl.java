@@ -89,8 +89,9 @@ public class PopularReviewServiceImpl implements PopularReviewService {
                 .atStartOfDay(java.time.ZoneOffset.UTC)
                 .toInstant();
             Instant endOfDay = startOfDay.plus(java.time.Duration.ofDays(1));
-            
-            long existingCount = popularReviewRepository.countByPeriodAndCreatedDate(period, startOfDay, endOfDay);
+
+            long existingCount = popularReviewRepository.countByPeriodAndCreatedDate(period,
+                startOfDay, endOfDay);
             if (existingCount > 0) {
                 log.info("기간 {} 배치 이미 실행됨 - 날짜: {}, {}건 존재",
                     period, referenceTime, existingCount);
@@ -172,14 +173,15 @@ public class PopularReviewServiceImpl implements PopularReviewService {
     /**
      * 특정 기간과 날짜의 기존 인기 리뷰 데이터 조회
      */
-    private List<PopularReview> getExistingPopularReviewsByPeriodAndDate(PeriodType period, Instant date) {
+    private List<PopularReview> getExistingPopularReviewsByPeriodAndDate(PeriodType period,
+        Instant date) {
         // 해당 날짜의 시작/끝 시간 계산
         Instant startOfDay = date.atZone(java.time.ZoneOffset.UTC)
             .toLocalDate()
             .atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant();
         Instant endOfDay = startOfDay.plus(java.time.Duration.ofDays(1));
-        
+
         return popularReviewRepository.findByPeriodAndCreatedDate(period, startOfDay, endOfDay);
     }
 }

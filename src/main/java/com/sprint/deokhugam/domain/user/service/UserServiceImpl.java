@@ -34,7 +34,8 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(userCreateRequest);
         User saved = userRepository.save(user);
 
-        log.info("[UserService]: 사용자 등록 완료: id={}, nickname={}", saved.getId(), saved.getNickname());
+        log.info("[UserService]: 사용자 등록 완료: id={}, nickname={}", saved.getId(),
+            saved.getNickname());
 
         return userMapper.toDto(saved);
 
@@ -46,11 +47,11 @@ public class UserServiceImpl implements UserService {
         log.debug("[UserService]: 사용자 조회 요청: id={}", userId);
 
         return userRepository.findById(userId)
-                .map(userMapper::toDto)
-                .orElseThrow(() -> {
-                    log.warn("[UserService]: 사용자 조회 실패: id={}", userId);
-                    return new UserNotFoundException(userId, "존재하지 않는 사용자 입니다.");
-                });
+            .map(userMapper::toDto)
+            .orElseThrow(() -> {
+                log.warn("[UserService]: 사용자 조회 실패: id={}", userId);
+                return new UserNotFoundException(userId, "존재하지 않는 사용자 입니다.");
+            });
     }
 
     @Override
@@ -64,10 +65,10 @@ public class UserServiceImpl implements UserService {
         String password = userLoginRequest.password();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    log.warn("[UserService]: 사용자 조회 실패: email={}", email);
-                    return new InvalidUserRequestException("email", "해당하는 이메일은 존재하지 않습니다.");
-                });
+            .orElseThrow(() -> {
+                log.warn("[UserService]: 사용자 조회 실패: email={}", email);
+                return new InvalidUserRequestException("email", "해당하는 이메일은 존재하지 않습니다.");
+            });
 
         if (!user.getPassword().equals(password)) {
             throw new InvalidUserRequestException("password", "비밀번호가 일치하지 않습니다.");
@@ -82,7 +83,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidUserRequestException("null", "null값으로 닉네임을 수정할 수 없습니다.");
         }
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId, "존재하지 않는 사용자 입니다."));
+            .orElseThrow(() -> new UserNotFoundException(userId, "존재하지 않는 사용자 입니다."));
 
         user.update(request.nickname());
 
@@ -94,9 +95,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto deleteUser(UUID userID) {
         User user = userRepository.findById(userID)
-                .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+            .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
 
-        user.deleted();
+        user.softDelete();
 
         return userMapper.toDto(user);
     }
@@ -105,7 +106,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void hardDeleteUser(UUID userID) {
         User user = userRepository.findById(userID)
-                .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+            .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
 
         if (!user.getIsDeleted()) {
             throw new InvalidUserRequestException("userId", "논리 삭제되지 않은 사용자는 물리 삭제할 수 없습니다.");

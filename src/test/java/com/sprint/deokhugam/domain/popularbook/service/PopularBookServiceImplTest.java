@@ -10,13 +10,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.popularbook.dto.data.PopularBookDto;
 import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest;
 import com.sprint.deokhugam.domain.popularbook.exception.InvalidSortDirectionException;
 import com.sprint.deokhugam.domain.popularbook.repository.PopularBookRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -73,9 +73,11 @@ class PopularBookServiceImplTest {
             .limit(10)
             .build();
 
-        given(popularBookRepository.findAllByRequest(request)).willReturn(List.of(dto1, dto2, dto3));
+        given(popularBookRepository.findAllByRequest(request)).willReturn(
+            List.of(dto1, dto2, dto3));
         given(popularBookRepository.countByPeriod(PeriodType.DAILY)).willReturn(3L);
-        given(s3Storage.generatePresignedUrl("test.jpg")).willReturn("https://cdn.example.com/cover.png");
+        given(s3Storage.generatePresignedUrl("test.jpg")).willReturn(
+            "https://cdn.example.com/cover.png");
 
         // when
         CursorPageResponse<PopularBookDto> result = popularBookService.getPopularBooks(request);
@@ -96,9 +98,11 @@ class PopularBookServiceImplTest {
             .limit(2)
             .build();
 
-        given(popularBookRepository.findAllByRequest(request)).willReturn(List.of(dto1, dto3, dto2));
+        given(popularBookRepository.findAllByRequest(request)).willReturn(
+            List.of(dto1, dto3, dto2));
         given(popularBookRepository.countByPeriod(PeriodType.DAILY)).willReturn(3L);
-        given(s3Storage.generatePresignedUrl("test.jpg")).willReturn("https://cdn.example.com/cover.png");
+        given(s3Storage.generatePresignedUrl("test.jpg")).willReturn(
+            "https://cdn.example.com/cover.png");
 
         // when
         CursorPageResponse<PopularBookDto> result = popularBookService.getPopularBooks(request);

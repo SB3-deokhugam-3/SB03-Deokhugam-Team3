@@ -23,13 +23,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 @RequiredArgsConstructor
 public class NotificationDeleteJobConfig {
 
+    private static final String JOB_NAME = "notificationDeleteJob";
+    private static final String STEP_NAME = "notificationDeleteStep";
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final EntityManagerFactory entityManagerFactory;
     private final NotificationRepository notificationRepository;
-
-    private static final String JOB_NAME = "notificationDeleteJob";
-    private static final String STEP_NAME = "notificationDeleteStep";
 
     @Bean
     public Job notificationDeleteJob() {

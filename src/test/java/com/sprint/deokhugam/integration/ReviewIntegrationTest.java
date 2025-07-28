@@ -115,7 +115,7 @@ public class ReviewIntegrationTest {
             "따봉 책!",
             5
         );
-        
+
         // when
         ResultActions result = mockMvc.perform(post("/api/reviews")
             .contentType(MediaType.APPLICATION_JSON)
@@ -202,8 +202,9 @@ public class ReviewIntegrationTest {
         reviewRepository.save(testReview);
 
         // when
-        ResultActions result = mockMvc.perform(delete("/api/reviews/{reviewId}/hard", testReview.getId())
-            .header("Deokhugam-Request-User-ID", testUser.getId()));
+        ResultActions result = mockMvc.perform(
+            delete("/api/reviews/{reviewId}/hard", testReview.getId())
+                .header("Deokhugam-Request-User-ID", testUser.getId()));
 
         // then
         result.andExpect(status().isNoContent())

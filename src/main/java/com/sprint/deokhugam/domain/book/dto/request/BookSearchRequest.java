@@ -9,6 +9,11 @@ public record BookSearchRequest(String keyword,
                                 String cursor,
                                 Instant after,
                                 Integer limit) {
+
+    private static final List<String> VALID_ORDER_BY = List.of("title", "publishedDate", "rating",
+        "reviewCount");
+    private static final List<String> VALID_DIRECTIONS = List.of("ASC", "DESC");
+
     // 기본값을 적용한 정적 팩토리 메서드
     public static BookSearchRequest of(String keyword, String orderBy, String direction,
         String cursor, Instant after, Integer limit) {
@@ -29,12 +34,10 @@ public record BookSearchRequest(String keyword,
         return this;
     }
 
-    private static final List<String> VALID_ORDER_BY = List.of("title", "publishedDate", "rating", "reviewCount");
-    private static final List<String> VALID_DIRECTIONS = List.of("ASC", "DESC");
-
     private void validateSortParameters() {
         if (!VALID_ORDER_BY.contains(orderBy())) {
-            throw new IllegalArgumentException("정렬 기준은 title, publishedDate, rating, reviewCount 중 하나여야 합니다.");
+            throw new IllegalArgumentException(
+                "정렬 기준은 title, publishedDate, rating, reviewCount 중 하나여야 합니다.");
         }
 
         if (!VALID_DIRECTIONS.contains(direction())) {

@@ -89,12 +89,14 @@ class ReviewLikeRepositoryTest {
         em.flush();
         em.clear();
 
-        em.getEntityManager().createQuery("UPDATE ReviewLike r SET r.createdAt = :createdAt WHERE r.id = :id")
+        em.getEntityManager()
+            .createQuery("UPDATE ReviewLike r SET r.createdAt = :createdAt WHERE r.id = :id")
             .setParameter("createdAt", inRange)
             .setParameter("id", like1.getId())
             .executeUpdate();
 
-        em.getEntityManager().createQuery("UPDATE ReviewLike r SET r.createdAt = :createdAt WHERE r.id = :id")
+        em.getEntityManager()
+            .createQuery("UPDATE ReviewLike r SET r.createdAt = :createdAt WHERE r.id = :id")
             .setParameter("createdAt", outOfRange)
             .setParameter("id", like2.getId())
             .executeUpdate();

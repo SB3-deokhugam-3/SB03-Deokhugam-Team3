@@ -23,17 +23,18 @@ public class PowerUserDataReader implements ItemReader<PowerUserData> {
     private Iterator<PowerUserData> userDataIterator;
     private boolean initialized = false;
 
+    // Factory 메서드
+    public static PowerUserDataReader createForPeriod(PowerUserRepository repository,
+        PeriodType period) {
+        PowerUserDataReader reader = new PowerUserDataReader(repository);
+        reader.setPeriod(period);
+        return reader;
+    }
+
     // Period 설정 메서드
     public void setPeriod(PeriodType period) {
         this.period = period;
         this.initialized = false; // 새로운 period 설정 시 초기화 상태 리셋
-    }
-
-    // Factory 메서드
-    public static PowerUserDataReader createForPeriod(PowerUserRepository repository, PeriodType period) {
-        PowerUserDataReader reader = new PowerUserDataReader(repository);
-        reader.setPeriod(period);
-        return reader;
     }
 
     @Override

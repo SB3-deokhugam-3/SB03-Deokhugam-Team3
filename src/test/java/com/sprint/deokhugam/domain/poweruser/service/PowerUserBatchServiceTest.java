@@ -116,7 +116,7 @@ class PowerUserBatchServiceTest {
         verify(popularReviewService).validateJobNotDuplicated(any());
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus();
-        assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
+        assert (exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
     }
 
     @Test
@@ -133,7 +133,7 @@ class PowerUserBatchServiceTest {
         // then
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus();
-        assert(exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
+        assert (exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
     }
 
     @Test
@@ -150,7 +150,7 @@ class PowerUserBatchServiceTest {
         // then
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus();
-        assert(exception.getMessage().contains("MONTHLY 파워 유저 배치 실행 실패"));
+        assert (exception.getMessage().contains("MONTHLY 파워 유저 배치 실행 실패"));
     }
 
     @Test
@@ -167,7 +167,7 @@ class PowerUserBatchServiceTest {
         // then
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus();
-        assert(exception.getMessage().contains("ALL_TIME 파워 유저 배치 실행 실패"));
+        assert (exception.getMessage().contains("ALL_TIME 파워 유저 배치 실행 실패"));
     }
 
     @Test
@@ -185,8 +185,8 @@ class PowerUserBatchServiceTest {
         // then
         verify(popularReviewService).validateJobNotDuplicated(any());
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
-        assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
-        assert(exception.getCause() == testException);
+        assert (exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
+        assert (exception.getCause() == testException);
     }
 
     @Test
@@ -202,8 +202,8 @@ class PowerUserBatchServiceTest {
 
         // then
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
-        assert(exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
-        assert(exception.getCause() == testException);
+        assert (exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
+        assert (exception.getCause() == testException);
     }
 
     @Test
@@ -219,8 +219,8 @@ class PowerUserBatchServiceTest {
 
         // then
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
-        assert(exception.getMessage().contains("MONTHLY 파워 유저 배치 실행 실패"));
-        assert(exception.getCause() == testException);
+        assert (exception.getMessage().contains("MONTHLY 파워 유저 배치 실행 실패"));
+        assert (exception.getCause() == testException);
     }
 
     @Test
@@ -236,8 +236,8 @@ class PowerUserBatchServiceTest {
 
         // then
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
-        assert(exception.getMessage().contains("ALL_TIME 파워 유저 배치 실행 실패"));
-        assert(exception.getCause() == testException);
+        assert (exception.getMessage().contains("ALL_TIME 파워 유저 배치 실행 실패"));
+        assert (exception.getCause() == testException);
     }
 
     @Test
@@ -256,7 +256,7 @@ class PowerUserBatchServiceTest {
         verify(popularReviewService).validateJobNotDuplicated(any());
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus(); // 2번 호출 허용
-        assert(exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
+        assert (exception.getMessage().contains("DAILY 파워 유저 배치 실행 실패"));
     }
 
     @Test
@@ -273,6 +273,6 @@ class PowerUserBatchServiceTest {
         // then
         verify(jobLauncher).run(eq(powerUserJob), any(JobParameters.class));
         verify(jobExecution, times(2)).getStatus(); // 2번 호출 허용
-        assert(exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
+        assert (exception.getMessage().contains("WEEKLY 파워 유저 배치 실행 실패"));
     }
 }

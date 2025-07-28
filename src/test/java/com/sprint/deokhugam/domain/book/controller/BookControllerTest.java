@@ -503,7 +503,8 @@ class BookControllerTest {
         result.andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("FILE_INVALID_INPUT_VALUE"))
             .andExpect(jsonPath("$.message").value("FILE 잘못된 입력 값입니다."))
-            .andExpect(jsonPath("$.details.contentType").value("지원하지 않는 파일 형식입니다. (지원 형식: jpg, jpeg, png)"));
+            .andExpect(jsonPath("$.details.contentType").value(
+                "지원하지 않는 파일 형식입니다. (지원 형식: jpg, jpeg, png)"));
     }
 
     @Test
@@ -657,7 +658,8 @@ class BookControllerTest {
             publishedDate, isbn, thumbnailUrl, 0L, 0.0,
             Instant.now(), Instant.now());
 
-        given(bookService.update(any(UUID.class), any(BookUpdateRequest.class), any(MultipartFile.class)))
+        given(bookService.update(any(UUID.class), any(BookUpdateRequest.class),
+            any(MultipartFile.class)))
             .willReturn(expectedResponse);
 
         // when
@@ -691,7 +693,8 @@ class BookControllerTest {
         UUID bookId = UUID.randomUUID();
         String longAuthor = "a".repeat(51);
 
-        BookUpdateRequest updateRequest = createUpdateRequest(title, longAuthor, description, publisher,
+        BookUpdateRequest updateRequest = createUpdateRequest(title, longAuthor, description,
+            publisher,
             publishedDate);
 
         MockMultipartFile bookData = new MockMultipartFile(
@@ -829,7 +832,8 @@ class BookControllerTest {
             .limit(3)
             .build();
 
-        CursorPageResponse<PopularBookDto> response = new CursorPageResponse<>(List.of(dto1, dto3, dto2),
+        CursorPageResponse<PopularBookDto> response = new CursorPageResponse<>(
+            List.of(dto1, dto3, dto2),
             null, null, 3, 3L, false);
 
         given(popularBookService.getPopularBooks(request)).willReturn(response);

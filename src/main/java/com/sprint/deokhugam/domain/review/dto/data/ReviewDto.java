@@ -21,4 +21,5 @@ public record ReviewDto(
     Instant updatedAt
 
 ) {
+
 }

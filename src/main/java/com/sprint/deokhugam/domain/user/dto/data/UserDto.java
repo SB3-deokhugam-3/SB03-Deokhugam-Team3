@@ -5,9 +5,10 @@ import lombok.Builder;
 
 @Builder
 public record UserDto(
-        UUID id,
-        String nickname,
-        String email,
-        boolean isDeleted
+    UUID id,
+    String nickname,
+    String email,
+    boolean isDeleted
 ) {
+
 }

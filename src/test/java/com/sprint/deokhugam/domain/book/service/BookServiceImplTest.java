@@ -32,8 +32,8 @@ import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -58,22 +58,16 @@ import org.springframework.web.multipart.MultipartFile;
 @ActiveProfiles("test")
 class BookServiceImplTest {
 
-    @InjectMocks
-    private BookServiceImpl bookService;
-
-    @Mock
-    private BookRepository bookRepository;
-
-    @Mock
-    private BookMapper bookMapper;
-
-    @Mock
-    private S3Storage storage;
-
     @Mock
     TesseractOcrExtractor tesseractOcrExtractor;
-
-
+    @InjectMocks
+    private BookServiceImpl bookService;
+    @Mock
+    private BookRepository bookRepository;
+    @Mock
+    private BookMapper bookMapper;
+    @Mock
+    private S3Storage storage;
     private List<Book> testBooks;
     private List<BookDto> testBookDtos;
     private String title;
@@ -101,7 +95,8 @@ class BookServiceImplTest {
 
         // given
         UUID bookId = UUID.randomUUID();
-        BookCreateRequest request = createRequest(title, author, description, publisher, publishedDate,
+        BookCreateRequest request = createRequest(title, author, description, publisher,
+            publishedDate,
             isbn);
 
         MultipartFile thumbnail = new MockMultipartFile(
@@ -123,7 +118,8 @@ class BookServiceImplTest {
 
         String presignedUrl = "https://cdn.example.com/cover.png";
 
-        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher, publishedDate,
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher,
+            publishedDate,
             isbn, presignedUrl, 0L, 0.0, Instant.now(), Instant.now());
 
         given(bookRepository.existsByIsbn(anyString())).willReturn(false);
@@ -153,7 +149,7 @@ class BookServiceImplTest {
         BookCreateRequest request = createRequest(title, author, description, publisher,
             publishedDate, isbn);
 
-        Book bookEntity =  createBookEntity(title, author, description, publisher, publishedDate,
+        Book bookEntity = createBookEntity(title, author, description, publisher, publishedDate,
             isbn, null, 0.0, 0L);
 
         Book savedBook = createBookEntity(title, author, description, publisher, publishedDate,
@@ -161,7 +157,8 @@ class BookServiceImplTest {
 
         ReflectionTestUtils.setField(savedBook, "id", bookId);
 
-        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher, publishedDate,
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher,
+            publishedDate,
             isbn, null, 0L, 0.0, Instant.now(), Instant.now());
 
         given(bookRepository.existsByIsbn(anyString())).willReturn(false);
@@ -187,7 +184,8 @@ class BookServiceImplTest {
         // given
         String existsIsbn = "1234567890123";
 
-        BookCreateRequest request = createRequest(title, author, description, publisher, publishedDate,
+        BookCreateRequest request = createRequest(title, author, description, publisher,
+            publishedDate,
             existsIsbn);
 
         given(bookRepository.existsByIsbn(existsIsbn)).willReturn(true);
@@ -205,7 +203,7 @@ class BookServiceImplTest {
     @Test
     void 키워드_없이_첫_페이지_조회() {
         //given
-        BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC",null,null,10);
+        BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", null, null, 10);
         given(bookRepository.findBooksWithKeyword(any(BookSearchRequest.class)))
             .willReturn(testBooks.subList(0, 3));
         given(bookRepository.countBooksWithKeyword(any()))
@@ -253,7 +251,8 @@ class BookServiceImplTest {
     void 커서_기반_페이지네이션_다음_페이지_존재() {
         // given
         Instant after = Instant.now().minusSeconds(3600);
-        BookSearchRequest request = BookSearchRequest.of("Super", "title", "DESC", "Java Programming", after, 2);
+        BookSearchRequest request = BookSearchRequest.of("Super", "title", "DESC",
+            "Java Programming", after, 2);
         List<Book> searchResults = testBooks.subList(0, 3); // limit+1 = 3개 조회
         given(bookRepository.findBooksWithKeywordAndCursor(any(BookSearchRequest.class)))
             .willReturn(searchResults);
@@ -325,7 +324,8 @@ class BookServiceImplTest {
 
         String presignedUrl = "https://cdn.example.com/cover.png";
 
-        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher, publishedDate,
+        BookDto expectedResponse = createBookDto(bookId, title, author, description, publisher,
+            publishedDate,
             isbn, presignedUrl, 0L, 0.0, Instant.now(), Instant.now());
 
         given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
@@ -382,7 +382,8 @@ class BookServiceImplTest {
 
         String presignedUrl = "https://cdn.example.com/cover.png";
 
-        BookDto expectedResponse = createBookDto(bookId, "new title", "new author", "new description",
+        BookDto expectedResponse = createBookDto(bookId, "new title", "new author",
+            "new description",
             "new publisher", LocalDate.of(2023, 3, 3), isbn, presignedUrl, 0L, 0.0,
             Instant.now(), Instant.now());
 
@@ -421,7 +422,8 @@ class BookServiceImplTest {
             "new publisher", LocalDate.of(1999, 7, 2), isbn, null,
             0.0, 0L);
 
-        BookDto expectedResponse = createBookDto(bookId, "new title", "new author", "new description",
+        BookDto expectedResponse = createBookDto(bookId, "new title", "new author",
+            "new description",
             "new publisher", LocalDate.of(1999, 7, 2), isbn, null, 0L, 0.0,
             Instant.now(), Instant.now());
 
@@ -466,7 +468,8 @@ class BookServiceImplTest {
 
         String presignedUrl = "https://cdn.example.com/cover.png";
 
-        BookDto expectedResponse = createBookDto(bookId, "new title", "new author", "new description",
+        BookDto expectedResponse = createBookDto(bookId, "new title", "new author",
+            "new description",
             "new publisher", LocalDate.of(2023, 3, 3), isbn, presignedUrl, 0L, 0.0,
             Instant.now(), Instant.now());
 
@@ -510,7 +513,8 @@ class BookServiceImplTest {
             "new publisher", LocalDate.of(2023, 3, 3), isbn, null,
             0.0, 0L);
 
-        BookDto expectedResponse = createBookDto(bookId, "new title", "new author", "new description",
+        BookDto expectedResponse = createBookDto(bookId, "new title", "new author",
+            "new description",
             "new publisher", LocalDate.of(2023, 3, 3), isbn, null, 0L, 0.0,
             Instant.now(), Instant.now());
 
@@ -543,7 +547,8 @@ class BookServiceImplTest {
         given(bookRepository.findById(notExistBookId)).willReturn(Optional.empty());
 
         // when
-        Throwable thrown = catchThrowable(() -> bookService.update(notExistBookId, updateRequest, null));
+        Throwable thrown = catchThrowable(
+            () -> bookService.update(notExistBookId, updateRequest, null));
 
         // then
         assertThat(thrown)
@@ -554,7 +559,8 @@ class BookServiceImplTest {
     @Test
     void OCR_서비스_사용_가능_ISBN_추출_성공() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
         String expectedIsbn = "9780134685991";
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
@@ -572,7 +578,8 @@ class BookServiceImplTest {
     @Test
     void OCR_서비스_사용_불가능_예외_발생() {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(false);
 
@@ -590,7 +597,8 @@ class BookServiceImplTest {
     @Test
     void OCR에서_null_반환_예외_발생() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
         given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn(null);
@@ -609,7 +617,8 @@ class BookServiceImplTest {
     @Test
     void OCR에서_빈_문자열_반환_예외_발생() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
         given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn("");
@@ -628,7 +637,8 @@ class BookServiceImplTest {
     @Test
     void OCR에서_공백만_있는_문자열_반환_예외_발생() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
         given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class))).willReturn("   ");
@@ -647,7 +657,8 @@ class BookServiceImplTest {
     @Test
     void OCR_처리_중_예외_발생() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
         given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class)))
@@ -667,7 +678,8 @@ class BookServiceImplTest {
     @Test
     void OCR_처리_중_RuntimeException_발생() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
         given(tesseractOcrExtractor.extractIsbn(any(MultipartFile.class)))
@@ -687,7 +699,8 @@ class BookServiceImplTest {
     @Test
     void 유효한_ISBN13_추출_성공() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
         String expectedIsbn = "9780134685991";
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
@@ -705,7 +718,8 @@ class BookServiceImplTest {
     @Test
     void 유효한_ISBN10_추출_성공() throws OcrException {
         // given
-        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg", "test content".getBytes());
+        MultipartFile testImage = new MockMultipartFile("test", "test.jpg", "image/jpeg",
+            "test content".getBytes());
         String expectedIsbn = "0134685997";
 
         given(tesseractOcrExtractor.isAvailable()).willReturn(true);
@@ -724,7 +738,8 @@ class BookServiceImplTest {
     void 도서를_논리_삭제하면_isDeleted_필드가_true로_변경된다() {
         // given
         UUID bookId = UUID.randomUUID();
-        Book book = createBookEntity(title, author, description, publisher, publishedDate, isbn, null, 0.0, 0L);
+        Book book = createBookEntity(title, author, description, publisher, publishedDate, isbn,
+            null, 0.0, 0L);
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
 
         // when

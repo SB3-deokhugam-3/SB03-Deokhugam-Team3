@@ -2,7 +2,6 @@ package com.sprint.deokhugam.domain.user.controller;
 
 import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
 import com.sprint.deokhugam.domain.poweruser.service.PowerUserService;
-import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.user.controller.api.UserApi;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
@@ -11,15 +10,12 @@ import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.service.UserService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
-import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -112,7 +108,8 @@ public class UserController implements UserApi {
     public ResponseEntity<CursorPageResponse<PowerUserDto>> getPopularUsers(
         String period, String direction, String cursor, String after, int limit
     ) {
-        log.info("[UserController] 파워유저 목록 조회 요청: period: {}, direction: {}, limit: {}, cursor: {}, after: {}",
+        log.info(
+            "[UserController] 파워유저 목록 조회 요청: period: {}, direction: {}, limit: {}, cursor: {}, after: {}",
             period, direction, limit, cursor, after);
 
         PeriodType periodType = PeriodType.valueOf(period.toUpperCase());

@@ -36,50 +36,50 @@ class NotificationRepositoryImplTest {
     void markAllAsReadByUserId_test() {
         // given
         User user = User.builder()
-                .email("test@example.com")
-                .nickname("tester")
-                .password("1234asdf!")
-                .build();
+            .email("test@example.com")
+            .nickname("tester")
+            .password("1234asdf!")
+            .build();
         em.persist(user);
 
         Book book = Book.builder()
-                .title("책 제목")
-                .author("작가 이름")
-                .isbn("978" + String.format("%010d", new Random().nextInt(1_000_000_000)))
-                .publisher("출판사")
-                .publishedDate(LocalDate.now())
-                .description("설명")
-                .thumbnailUrl("https://example.com/thumbnail.jpg")
-                .reviewCount(0L)
-                .rating(0.0)
-                .isDeleted(false)
-                .build();
+            .title("책 제목")
+            .author("작가 이름")
+            .isbn("978" + String.format("%010d", new Random().nextInt(1_000_000_000)))
+            .publisher("출판사")
+            .publishedDate(LocalDate.now())
+            .description("설명")
+            .thumbnailUrl("https://example.com/thumbnail.jpg")
+            .reviewCount(0L)
+            .rating(0.0)
+            .isDeleted(false)
+            .build();
         em.persist(book);
 
         Review review = Review.builder()
-                .content("리뷰 내용")
-                .commentCount(0L)
-                .likeCount(0L)
-                .rating(4)
-                .isDeleted(false)
-                .user(user)
-                .book(book)
-                .build();
+            .content("리뷰 내용")
+            .commentCount(0L)
+            .likeCount(0L)
+            .rating(4)
+            .isDeleted(false)
+            .user(user)
+            .book(book)
+            .build();
         em.persist(review);
 
         Notification n1 = Notification.builder()
-                .user(user)
-                .review(review)
-                .content("알림1")
-                .isConfirmed(false)
-                .build();
+            .user(user)
+            .review(review)
+            .content("알림1")
+            .isConfirmed(false)
+            .build();
 
         Notification n2 = Notification.builder()
-                .user(user)
-                .review(review)
-                .content("알림2")
-                .isConfirmed(false)
-                .build();
+            .user(user)
+            .review(review)
+            .content("알림2")
+            .isConfirmed(false)
+            .build();
 
         em.persist(n1);
         em.persist(n2);
@@ -96,11 +96,11 @@ class NotificationRepositoryImplTest {
 
         // then
         List<Notification> all = em.createQuery("""
-                        select n from Notification n
-                        where n.user.id = :userId
-                        """, Notification.class)
-                .setParameter("userId", userId)
-                .getResultList();
+                select n from Notification n
+                where n.user.id = :userId
+                """, Notification.class)
+            .setParameter("userId", userId)
+            .getResultList();
 
         assertThat(all).hasSize(2);
         assertThat(all).allSatisfy(n -> assertThat(n.isConfirmed()).isTrue());

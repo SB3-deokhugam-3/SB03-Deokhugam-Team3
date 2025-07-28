@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.user.controller;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -9,7 +8,6 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -32,7 +30,6 @@ import com.sprint.deokhugam.domain.user.service.UserService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -67,77 +64,77 @@ class UserControllerTest {
     void 회원가입_요청시_201을_반환한다() throws Exception {
         // given
         UserCreateRequest request = UserCreateRequest.builder()
-                .email("test@example.com")
-                .nickname("testuser")
-                .password("test1234!")
-                .build();
+            .email("test@example.com")
+            .nickname("testuser")
+            .password("test1234!")
+            .build();
 
         UserDto userDto = UserDto.builder()
-                .id(UUID.randomUUID())
-                .email("test@example.com")
-                .nickname("testuser")
-                .build();
+            .id(UUID.randomUUID())
+            .email("test@example.com")
+            .nickname("testuser")
+            .build();
 
         when(userService.createUser(any(UserCreateRequest.class)))
-                .thenReturn(userDto);
+            .thenReturn(userDto);
 
         // when & then
         mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.nickname").value("testuser"));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.email").value("test@example.com"))
+            .andExpect(jsonPath("$.nickname").value("testuser"));
     }
 
 
     @Test
     void 비밀번호_형식이_잘못되면_400_에러를_반환한다() throws Exception {
         List<String> invalidPasswords = List.of(
-                "qwerqwerq", //영어 , 숫자, 특수문자 같이 있어야 하는 조건 위반
-                "qwer1234",
-                "qwer!!!",
-                "1234!@#$",
-                "1",  //2자 이상 조건 위반
-                "" //빈값
+            "qwerqwerq", //영어 , 숫자, 특수문자 같이 있어야 하는 조건 위반
+            "qwer1234",
+            "qwer!!!",
+            "1234!@#$",
+            "1",  //2자 이상 조건 위반
+            "" //빈값
         );
 
         for (String pw : invalidPasswords) {
             String requestJson = String.format("""
-                        {
-                          "email": "test@example.com",
-                          "nickname": "tester",
-                          "password": "%s"
-                        }
-                    """, pw);
+                    {
+                      "email": "test@example.com",
+                      "nickname": "tester",
+                      "password": "%s"
+                    }
+                """, pw);
 
             mockMvc.perform(post("/api/users")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(requestJson))
-                    .andExpect(status().isBadRequest());
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestJson))
+                .andExpect(status().isBadRequest());
         }
     }
 
     @Test
     void 닉네임_형식이_잘못되면_400_에러를_반환한다() throws Exception {
         List<String> invalidNickNames = List.of(
-                "1", //2자 이상 조건 위반
-                "" //빈값
+            "1", //2자 이상 조건 위반
+            "" //빈값
         );
 
         for (String nickname : invalidNickNames) {
             String requestJson = String.format("""
-                        {
-                          "email": "test@example.com",
-                          "nickname": "%s",
-                          "password": "testPassword!"
-                        }
-                    """, nickname);
+                    {
+                      "email": "test@example.com",
+                      "nickname": "%s",
+                      "password": "testPassword!"
+                    }
+                """, nickname);
 
             mockMvc.perform(post("/api/users")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(requestJson))
-                    .andExpect(status().isBadRequest());
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestJson))
+                .andExpect(status().isBadRequest());
         }
     }
 
@@ -149,56 +146,57 @@ class UserControllerTest {
         when(userService.findUser(userId)).thenReturn(userDto);
 
         // When
-        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/{userId}", userId)
+        ResultActions result = mockMvc.perform(
+            MockMvcRequestBuilders.get("/api/users/{userId}", userId)
                 .accept(MediaType.APPLICATION_JSON));
 
         // Then
         result.andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.id").value(userId.toString()))
-                .andExpect(jsonPath("$.nickname").value("testUser"))
-                .andExpect(jsonPath("$.email").value("testUser@test.com"));
+            .andExpect(jsonPath("$.id").value(userId.toString()))
+            .andExpect(jsonPath("$.nickname").value("testUser"))
+            .andExpect(jsonPath("$.email").value("testUser@test.com"));
     }
 
     @Test
     void 존재하지_않은_사용자_조회시_404을_반환한다() throws Exception {
         UUID invalidId = UUID.randomUUID();
         when(userService.findUser(invalidId))
-                .thenThrow(new UserNotFoundException("user", "존재하지 않는 사용자 입니다."));
+            .thenThrow(new UserNotFoundException("user", "존재하지 않는 사용자 입니다."));
 
         // when
         ResultActions result = mockMvc.perform(get("/api/users/{userId}", invalidId)
-                .accept(MediaType.APPLICATION_JSON));
+            .accept(MediaType.APPLICATION_JSON));
 
         // then
         result.andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
     }
 
     @Test
     void 로그인_요청이_정상이라면_200과_사용자_정보를_반환한다() throws Exception {
         // given
         UserDto userDto = UserDto.builder()
-                .id(UUID.randomUUID())
-                .email("test@test.com")
-                .nickname("testUser")
-                .build();
+            .id(UUID.randomUUID())
+            .email("test@test.com")
+            .nickname("testUser")
+            .build();
 
         UserLoginRequest loginRequest = new UserLoginRequest("test@test.com", "test1234!");
 
         when(userService.loginUser(any(UserLoginRequest.class)))
-                .thenReturn(userDto);
+            .thenReturn(userDto);
 
         // when
         ResultActions result = mockMvc.perform(post("/api/users/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)));
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(loginRequest)));
 
         // then
         result.andExpectAll(
-                status().isOk(),
-                jsonPath("$.email").value("test@test.com"),
-                jsonPath("$.nickname").value("testUser")
+            status().isOk(),
+            jsonPath("$.email").value("test@test.com"),
+            jsonPath("$.nickname").value("testUser")
         );
     }
 
@@ -209,31 +207,31 @@ class UserControllerTest {
         String newNickname = "updatedNickName";
 
         UserUpdateRequest request = UserUpdateRequest.builder()
-                .nickname(newNickname)
-                .build();
+            .nickname(newNickname)
+            .build();
 
         UserDto responseDto = UserDto.builder()
-                .id(userId)
-                .email("test@example.com")
-                .nickname(newNickname)
-                .build();
+            .id(userId)
+            .email("test@example.com")
+            .nickname(newNickname)
+            .build();
 
         when(userService.updateUserNickName(eq(request), eq(userId)))
-                .thenReturn(responseDto);
+            .thenReturn(responseDto);
 
         // when
         ResultActions result = mockMvc.perform(
-                patch("/api/users/{userId}", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
+            patch("/api/users/{userId}", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
         );
 
         // then
         result.andExpectAll(
-                status().isOk(),
-                jsonPath("$.id").value(userId.toString()),
-                jsonPath("$.nickname").value(newNickname),
-                jsonPath("$.email").value("test@example.com")
+            status().isOk(),
+            jsonPath("$.id").value(userId.toString()),
+            jsonPath("$.nickname").value(newNickname),
+            jsonPath("$.email").value("test@example.com")
         );
     }
 
@@ -242,20 +240,20 @@ class UserControllerTest {
         // given
         UUID userId = UUID.randomUUID();
         List<String> invalidNicknames = List.of(
-                "",            // 빈 문자열
-                "a",           // 1자
-                "a".repeat(21) // 21자 초과
+            "",            // 빈 문자열
+            "a",           // 1자
+            "a".repeat(21) // 21자 초과
         );
 
         for (String invalidNickname : invalidNicknames) {
             UserUpdateRequest request = UserUpdateRequest.builder()
-                    .nickname(invalidNickname)
-                    .build();
+                .nickname(invalidNickname)
+                .build();
 
             // when
             ResultActions result = mockMvc.perform(patch("/api/users/{userId}", userId)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
 
             // then
             result.andExpect(status().isBadRequest());
@@ -267,22 +265,22 @@ class UserControllerTest {
         // given
         UUID userId = UUID.randomUUID();
         UserDto deletedUser = UserDto.builder()
-                .id(userId)
-                .email("deleted@example.com")
-                .nickname("deletedUser")
-                .isDeleted(true)
-                .build();
+            .id(userId)
+            .email("deleted@example.com")
+            .nickname("deletedUser")
+            .isDeleted(true)
+            .build();
 
         when(userService.deleteUser(userId)).thenReturn(deletedUser);
 
         // when & then
 
         ResultActions result = mockMvc.perform(delete("/api/users/{userId}", userId)
-                .contentType(MediaType.APPLICATION_JSON));
+            .contentType(MediaType.APPLICATION_JSON));
 
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId.toString()))
-                .andExpect(jsonPath("$.isDeleted").value(true));
+            .andExpect(jsonPath("$.id").value(userId.toString()))
+            .andExpect(jsonPath("$.isDeleted").value(true));
     }
 
     @Test
@@ -293,7 +291,7 @@ class UserControllerTest {
 
         // when & then
         ResultActions result = mockMvc.perform(delete("/api/users/{userId}/hard", userId)
-                .contentType(MediaType.APPLICATION_JSON));
+            .contentType(MediaType.APPLICATION_JSON));
 
         result.andExpect(status().isNoContent());
     }
@@ -303,15 +301,15 @@ class UserControllerTest {
         // given
         UUID userId = UUID.randomUUID();
         when(userService.deleteUser(userId))
-                .thenThrow(new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
+            .thenThrow(new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
 
         // when & then
         ResultActions resultActions =
-                mockMvc.perform(delete("/api/users/{userId}", userId)
-                        .contentType(MediaType.APPLICATION_JSON));
+            mockMvc.perform(delete("/api/users/{userId}", userId)
+                .contentType(MediaType.APPLICATION_JSON));
 
         resultActions.andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+            .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
     }
 
     @Test
@@ -319,14 +317,14 @@ class UserControllerTest {
         // given
         UUID userId = UUID.randomUUID();
         doThrow(new InvalidUserRequestException("userId", "논리 삭제되지 않은 사용자는 물리 삭제할 수 없습니다."))
-                .when(userService).hardDeleteUser(userId);
+            .when(userService).hardDeleteUser(userId);
 
         // when & then
         ResultActions result = mockMvc.perform(delete("/api/users/{userId}/hard", userId)
-                .contentType(MediaType.APPLICATION_JSON));
+            .contentType(MediaType.APPLICATION_JSON));
 
         result.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("USER_INVALID_INPUT_VALUE"));
+            .andExpect(jsonPath("$.code").value("USER_INVALID_INPUT_VALUE"));
     }
 
     @Test
@@ -334,14 +332,14 @@ class UserControllerTest {
         // given
         UUID userId = UUID.randomUUID();
         doThrow(new UserNotFoundException("userId", "존재하지 않은 사용자입니다."))
-                .when(userService).hardDeleteUser(userId);
+            .when(userService).hardDeleteUser(userId);
 
         // when & then
         ResultActions result = mockMvc.perform(delete("/api/users/{userId}/hard", userId)
-                .contentType(MediaType.APPLICATION_JSON));
+            .contentType(MediaType.APPLICATION_JSON));
 
         result.andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+            .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
     }
 
     @Test
@@ -547,7 +545,6 @@ class UserControllerTest {
         verify(powerUserService).getPowerUsersWithCursor(
             PeriodType.DAILY, "ASC", 50, null, null);
     }
-
 
 
     @Test

@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.book.exception;
 
-import com.sprint.deokhugam.global.exception.BadRequestException;
 import com.sprint.deokhugam.global.exception.DomainException;
 import com.sprint.deokhugam.global.exception.ErrorCode;
 import java.util.Map;

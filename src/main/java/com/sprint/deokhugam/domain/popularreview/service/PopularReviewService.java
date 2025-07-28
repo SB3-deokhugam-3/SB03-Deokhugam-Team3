@@ -29,6 +29,7 @@ public interface PopularReviewService {
 
     /**
      * 특정 사용자의 기간별 인기 리뷰 점수 합계를 반환
+     *
      * @param userId 사용자 ID
      * @param period 기간 타입 ( DAILY, WEEKLY, MONTHLY, ALL )
      * @return 해당 기간 동안 사용자가 작성한 인기 리뷰들의 점수 합계

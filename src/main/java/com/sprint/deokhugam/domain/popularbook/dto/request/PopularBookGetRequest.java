@@ -11,6 +11,7 @@ public record PopularBookGetRequest(
     String after,
     Integer limit
 ) {
+
     public PopularBookGetRequest {
         if (period == null) {
             period = PeriodType.DAILY;

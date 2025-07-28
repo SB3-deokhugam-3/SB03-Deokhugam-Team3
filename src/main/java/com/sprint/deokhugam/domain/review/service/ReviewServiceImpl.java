@@ -3,7 +3,6 @@ package com.sprint.deokhugam.domain.review.service;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
@@ -21,6 +20,7 @@ import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +36,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ReviewServiceImpl implements ReviewService {
 
+    private static final String ORDER_BY_CREATED_AT = "createdAt";
+    private static final String ORDER_BY_RATING = "rating";
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
     private final ReviewLikeRepository reviewLikeRepository;
     private final ReviewMapper reviewMapper;
     private final S3Storage s3Storage;
-
-    private static final String ORDER_BY_CREATED_AT = "createdAt";
-    private static final String ORDER_BY_RATING = "rating";
 
     @Override
     public CursorPageResponse<ReviewDto> findAll(ReviewGetRequest params, UUID requestUserId) {
