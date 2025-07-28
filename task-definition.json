@@ -2,7 +2,7 @@
   "containerDefinitions": [
     {
       "name": "deokhugam-app-hj",
-      "image": "public.ecr.aws/t7q8z8s5/deokhugam:latest",
+      "image": "487825214505.dkr.ecr.ap-northeast-2.amazonaws.com/deokhugam:latest",
       "cpu": 512,
       "memory": 1536,
       "memoryReservation": 512,
