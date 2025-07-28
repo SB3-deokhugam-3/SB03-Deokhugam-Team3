@@ -24,9 +24,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,69 +99,50 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CursorPageResponse<CommentDto> findAll(UUID reviewId, String cursor, String direction,
-        int limit) {
+    public CursorPageResponse<CommentDto> findAll(UUID reviewId, String cursor, String after,
+        String direction, int limit) {
+        log.info(
+            "[CommentService] 댓글 목록 조회 시작 - reviewId={}, cursor={}, after={}, direction={}, limit={}",
+            reviewId, cursor, after, direction, limit);
+
         if (!reviewRepository.existsById(reviewId)) {
             throw new ReviewNotFoundException(reviewId);
         }
 
-        // cursor String → Instant 변환
-        Instant createdAt = null;
-        if (cursor != null) {
-            try {
-                createdAt = Instant.parse(cursor);
-            } catch (DateTimeParseException e) {
-                throw new InvalidCursorTypeException(cursor, e.getMessage());
-            }
-        }
-
-        // Pageable 생성
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
-        Pageable pageable = PageRequest.of(0, limit, Sort.by(sortDirection, "createdAt"));
 
-        // Repository 호출 - cursor에 따라 다른 메서드 사용
-        Slice<Comment> slice;
-        if (createdAt == null) {
-            // 첫 페이지 조회 (cursor가 null인 경우)
-            slice = commentRepository.findByReviewId(reviewId, pageable);
-        } else {
-            // 다음 페이지 조회 (cursor가 있는 경우)
-            slice = commentRepository.findByReviewIdAndCreatedAtLessThan(reviewId, createdAt,
-                pageable);
+        Instant cursorTime = parseInstant(cursor);
+        UUID afterId = parseUUID(after);
+
+        int fetchSize = limit + 1;
+        List<Comment> comments = commentRepository.fetchComments(reviewId, cursorTime, afterId,
+            sortDirection, fetchSize);
+
+        boolean hasNext = comments.size() > limit;
+        if (hasNext) {
+            comments = comments.subList(0, limit);
         }
 
-        List<CommentDto> commentDtos = slice.getContent().stream()
+        List<CommentDto> dtos = comments.stream()
             .map(commentMapper::toDto)
             .toList();
 
-        int size = slice.getSize();
+        Instant nextCursor = hasNext && !comments.isEmpty()
+            ? comments.get(comments.size() - 1).getCreatedAt()
+            : null;
 
-        log.info("[comment] 전체 조회 요청 - reviewId: {}, size: {}", reviewId, commentDtos.size());
-        log.debug("[comment] Slice 정보: {}", slice);
-
-        // 커서 처리
-        Instant nextCursor = null;
-        boolean hasNext = slice.hasNext();
-
-        if (hasNext && !commentDtos.isEmpty()) {
-            nextCursor = commentDtos.get(commentDtos.size() - 1).createdAt();
-        }
-
-        Long totalElements = commentRepository.countByReviewId(reviewId);
-
-        log.info("[comment] 전체 조회 응답 - reviewId: {}, 결과 개수: {}, nextCursor: {}",
-            reviewId, commentDtos.size(), nextCursor);
-
-        CursorPageResponse<CommentDto> commentResponse = new CursorPageResponse<>(
-            commentDtos,
+        CursorPageResponse<CommentDto> response = new CursorPageResponse<>(
+            dtos,
             nextCursor != null ? nextCursor.toString() : null,
             nextCursor != null ? nextCursor.toString() : null,
-            size,
-            totalElements,
+            dtos.size(),
+            commentRepository.countByReviewId(reviewId),
             hasNext
         );
 
-        return commentResponse;
+        log.info("[CommentService] 댓글 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(),
+            response.hasNext());
+        return response;
     }
 
     @Transactional
@@ -204,6 +182,28 @@ public class CommentServiceImpl implements CommentService {
             log.warn("[comment] 권한 검증 실패 - 해당 유저는 권한이 없음: commentId={}, userId={}", comment.getId(),
                 userId);
             throw new CommentUnauthorizedAccessException(comment.getId(), userId);
+        }
+    }
+
+    private Instant parseInstant(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new InvalidCursorTypeException(value, e.getMessage());
+        }
+    }
+
+    private UUID parseUUID(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("올바르지 않은 after(UUID) 형식입니다: " + value);
         }
     }
 }

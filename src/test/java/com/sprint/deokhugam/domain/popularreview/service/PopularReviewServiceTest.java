@@ -15,7 +15,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
-import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
@@ -268,6 +268,7 @@ public class PopularReviewServiceTest {
         String cursor = null;
         Instant after = Instant.now();
         int limit = 1;
+
         when(popularReviewRepository.findByPeriodWithCursor(
             eq(period), eq(direction), eq(cursor), eq(after), eq(limit + 1)))
             .thenReturn(List.of(popularReview1, popularReview2));
@@ -280,10 +281,13 @@ public class PopularReviewServiceTest {
         );
 
         // then
-        assertThat(response.nextCursor()).isNotNull();
-        assertThat(response.nextCursor()).matches("^[A-Za-z0-9+/]+=*$");
-        String decodedCursor = new String(Base64.getDecoder().decode(response.nextCursor()));
-        assertThat(decodedCursor).contains("|");
+        assertThat(response.nextCursor())
+            .isEqualTo(String.valueOf(popularReviewDto1.rank()));
+        assertThat(response.nextAfter())
+            .isEqualTo(popularReviewDto1.createdAt().toString());
+        assertThat(response.content())
+            .containsExactly(popularReviewDto1);
+        assertThat(response.hasNext()).isTrue();
     }
 
     @Test

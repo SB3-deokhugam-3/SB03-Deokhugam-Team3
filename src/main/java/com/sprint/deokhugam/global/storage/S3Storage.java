@@ -1,7 +1,8 @@
-package com.sprint.deokhugam.domain.book.storage.s3;
+package com.sprint.deokhugam.global.storage;
 
 import com.sprint.deokhugam.domain.book.exception.FileSizeExceededException;
 import com.sprint.deokhugam.domain.book.exception.InvalidFileTypeException;
+import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
@@ -98,5 +99,28 @@ public class S3Storage {
         return s3Presigner.presignGetObject(presignRequest)
             .url()
             .toString();
+    }
+
+    public String uploadFile(File file) {
+        // 파일 타입 검증
+        String fileName = file.getName();
+        int index = fileName.lastIndexOf('.');
+        String extension = fileName.substring(index + 1);
+
+        if (!extension.equals("log")) {
+            throw new InvalidFileTypeException(extension);
+        }
+
+        String key = "logs/" + fileName;
+
+        // 메타 데이터 설정
+        PutObjectRequest putRequest = PutObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .build();
+
+        s3Client.putObject(putRequest, RequestBody.fromFile(file));
+
+        return key;
     }
 }

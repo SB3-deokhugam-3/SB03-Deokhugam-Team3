@@ -1,6 +1,6 @@
 package com.sprint.deokhugam.domain.popularbook.service;
 
-import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.popularbook.dto.data.PopularBookDto;
 import com.sprint.deokhugam.domain.popularbook.dto.request.PopularBookGetRequest;
 import com.sprint.deokhugam.domain.popularbook.exception.InvalidSortDirectionException;

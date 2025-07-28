@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.reviewlike.controller;
 
+import com.sprint.deokhugam.domain.reviewlike.controller.api.ReviewLikeApi;
 import com.sprint.deokhugam.domain.reviewlike.dto.data.ReviewLikeDto;
 import com.sprint.deokhugam.domain.reviewlike.service.ReviewLikeService;
 import java.util.UUID;
@@ -14,14 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/reviews/{reviewId}/like")
-public class ReviewLikeController {
+public class ReviewLikeController implements ReviewLikeApi {
 
     private final ReviewLikeService reviewLikeService;
 
-    @PostMapping
     public ResponseEntity<ReviewLikeDto> toggleLike(
-        @PathVariable UUID reviewId,
-        @RequestHeader("Deokhugam-Request-User-ID") UUID userId
+        UUID reviewId, UUID userId
     ) {
         ReviewLikeDto result = reviewLikeService.toggleLike(reviewId, userId);
         return ResponseEntity.ok(result);

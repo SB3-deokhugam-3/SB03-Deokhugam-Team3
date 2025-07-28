@@ -1,13 +1,11 @@
 package com.sprint.deokhugam.domain.review.mapper;
 
-import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.entity.Review;
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface ReviewMapper {
