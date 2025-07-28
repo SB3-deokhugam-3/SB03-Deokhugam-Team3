@@ -105,7 +105,8 @@ CREATE TABLE users
     email      VARCHAR(320) NOT NULL UNIQUE,
     nickname   VARCHAR(50)  NOT NULL,
     password   VARCHAR(100) NOT NULL,
-    is_deleted BOOLEAN      NOT NULL DEFAULT FALSE
+    is_deleted BOOLEAN      NOT NULL DEFAULT FALSE,
+    deleted_at TIMESTAMPTZ
 );
 
 CREATE TABLE books
