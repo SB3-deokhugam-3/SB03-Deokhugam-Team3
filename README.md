@@ -43,15 +43,24 @@ Notion Link - [팀장즈](https://www.notion.so/ohgiraffers/207649136c118098b9c8
 <img width="377" height="522" alt="알림" src="https://github.com/user-attachments/assets/341baca2-edab-4beb-8ca2-4e5c9aa45670" />
 
 - 사용자 관리
-  -- 등록
-  -- 수정
-  -- 삭제
-  -- 로그인
+  
+  - 등록
+  
+  - 수정
+  
+  - 삭제
+  
+  - 로그인
+  
 - 알림 관리
-  -- 등록
-  -- 수정
-  -- 삭제
-  -- 목록 조회
+  
+  - 등록
+  
+  - 수정
+  
+  - 삭제
+  
+  - 목록 조회
 
 ---
 
@@ -61,12 +70,18 @@ Notion Link - [팀장즈](https://www.notion.so/ohgiraffers/207649136c118098b9c8
 
 
 - 도서 관리
-  -- OCR 기반 ISBN 등록
-  -- 목록 조회
-  -- 삭제
+  
+  - OCR 기반 ISBN 등록
+  
+  - 목록 조회
+  
+  - 삭제
+  
 - 파워유저 관리
-  -- 배치
-  -- 목록 조회 
+  
+  - 배치
+  
+  - 목록 조회 
   
 ---
 
@@ -76,14 +91,22 @@ Notion Link - [팀장즈](https://www.notion.so/ohgiraffers/207649136c118098b9c8
 
 
 - 리뷰 관리
-  -- 삭제
-  -- 목록 조회
+  
+  - 삭제
+  
+  - 목록 조회
+  
 - 댓글 관리
-  -- 등록
-  -- 수정
-  -- 상세 정보 조회
+
+  - 등록
+  
+  - 수정
+  
+  - 상세 정보 조회
+  
 - 인기 리뷰 관리
-  -- 배치
+
+  - 배치
 
 ---
 
@@ -92,14 +115,23 @@ Notion Link - [팀장즈](https://www.notion.so/ohgiraffers/207649136c118098b9c8
 <img width="889" height="768" alt="리뷰" src="https://github.com/user-attachments/assets/76d9fd61-1119-423a-9be3-f7774b464aa0" />
 
 - 리뷰 관리
-  -- 좋아요
-  -- 등록
-  -- 수정
-  -- 상세 정보 조회
+  
+  - 좋아요
+  
+  - 등록
+  
+  - 수정
+  
+  - 상세 정보 조회
+  
 - 댓글 관리
-  -- 목록 조회
-  -- 삭제
+
+  - 목록 조회
+
+  - 삭제
+  
 - 인기 리뷰 관리
+
   -- 목록 조회
 
 --- 
@@ -109,13 +141,20 @@ Notion Link - [팀장즈](https://www.notion.so/ohgiraffers/207649136c118098b9c8
 <img width="925" height="651" alt="등록된 도서" src="https://github.com/user-attachments/assets/28245d6b-8466-4ca7-a383-e05bf1237080" />
 
 - 도서 관리
-  -- 등록
-  -- 수정
-  -- Naver API로 ISBN 정보 조회
-  -- 상세 정보 조회
+
+  - 등록
+    
+  - 수정
+ 
+  - Naver API로 ISBN 정보 조회
+ 
+  - 상세 정보 조회
+ 
 - 인기 도서 관리
-  -- 배치
-  -- 목록 조회
+
+  - 배치
+ 
+  - 목록 조회
 
 ---
 
