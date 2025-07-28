@@ -9,6 +9,8 @@ import com.sprint.deokhugam.domain.popularreview.entity.QPopularReview;
 import com.sprint.deokhugam.domain.review.entity.QReview;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
     private final JPAQueryFactory queryFactory;
     private static final QPopularReview pr = QPopularReview.popularReview;
     private static final QReview r = QReview.review;
+    private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Seoul");
 
     @Override
     public List<PopularReview> findByPeriodWithCursor(
@@ -38,6 +41,21 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
 
         builder.and(pr.period.eq(period));
         builder.and(r.isDeleted.eq(false));
+
+        // 오늘 생성된 인기 리뷰 데이터만 조회
+        Instant startOfDay = LocalDate.now(DEFAULT_ZONE)
+            .atTime(0, 0)
+            .atZone(DEFAULT_ZONE)
+            .toInstant();
+
+        Instant endOfDay = LocalDate.now(DEFAULT_ZONE)
+            .plusDays(1)
+            .atTime(0, 0)
+            .atZone(DEFAULT_ZONE)
+            .toInstant();
+
+        builder.and(pr.createdAt.goe(startOfDay));
+        builder.and(pr.createdAt.lt(endOfDay));
 
         if (cursor != null && !cursor.isBlank() && after != null) {
             try {

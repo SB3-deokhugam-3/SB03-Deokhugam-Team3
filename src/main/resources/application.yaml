@@ -63,3 +63,6 @@ springdoc:
     path: /swagger-ui.html
     display-request-duration: true
     operations-sorter: method
+
+swagger:
+  server-url: http://localhost:${server.port}

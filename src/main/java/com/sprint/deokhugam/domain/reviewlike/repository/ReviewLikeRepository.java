@@ -9,7 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-public interface ReviewLikeRepository extends JpaRepository<ReviewLike, UUID> {
+public interface ReviewLikeRepository extends JpaRepository<ReviewLike, UUID>,
+    ReviewLikeRepositoryCustom {
 
     boolean existsByReviewIdAndUserId(UUID reviewId, UUID userId);
 

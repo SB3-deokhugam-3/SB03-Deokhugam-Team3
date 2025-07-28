@@ -20,17 +20,17 @@ public interface PopularReviewRepository extends JpaRepository<PopularReview, UU
      * 특정 날짜와 기간 타입으로 count 조회
      * */
     @Query("SELECT COUNT(p) FROM PopularReview p WHERE p.period = :period " +
-        "AND DATE(p.createdAt) = DATE(:referenceDate)")
+        "AND p.createdAt >= :startOfDay AND p.createdAt < :endOfDay")
     long countByPeriodAndCreatedDate(@Param("period") PeriodType period,
-        @Param("referenceDate") Instant referenceDate);
+        @Param("startOfDay") Instant startOfDay, @Param("endOfDay") Instant endOfDay);
 
     /**
      * 특정 기간과 날짜의 인기 리뷰 조회
      * */
     @Query("SELECT p FROM PopularReview p WHERE p.period = :period " +
-        "AND DATE(p.createdAt) = DATE(:referenceDate) ORDER BY p.rank ASC")
+        "AND p.createdAt >= :startOfDay AND p.createdAt < :endOfDay ORDER BY p.rank ASC")
     List<PopularReview> findByPeriodAndCreatedDate(@Param("period") PeriodType period,
-        @Param("referenceDate") Instant referenceDate);
+        @Param("startOfDay") Instant startOfDay, @Param("endOfDay") Instant endOfDay);
 
     /**
      * 특정 사용자의 기간별 인기 리뷰 점수 합계 조회

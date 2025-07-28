@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.review.repository;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomRev
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.book = :book")
     Double findAverageRatingByBook(@Param("book") Book book);
 
+    List<Review> findAllByIdInAndIsDeletedFalse(Collection<UUID> ids);
     /* 배치에서 사용 */
     @Query(value = "SELECT * FROM reviews WHERE (comment_count*0.7 + like_count*0.3) > 0 AND is_deleted = false ORDER BY (comment_count*0.7 + like_count*0.3) DESC ", nativeQuery = true)
     List<Review> findAllByCommentCountAndLikeCountWithSorting();
