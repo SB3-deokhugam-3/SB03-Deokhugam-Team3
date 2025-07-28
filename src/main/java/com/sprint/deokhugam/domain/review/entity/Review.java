@@ -61,9 +61,6 @@ public class Review extends BaseUpdatableEntity {
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "review", cascade = CascadeType.REMOVE)
-    private List<PopularReview> popularReviews = new ArrayList<>();
-
     public Review(Integer rating, String content, Book book, User user) {
         this.rating = rating;
         this.content = content;
