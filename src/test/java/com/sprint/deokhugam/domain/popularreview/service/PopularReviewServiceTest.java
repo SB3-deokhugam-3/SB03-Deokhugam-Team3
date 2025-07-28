@@ -21,6 +21,7 @@ import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
 import com.sprint.deokhugam.domain.popularreview.repository.PopularReviewRepository;
 import com.sprint.deokhugam.domain.review.entity.Review;
+import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
@@ -29,6 +30,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +53,9 @@ public class PopularReviewServiceTest {
 
     @Mock
     private PopularReviewRepository popularReviewRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @Mock
     private PopularReviewMapper popularReviewMapper;
@@ -147,134 +152,34 @@ public class PopularReviewServiceTest {
                 review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3)
         );
 
+        Map<UUID, Long> commentMap = Map.of(
+            review1.getId(), 1L,
+            review2.getId(), 3L,
+            review3.getId(), 2L
+        );
+        Map<UUID, Long> likeMap = Map.of(
+            review1.getId(), 1L,
+            review2.getId(), 3L,
+            review3.getId(), 2L
+        );
+
+        given(reviewRepository.findAllByIdInAndIsDeletedFalse(any())).willReturn(totalReviews);
+
         // when
-        List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
+        List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(
             PeriodType.ALL_TIME,
-            contribution, Instant.now());
+            Instant.now(),
+            commentMap,
+            likeMap,
+            contribution);
 
         // then
         assertThat(result).hasSize(3);
         assertThat(result.get(0).getRank()).isEqualTo(1L);
-        assertThat(result.get(0).getScore()).isEqualTo(1L * 0.7 + 1L * 0.3);
+        assertThat(result.get(0).getScore()).isEqualTo(3L * 0.7 + 3L * 0.3);
         then(popularReviewRepository).should().saveAll(any());
         then(contribution).should().incrementWriteCount(expectedPopularReviews.size());
     }
-
-    @Test
-    void 월기간_기준으로_인기리뷰를_저장한다() {
-        //given
-        Review review1 = createReview(1L, 1L, "2025-07-03T00:00:00Z");
-        Review notInPeriodReview = createReview(3L, 3L, "2025-06-01T00:00:00Z");
-        Review review3 = createReview(2L, 2L, "2025-07-22T00:00:00Z");
-        List<Review> totalReviews = List.of(
-            review3,
-            notInPeriodReview,
-            review1
-        );
-        List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review3, PeriodType.ALL_TIME, 1L,
-                review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3),
-            createPopularReview(review1, PeriodType.ALL_TIME, 2L,
-                review1.getCommentCount() * 0.7 + review1.getLikeCount() * 0.3)
-        );
-
-        // when
-        List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.MONTHLY, contribution, Instant.parse("2025-07-23T00:00:00Z"));
-
-        // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getRank()).isEqualTo(1L);
-        assertThat(result.get(0).getScore()).isEqualTo(
-            review3.getCommentCount() * 0.7 + review3.getLikeCount() * 0.3);
-        then(popularReviewRepository).should().saveAll(any());
-        then(contribution).should().incrementWriteCount(expectedPopularReviews.size());
-    }
-
-    @Test
-    @DisplayName("주간 인기리뷰:7/18~7/24일 데이터를 가져온다(한국시간기준)")
-    void 주기간_기준으로_인기리뷰를_저장한다() {
-        //given
-        Instant currentTime = Instant.parse("2025-07-24T15:05:00Z"); // 한국시간 7/25일 00:05
-        Review notInPeriodReview1 = createReview(3L, 3L, "2025-06-01T00:00:00Z");
-        Review notInPeriodReview2 = createReview(2L, 2L,
-            "2025-07-17T14:49:00Z"); // 한국시간 7/17일 23:59
-        Review notInPeriodReview3 = createReview(2L, 2L,
-            "2025-07-25T15:00:00Z"); // 한국시간 7/26일 00:00
-
-        Review review1 = createReview(1L, 1L, "2025-07-17T15:00:00Z");  // 한국시간 7/18일 00:00
-        Review review2 = createReview(2L, 2L, "2025-07-24T14:49:00Z");  // 한국시간 7/24일 23:59
-        Review reviewToday1 = createReview(3L, 3L, "2025-07-24T15:00:00Z");  // 한국시간 7/25일 00:00
-        Review reviewToday2 = createReview(4L, 4L, "2025-07-25T14:59:59Z");  // 한국시간 7/25일 23:59
-
-        List<Review> totalReviews = List.of(
-            notInPeriodReview1,
-            notInPeriodReview2,
-            notInPeriodReview3,
-            reviewToday2,
-            reviewToday1,
-            review2,
-            review1
-        );
-        List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(review2, PeriodType.WEEKLY, 1L, 2.0),
-            createPopularReview(review1, PeriodType.WEEKLY, 2L, 1.0)
-        );
-
-        // when
-        List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.WEEKLY, contribution, currentTime);
-
-        // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(1).getRank()).isEqualTo(2L);
-        assertThat(result.get(1).getScore()).isEqualTo(1.0);
-        then(popularReviewRepository).should().saveAll(any());
-        then(contribution).should().incrementWriteCount(expectedPopularReviews.size());
-
-    }
-
-    @Test
-    @DisplayName("일간 인기리뷰:7/24일 데이터를 가져온다(한국시간기준)")
-    void 일기간_기준으로_인기리뷰를_저장한다() {
-
-        //given
-        Instant currentTime = Instant.parse("2025-07-24T15:05:00Z"); // 한국시간 7/25일 00:05
-        Review notInPeriodReview1 = createReview(3L, 3L, "2025-06-01T00:00:00Z");
-        Review notInPeriodReview2 = createReview(2L, 2L,
-            "2025-07-23T14:59:00Z"); // 한국시간 7/23일 23:59
-        Review reviewYesterday1 = createReview(1L, 1L, "2025-07-23T15:00:00Z");  // 한국시간 7/24일 00:00
-        Review reviewYesterday2 = createReview(2L, 2L, "2025-07-24T14:59:00Z");  // 한국시간 7/24일 23:59
-        Review reviewToday1 = createReview(3L, 3L, "2025-07-24T15:00:00Z");  // 한국시간 7/25일 00:00
-        Review reviewToday2 = createReview(4L, 4L, "2025-07-25T14:59:59Z");  // 한국시간 7/25일 23:59
-
-        List<Review> totalReviews = List.of(
-            notInPeriodReview1,
-            notInPeriodReview2,
-            reviewYesterday2,
-            reviewYesterday1,
-            reviewToday1,
-            reviewToday2
-        );
-        List<PopularReview> expectedPopularReviews = List.of(
-            createPopularReview(reviewYesterday2, PeriodType.DAILY, 1L, 2.0),
-            createPopularReview(reviewYesterday1, PeriodType.DAILY, 2L, 1.0)
-        );
-
-        // when
-        List<PopularReview> result = popularReviewService.savePopularReviewsByPeriod(totalReviews,
-            PeriodType.DAILY, contribution, currentTime);
-
-        // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getRank()).isEqualTo(1L);
-        assertThat(result.get(0).getScore()).isEqualTo(2.0);
-        assertThat(result.get(1).getRank()).isEqualTo(2L);
-        assertThat(result.get(1).getScore()).isEqualTo(1.0);
-        then(popularReviewRepository).should().saveAll(any());
-        then(contribution).should().incrementWriteCount(expectedPopularReviews.size());
-    }
-
 
     @Test
     void getPopularReviews_정상작동() {
@@ -497,6 +402,9 @@ public class PopularReviewServiceTest {
         ReflectionTestUtils.setField(review, "likeCount", likeCount);
         ReflectionTestUtils.setField(review, "commentCount", commentCount);
         ReflectionTestUtils.setField(review, "createdAt", Instant.parse(createdAt));
+
+        UUID reviewId = UUID.randomUUID();
+        ReflectionTestUtils.setField(review, "id", reviewId);
 
         return review;
     }

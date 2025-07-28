@@ -2,11 +2,11 @@ package com.sprint.deokhugam.domain.popularreview.service;
 
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
-import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.data.domain.Sort;
@@ -24,9 +24,8 @@ public interface PopularReviewService {
 
     void validateJobNotDuplicated(Instant referenceTime);
 
-
-    List<PopularReview> savePopularReviewsByPeriod(List<Review> totalReviews,
-        PeriodType period, StepContribution contribution, Instant today);
+    List<PopularReview> savePopularReviewsByPeriod(PeriodType period, Instant today,
+        Map<UUID, Long> commentMap, Map<UUID, Long> likeMap, StepContribution contribution);
 
     /**
      * 특정 사용자의 기간별 인기 리뷰 점수 합계를 반환

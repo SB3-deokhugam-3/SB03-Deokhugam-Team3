@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CommentRepository extends JpaRepository<Comment, UUID>, CustomCommentRepository{
-
+public interface CommentRepository extends JpaRepository<Comment, UUID>, CustomCommentRepository {
+    
     Long countByReviewId(UUID reviewId);
 
     @Query(value = "SELECT * FROM comments WHERE id = :id", nativeQuery = true)
