@@ -144,7 +144,7 @@ class CommentRepositoryTest {
 
         // given
         Instant start = Instant.MIN;
-        Instant end = Instant.MAX;
+        Instant end = Instant.parse("9999-12-31T23:59:59Z");
         Comment comment = createComment("테스트용", Instant.now());
         em.persist(comment);
         em.flush();
@@ -155,11 +155,11 @@ class CommentRepositoryTest {
 
         // then
         assertEquals(1, result.size());
-        assert(result.values().contains(1L));
+        assert (result.values().contains(1L));
     }
 
     @Test
-    void  ASC_정렬로_댓글을_조회하면_오래된_순으로_반환된다() {
+    void ASC_정렬로_댓글을_조회하면_오래된_순으로_반환된다() {
         // given
         Instant baseTime = Instant.now();
         Comment comment1 = createCommentWithTime("댓1", baseTime.minusSeconds(300));
