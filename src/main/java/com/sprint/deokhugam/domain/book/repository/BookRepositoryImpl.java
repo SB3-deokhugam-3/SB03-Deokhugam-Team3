@@ -176,7 +176,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
             default -> orderSpecifiers.add(new OrderSpecifier<>(order, book.title));
         }
 
-        // 보조 정렬 조건 (생성시간)
+        // 보조 정렬 조건 ( 생성시간 )
         orderSpecifiers.add(new OrderSpecifier<>(timeOrder, book.createdAt));
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);

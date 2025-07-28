@@ -1,6 +1,7 @@
 package com.sprint.deokhugam.domain.user.controller.api;
 
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
+import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
@@ -238,9 +239,9 @@ public interface UserApi {
                 schema = @Schema(implementation = PopularReviewDto.class))
         )
     })
-    ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularUsers(
+    ResponseEntity<CursorPageResponse<PowerUserDto>> getPopularUsers(
         @Parameter(description = "랭킹 기간")
-        @RequestParam(defaultValue = "DAILY") PeriodType period,
+        @RequestParam(defaultValue = "DAILY") String period,
 
         @Parameter(description = "정렬 방향")
         @RequestParam(defaultValue = "ASC") String direction,
@@ -249,7 +250,7 @@ public interface UserApi {
         @RequestParam(required = false) String cursor,
 
         @Parameter(description = "보조 커서(createdAt)")
-        @RequestParam(required = false) Instant after,
+        @RequestParam(required = false) String after,
 
         @Parameter(description = "페이지 크기")
         @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit
