@@ -28,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceImplTest {
@@ -41,7 +42,8 @@ class NotificationServiceImplTest {
     @InjectMocks
     private NotificationServiceImpl notificationService;
 
-    private User mockUser;
+    private User mockUser1;
+    private User mockUser2;
     private Book mockBook;
     private Review mockReview;
     private Instant now;
@@ -50,11 +52,19 @@ class NotificationServiceImplTest {
     void setUp() {
         now = Instant.now();
 
-        mockUser = User.builder()
+        mockUser1 = User.builder()
             .email("test@example.com")
             .nickname("tester")
             .password("password123")
             .build();
+        ReflectionTestUtils.setField(mockUser1, "id", UUID.randomUUID());
+
+        mockUser2 = User.builder()
+            .email("test@example.com")
+            .nickname("tester")
+            .password("password123")
+            .build();
+        ReflectionTestUtils.setField(mockUser2, "id", UUID.randomUUID());
 
         mockBook = Book.builder()
             .title("테스트책")
@@ -69,9 +79,10 @@ class NotificationServiceImplTest {
         mockReview = Review.builder()
             .rating(5)
             .content("좋은 책입니다.")
-            .user(mockUser)
+            .user(mockUser1)
             .book(mockBook)
             .build();
+        ReflectionTestUtils.setField(mockUser1, "id", UUID.randomUUID());
     }
 
     @Test
@@ -147,11 +158,11 @@ class NotificationServiceImplTest {
         // given
         String content = "새로운 알림";
         boolean isConfirmed = false;
-        UUID userId = UUID.randomUUID();
-        UUID reviewId = UUID.randomUUID();
+        UUID userId = mockUser2.getId();
+        UUID reviewId = mockReview.getId();
 
         Notification fakeNotification = Notification.builder()
-            .user(mockUser)
+            .user(mockUser2)
             .review(mockReview)
             .content(content)
             .isConfirmed(isConfirmed)
@@ -170,16 +181,34 @@ class NotificationServiceImplTest {
         when(notificationMapper.toDto(fakeNotification)).thenReturn(expectedDto);
 
         // when
-        NotificationDto result = notificationService.create(mockUser, mockReview, content,
+        Optional<NotificationDto> result = notificationService.create(mockUser2, mockReview, content,
             isConfirmed);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(result.content()).isEqualTo(content);
-        assertThat(result.confirmed()).isFalse();
+        assertThat(result).isPresent();
+        NotificationDto dto = result.get();
+
+        assertThat(dto.content()).isEqualTo(content);
+        assertThat(dto.confirmed()).isFalse();
 
         verify(notificationRepository).save(any(Notification.class));
         verify(notificationMapper).toDto(fakeNotification);
+    }
+
+    @Test
+    void 자기_글에_대한_알림은_생성되지_않는다() {
+        // given
+        // mockUser가 mockReview 작성자와 같음 (자기 글)
+        String content = "자기 글 알림";
+        boolean isConfirmed = false;
+
+        // when
+        Optional<NotificationDto> result = notificationService.create(mockUser1, mockReview, content, isConfirmed);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(notificationRepository, times(0)).save(any(Notification.class));
+        verify(notificationMapper, times(0)).toDto(any(Notification.class));
     }
 
     @Test
@@ -193,7 +222,7 @@ class NotificationServiceImplTest {
     @Test
     void review값이_null이면_알림_생성_실패한다() {
         // when & then
-        assertThatThrownBy(() -> notificationService.create(mockUser, null, "내용", false))
+        assertThatThrownBy(() -> notificationService.create(mockUser1, null, "내용", false))
             .isInstanceOf(InvalidUserRequestException.class)
             .hasMessageContaining("null 값이 들어왔습니다.");
     }
@@ -201,7 +230,7 @@ class NotificationServiceImplTest {
     @Test
     void content값이_null이면_알림_생성_실패한다() {
         // when & then
-        assertThatThrownBy(() -> notificationService.create(mockUser, mockReview, null, false))
+        assertThatThrownBy(() -> notificationService.create(mockUser1, mockReview, null, false))
             .isInstanceOf(InvalidUserRequestException.class)
             .hasMessageContaining("null 값이 들어왔습니다.");
     }
@@ -212,7 +241,7 @@ class NotificationServiceImplTest {
         UUID notificationId = UUID.randomUUID();
 
         Notification mockNotification = Notification.builder()
-            .user(mockUser)
+            .user(mockUser1)
             .review(mockReview)
             .content("알림 내용")
             .isConfirmed(false)
