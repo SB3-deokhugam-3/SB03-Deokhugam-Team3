@@ -1,9 +1,16 @@
 package com.sprint.deokhugam.domain.user.controller;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -13,6 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
+import com.sprint.deokhugam.domain.poweruser.service.PowerUserService;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
 import com.sprint.deokhugam.domain.user.dto.request.UserCreateRequest;
 import com.sprint.deokhugam.domain.user.dto.request.UserLoginRequest;
@@ -20,6 +29,11 @@ import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
 import com.sprint.deokhugam.domain.user.exception.UserNotFoundException;
 import com.sprint.deokhugam.domain.user.service.UserService;
+import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.enums.PeriodType;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -42,6 +56,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private PowerUserService powerUserService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -325,5 +342,251 @@ class UserControllerTest {
 
         result.andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+    }
+
+    @Test
+    void 파워유저_목록_조회시_200을_반환() throws Exception {
+        // given
+        PowerUserDto powerUser1 = PowerUserDto.builder()
+            .userId(UUID.randomUUID())
+            .nickname("powerUser1")
+            .period("DAILY")
+            .rank(1L)
+            .score(95.5)
+            .reviewScoreSum(80.0)
+            .likeCount(15L)
+            .commentCount(10L)
+            .createdAt(Instant.now())
+            .build();
+
+        PowerUserDto powerUser2 = PowerUserDto.builder()
+            .userId(UUID.randomUUID())
+            .nickname("powerUser2")
+            .period("DAILY")
+            .rank(2L)
+            .score(85.0)
+            .reviewScoreSum(70.0)
+            .likeCount(12L)
+            .commentCount(8L)
+            .createdAt(Instant.now())
+            .build();
+
+        CursorPageResponse<PowerUserDto> response = new CursorPageResponse<>(
+            List.of(powerUser1, powerUser2),
+            "3",
+            Instant.now().toString(),
+            50,
+            100L,
+            true
+        );
+
+        when(powerUserService.getPowerUsersWithCursor(
+            eq(PeriodType.DAILY), eq("ASC"), eq(50), isNull(), isNull()))
+            .thenReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power")
+            .param("period", "DAILY")
+            .param("direction", "ASC")
+            .param("limit", "50"));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.content[0].nickname").value("powerUser1"))
+            .andExpect(jsonPath("$.content[0].rank").value(1))
+            .andExpect(jsonPath("$.content[0].score").value(95.5))
+            .andExpect(jsonPath("$.content[1].nickname").value("powerUser2"))
+            .andExpect(jsonPath("$.content[1].rank").value(2))
+            .andExpect(jsonPath("$.nextCursor").value("3"))
+            .andExpect(jsonPath("$.hasNext").value(true))
+            .andExpect(jsonPath("$.totalElements").value(100));
+    }
+
+    @Test
+    void 파워유저_목록_조회시_기본값으로_조회() throws Exception {
+        // given
+        CursorPageResponse<PowerUserDto> response = new CursorPageResponse<>(
+            Collections.emptyList(),
+            null,
+            null,
+            50,
+            0L,
+            false
+        );
+
+        when(powerUserService.getPowerUsersWithCursor(
+            eq(PeriodType.DAILY), eq("ASC"), eq(50), isNull(), isNull()))
+            .thenReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power"));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(0))
+            .andExpect(jsonPath("$.hasNext").value(false));
+
+        verify(powerUserService).getPowerUsersWithCursor(
+            PeriodType.DAILY, "ASC", 50, null, null);
+    }
+
+    @Test
+    void 파워유저_목록_조회시_커서_기반_페이지네이션이_작동() throws Exception {
+        // given
+        CursorPageResponse<PowerUserDto> response = new CursorPageResponse<>(
+            Collections.emptyList(), "next", "after", 20, 100L, true);
+
+        when(powerUserService.getPowerUsersWithCursor(
+            eq(PeriodType.WEEKLY), eq("ASC"), eq(20), eq("cursor"), eq("after")))
+            .thenReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power")
+            .param("period", "WEEKLY")
+            .param("limit", "20")
+            .param("cursor", "cursor")
+            .param("after", "after"));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.nextCursor").value("next"))
+            .andExpect(jsonPath("$.nextAfter").value("after"))
+            .andExpect(jsonPath("$.hasNext").value(true));
+    }
+
+    @Test
+    void 파워유저_목록_조회시_DESC_정렬() throws Exception {
+        // given
+        CursorPageResponse<PowerUserDto> response = new CursorPageResponse<>(
+            Collections.emptyList(), null, null, 50, 0L, false);
+
+        when(powerUserService.getPowerUsersWithCursor(
+            eq(PeriodType.DAILY), eq("DESC"), eq(50), isNull(), isNull()))
+            .thenReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power")
+            .param("direction", "DESC"));
+
+        // then
+        result.andExpect(status().isOk());
+        verify(powerUserService).getPowerUsersWithCursor(
+            PeriodType.DAILY, "DESC", 50, null, null);
+    }
+
+    @Test
+    void 파워유저_목록_조회시_잘못된_direction이면_400을_반환() throws Exception {
+        when(powerUserService.getPowerUsersWithCursor(
+            any(PeriodType.class), eq("INVALID"), anyInt(), any(), any()))
+            .thenThrow(new IllegalArgumentException("잘못된 정렬 방향"));
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power")
+            .param("direction", "INVALID"));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 파워유저_목록_조회시_전체_기간_필터링이_작동() throws Exception {
+        // given
+        CursorPageResponse<PowerUserDto> response = new CursorPageResponse<>(
+            Collections.emptyList(), null, null, 50, 0L, false);
+
+        when(powerUserService.getPowerUsersWithCursor(
+            eq(PeriodType.ALL_TIME), eq("ASC"), eq(50), isNull(), isNull()))
+            .thenReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power")
+            .param("period", "ALL_TIME"));
+
+        // then
+        result.andExpect(status().isOk());
+        verify(powerUserService).getPowerUsersWithCursor(
+            PeriodType.ALL_TIME, "ASC", 50, null, null);
+    }
+
+    @Test
+    void 파워유저_목록_조회시_잘못된_기간_타입이면_400을_반환() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power")
+            .param("period", "INVALID"));
+
+        // then
+        result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 파워유저_목록_조회시_빈_결과를_반환() throws Exception {
+        // given
+        CursorPageResponse<PowerUserDto> response = new CursorPageResponse<>(
+            Collections.emptyList(), null, null, 50, 0L, false);
+
+        when(powerUserService.getPowerUsersWithCursor(
+            eq(PeriodType.DAILY),
+            eq("ASC"),
+            eq(50),
+            isNull(),
+            isNull()
+        )).thenReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power"));
+
+        // then
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(0))
+            .andExpect(jsonPath("$.hasNext").value(false));
+
+        verify(powerUserService).getPowerUsersWithCursor(
+            PeriodType.DAILY, "ASC", 50, null, null);
+    }
+
+
+
+    @Test
+    void 파워유저_목록_조회시_최대_사이즈_제한을_확인() throws Exception {
+        // given
+        CursorPageResponse<PowerUserDto> response = new CursorPageResponse<>(
+            Collections.emptyList(), null, null, 100, 0L, false);
+
+        when(powerUserService.getPowerUsersWithCursor(
+            eq(PeriodType.DAILY), eq("ASC"), eq(100), isNull(), isNull()))
+            .thenReturn(response);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power")
+            .param("limit", "100"));
+
+        // then
+        result.andExpect(status().isOk());
+        verify(powerUserService).getPowerUsersWithCursor(
+            PeriodType.DAILY, "ASC", 100, null, null);
+    }
+
+    @Test
+    void 파워유저_목록_조회시_서비스_예외가_발생하면_500을_반환() throws Exception {
+        // given
+        when(powerUserService.getPowerUsersWithCursor(
+            any(PeriodType.class),
+            anyString(),
+            anyInt(),
+            nullable(String.class),
+            nullable(String.class)
+        )).thenThrow(new RuntimeException("Internal server error"));
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/users/power"));
+
+        // then
+        result.andExpect(status().isInternalServerError());
+        verify(powerUserService).getPowerUsersWithCursor(
+            PeriodType.DAILY, "ASC", 50, null, null);
     }
 }

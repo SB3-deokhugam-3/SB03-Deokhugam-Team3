@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -84,20 +85,22 @@ public class PopularReviewServiceImpl implements PopularReviewService {
     /* 배치에서 사용 - 오늘 이미 실행한 배치인지 검증 */
     public void validateJobNotDuplicated(Instant referenceTime)
         throws BatchAlreadyRunException {
-        ZoneId zoneId = ZoneId.of("Asia/Seoul");
-
-        Instant startOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getStartInstant(
-            referenceTime, zoneId);
-        Instant endOfDay = com.sprint.deokhugam.global.enums.PeriodType.DAILY.getEndInstant(
-            referenceTime, zoneId);
-
-        Boolean isAlreadyExist = popularReviewRepository.existsByCreatedAtBetween(startOfDay,
-            endOfDay);
-
-        if (isAlreadyExist) {
-            throw new BatchAlreadyRunException("Review",
-                Map.of("execution datetime", Instant.now()));
+        // 모든 기간에 대해 체크 ( referenceTime 기준으로 )
+        for (PeriodType period : PeriodType.values()) {
+            long existingCount = popularReviewRepository.countByPeriodAndCreatedDate(period, referenceTime);
+            if (existingCount > 0) {
+                log.info("기간 {} 배치 이미 실행됨 - 날짜: {}, {}건 존재",
+                    period, referenceTime, existingCount);
+                throw new BatchAlreadyRunException("PopularReview",
+                    Map.of(
+                        "period", period.toString(),
+                        "reference_date", referenceTime.toString(),
+                        "existing_count", existingCount,
+                        "execution_datetime", Instant.now()
+                    ));
+            }
         }
+        log.info("배치 중복 검증 통과 - 날짜: {}", referenceTime);
     }
 
     /* 배치에서 사용 */
@@ -142,5 +145,31 @@ public class PopularReviewServiceImpl implements PopularReviewService {
         contribution.incrementWriteCount(result.size());
 
         return result;
+    }
+
+    @Override
+    public Double getUserPopularityScoreSum(UUID userId, PeriodType period) {
+        if (userId == null) {
+            throw new IllegalArgumentException("사용자 ID는 필수입니다.");
+        }
+        if (period == null) {
+            throw new IllegalArgumentException("기간 타입은 필수입니다.");
+        }
+
+        log.debug("사용자 인기 리뷰 점수 합계 조회 - userId: {}, period: {}", userId, period);
+
+        Double scoreSum = popularReviewRepository.findScoreSumByUserIdAndPeriod(userId, period);
+
+        log.debug("사용자 인기 리뷰 점수 합계 조회 결과 - userId: {}, period: {}, scoreSum: {}",
+            userId, period, scoreSum);
+
+        return scoreSum != null ? scoreSum : 0.0;
+    }
+
+    /**
+     * 특정 기간과 날짜의 기존 인기 리뷰 데이터 조회
+     */
+    private List<PopularReview> getExistingPopularReviewsByPeriodAndDate(PeriodType period, Instant date) {
+        return popularReviewRepository.findByPeriodAndCreatedDate(period, date);
     }
 }
