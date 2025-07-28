@@ -15,7 +15,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
-import com.sprint.deokhugam.domain.book.storage.s3.S3Storage;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
@@ -98,9 +98,10 @@ public class PopularReviewServiceTest {
     @Test
     void 오늘날짜로_데이터가_생성된게_없다면_에러를_반환하지_않는다() {
         //given
-        given(popularReviewRepository.existsByCreatedAtBetween(any(Instant.class),
-            any(Instant.class)))
-            .willReturn(false);
+        for (PeriodType period : PeriodType.values()) {
+            given(popularReviewRepository.countByPeriod(period))
+                .willReturn(0L);
+        }
 
         //when
         Executable executable = () -> popularReviewService.validateJobNotDuplicated(
@@ -113,9 +114,9 @@ public class PopularReviewServiceTest {
     @Test
     void 오늘날짜로_데이터가_생성된게_이미_있다면_BatchAlreadyRunException에러를_반환한다() {
         //given
-        given(popularReviewRepository.existsByCreatedAtBetween(any(Instant.class),
-            any(Instant.class)))
-            .willReturn(true);
+        // 첫 번째로 체크되는 PeriodType에서만 1을 반환
+        given(popularReviewRepository.countByPeriod(any(PeriodType.class)))
+            .willReturn(1L);
 
         //when
         Throwable thrown = catchThrowable(() -> popularReviewService.validateJobNotDuplicated(

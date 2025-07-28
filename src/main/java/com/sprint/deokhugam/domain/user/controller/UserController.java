@@ -1,5 +1,7 @@
 package com.sprint.deokhugam.domain.user.controller;
 
+import com.sprint.deokhugam.domain.poweruser.dto.PowerUserDto;
+import com.sprint.deokhugam.domain.poweruser.service.PowerUserService;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.user.controller.api.UserApi;
 import com.sprint.deokhugam.domain.user.dto.data.UserDto;
@@ -15,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController implements UserApi {
 
     private final UserService userService;
+    private final PowerUserService powerUserService;
 
     public ResponseEntity<UserDto> create(
         UserCreateRequest userCreateRequest
@@ -104,12 +109,18 @@ public class UserController implements UserApi {
             .body(deletedUser);
     }
 
-    public ResponseEntity<CursorPageResponse<PopularReviewDto>> getPopularUsers(
-        PeriodType period, String direction, String cursor, Instant after, int limit
+    public ResponseEntity<CursorPageResponse<PowerUserDto>> getPopularUsers(
+        String period, String direction, String cursor, String after, int limit
     ) {
+        log.info("[UserController] 파워유저 목록 조회 요청: period: {}, direction: {}, limit: {}, cursor: {}, after: {}",
+            period, direction, limit, cursor, after);
 
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(null);
+        PeriodType periodType = PeriodType.valueOf(period.toUpperCase());
+        CursorPageResponse<PowerUserDto> response = powerUserService.getPowerUsersWithCursor(
+            periodType, direction, limit, cursor, after);
+
+        log.info("[UserController] 파워유저 목록 조회 완료: {} 명", response.content().size());
+
+        return ResponseEntity.ok(response);
     }
 }

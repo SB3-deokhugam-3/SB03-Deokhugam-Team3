@@ -238,7 +238,7 @@ CREATE TABLE power_users
     period           VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     score            DOUBLE PRECISION NOT NULL,
     rank             BIGINT           NOT NULL,
-    review_score_num DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    review_score_sum DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     like_count       BIGINT           NOT NULL DEFAULT 0,
     comment_count    BIGINT           NOT NULL DEFAULT 0,
 
