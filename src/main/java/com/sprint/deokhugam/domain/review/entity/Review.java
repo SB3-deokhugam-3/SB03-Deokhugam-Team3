@@ -2,6 +2,7 @@ package com.sprint.deokhugam.domain.review.entity;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.comment.entity.Comment;
+import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.reviewlike.entity.ReviewLike;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
@@ -59,6 +60,9 @@ public class Review extends BaseUpdatableEntity {
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "review", cascade = CascadeType.REMOVE)
+    private List<PopularReview> popularReviews = new ArrayList<>();
 
     public Review(Integer rating, String content, Book book, User user) {
         this.rating = rating;

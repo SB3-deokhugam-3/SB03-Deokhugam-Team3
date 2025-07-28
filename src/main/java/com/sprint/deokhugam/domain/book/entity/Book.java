@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.domain.book.entity;
 
+import com.sprint.deokhugam.domain.popularbook.entity.PopularBook;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
 import jakarta.persistence.CascadeType;
@@ -59,6 +60,8 @@ public class Book extends BaseUpdatableEntity  {
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Book> books = new ArrayList<>();
 
     public void updateTitle(String title) {
         this.title = title;
