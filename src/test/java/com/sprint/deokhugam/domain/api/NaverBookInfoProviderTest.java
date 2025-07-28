@@ -41,28 +41,29 @@ class NaverBookInfoProviderTest {
 
     @Mock
     private WebClient.ResponseSpec responseSpec;
-    
+
     @Test
     void isbn으로_도서_정보를_불러올_수_있다() {
 
         // given
         String jsonResponse = """
-        {
-          "items": [
             {
-              "title": "아유 하기 싫어",
-              "author": "박명수",
-              "description": "하기 싫다ㅏㅏㅏ",
-              "publisher": "무한도전",
-              "pubdate": "19990702",
-              "isbn": "1999070212345",
-              "image": "http://dummyimage.com/100.jpg"
+              "items": [
+                {
+                  "title": "아유 하기 싫어",
+                  "author": "박명수",
+                  "description": "하기 싫다ㅏㅏㅏ",
+                  "publisher": "무한도전",
+                  "pubdate": "19990702",
+                  "isbn": "1999070212345",
+                  "image": "http://dummyimage.com/100.jpg"
+                }
+              ]
             }
-          ]
-        }
-        """;
+            """;
 
-        given(naverApiClient.get()).willReturn((WebClient.RequestHeadersUriSpec) requestHeadersUriSpec);
+        given(naverApiClient.get()).willReturn(
+            (WebClient.RequestHeadersUriSpec) requestHeadersUriSpec);
         given(requestHeadersUriSpec.uri(any(Function.class))).willReturn(requestHeadersSpec);
         given(requestHeadersSpec.retrieve()).willReturn(responseSpec);
         given(responseSpec.bodyToMono(String.class)).willReturn(Mono.just(jsonResponse));
@@ -87,12 +88,13 @@ class NaverBookInfoProviderTest {
         // given
         String noInfoIsbn = "1999070212345";
         String jsonResponse = """
-        {
-          "items": []
-        }
-        """;
+            {
+              "items": []
+            }
+            """;
 
-        given(naverApiClient.get()).willReturn((WebClient.RequestHeadersUriSpec) requestHeadersUriSpec);
+        given(naverApiClient.get()).willReturn(
+            (WebClient.RequestHeadersUriSpec) requestHeadersUriSpec);
         given(requestHeadersUriSpec.uri(any(Function.class))).willReturn(requestHeadersSpec);
         given(requestHeadersSpec.retrieve()).willReturn(responseSpec);
         given(responseSpec.bodyToMono(String.class)).willReturn(Mono.just(jsonResponse));

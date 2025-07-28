@@ -62,7 +62,8 @@ class S3StorageTest {
         String key = s3Storage.uploadImage(file);
 
         // then
-        ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
+        ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(
+            PutObjectRequest.class);
         verify(s3Client).putObject(requestCaptor.capture(), any(RequestBody.class));
         PutObjectRequest capturedRequest = requestCaptor.getValue();
         assertThat(capturedRequest.bucket()).isEqualTo("test-bucket");
@@ -126,7 +127,8 @@ class S3StorageTest {
 
         // then
         assertThat(url).isEqualTo("https://fake-presigned-url.com/image/test.jpg");
-        ArgumentCaptor<GetObjectPresignRequest> captor = ArgumentCaptor.forClass(GetObjectPresignRequest.class);
+        ArgumentCaptor<GetObjectPresignRequest> captor = ArgumentCaptor.forClass(
+            GetObjectPresignRequest.class);
         verify(s3Presigner).presignGetObject(captor.capture());
         assertThat(captor.getValue().signatureDuration()).isEqualTo(Duration.ofMinutes(10));
     }
@@ -144,7 +146,8 @@ class S3StorageTest {
         String key = s3Storage.uploadFile(tmpFile);
 
         // then
-        ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
+        ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(
+            PutObjectRequest.class);
         verify(s3Client).putObject(requestCaptor.capture(), any(RequestBody.class));
         PutObjectRequest capturedRequest = requestCaptor.getValue();
         assertThat(capturedRequest.bucket()).isEqualTo("test-bucket");

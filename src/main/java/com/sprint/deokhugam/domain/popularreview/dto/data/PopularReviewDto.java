@@ -4,7 +4,7 @@ import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
 import java.util.UUID;
 
-public record PopularReviewDto (
+public record PopularReviewDto(
     UUID id,
     UUID reviewId,
     UUID bookId,
@@ -20,6 +20,6 @@ public record PopularReviewDto (
     double score,
     Long likeCount,
     Long commentCount
-){
+) {
 
 }

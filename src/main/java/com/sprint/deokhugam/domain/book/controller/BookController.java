@@ -57,14 +57,15 @@ public class BookController implements BookApi {
 
     /**
      * 도서 목록 조회 ( 키워드 검색 + 커서 페이지네이션 )
-     * @param keyword 검색 키워드 ( 제목, 저자, ISBN에서 부분 일치 )
-     * @param orderBy 정렬 기준 ( 제목, 출판일, 평점, 리뷰수 )
+     *
+     * @param keyword   검색 키워드 ( 제목, 저자, ISBN에서 부분 일치 )
+     * @param orderBy   정렬 기준 ( 제목, 출판일, 평점, 리뷰수 )
      * @param direction 정렬 방향 ( ASC, DESC )
-     * @param cursor 커서 값 ( 이전 페이지 마지막 요소의 정렬 기준 값 )
-     * @param after 이전 페이지 마지막 요소의 생성 시간
-     * @param limit 페이지 크기
+     * @param cursor    커서 값 ( 이전 페이지 마지막 요소의 정렬 기준 값 )
+     * @param after     이전 페이지 마지막 요소의 생성 시간
+     * @param limit     페이지 크기
      * @return 도서 목록 응답
-     * */
+     */
 
     @Override
     @GetMapping
@@ -76,7 +77,8 @@ public class BookController implements BookApi {
         @RequestParam(required = false) Long after,
         @RequestParam(defaultValue = "50") Integer limit
     ) {
-        log.info("[BookController] 도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
+        log.info(
+            "[BookController] 도서 목록 조회 요청 - keyword: {}, orderBy: {}, direction: {}, cursor: {}, after: {}, limit: {}",
             keyword, orderBy, direction, cursor, after, limit);
 
         // Request DTO 생성
@@ -115,7 +117,7 @@ public class BookController implements BookApi {
     }
 
     @Override
-    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, path ="/{bookId}")
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, path = "/{bookId}")
     public ResponseEntity<BookDto> update(
         @PathVariable UUID bookId,
         @Valid @RequestPart("bookData") BookUpdateRequest bookData,
@@ -129,13 +131,12 @@ public class BookController implements BookApi {
     }
 
     /**
-     * 이미지 기반 ISBN 인식
-     * 도서 이미지를 통해 ISBN을 인식합니다.
+     * 이미지 기반 ISBN 인식 도서 이미지를 통해 ISBN을 인식합니다.
      *
      * @param image 도서 이미지
      * @return 인식된 ISBN 문자열
      * @throws OcrException OCR 처리 중 오류 발생 시
-     * */
+     */
     @Override
     @PostMapping("/isbn/ocr")
     public ResponseEntity<String> extractIsbnFromImage(

@@ -13,7 +13,6 @@ import static org.mockito.Mockito.never;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import com.sprint.deokhugam.domain.book.exception.BookNotFoundException;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.review.dto.data.ReviewDto;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewCreateRequest;
 import com.sprint.deokhugam.domain.review.dto.request.ReviewGetRequest;
@@ -30,6 +29,7 @@ import com.sprint.deokhugam.domain.user.repository.UserRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.exception.InvalidTypeException;
 import com.sprint.deokhugam.global.exception.NotFoundException;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -50,24 +50,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 @DisplayName("ReviewService 단위 테스트")
 public class ReviewServiceImplTest {
 
+    UUID bookId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    Instant now = Instant.now();
     @Mock
     private ReviewRepository reviewRepository;
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private BookRepository bookRepository;
-
     @Mock
     private ReviewLikeRepository reviewLikeRepository;
-
     @Mock
     private ReviewMapper reviewMapper;
-
     @Mock
     private S3Storage s3Storage;
-
     @InjectMocks
     private ReviewServiceImpl reviewService;
     private CursorPageResponse<ReviewDto> mockResponse;
@@ -271,12 +268,8 @@ public class ReviewServiceImplTest {
         );
     }
 
-    UUID bookId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    Instant now = Instant.now();
-
     @Test
-    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다()  {
+    void 유효한_입력일_경우_리뷰를_정상적으로_생성한다() {
         // given
         Book book = mock(Book.class);
         User user = mock(User.class);
@@ -348,7 +341,8 @@ public class ReviewServiceImplTest {
         ReviewDto expectedDto = createDto(reviewId);
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(savedReview));
         given(reviewMapper.toDto(savedReview, s3Storage)).willReturn(expectedDto);
-        given(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, requestUserId)).willReturn(false);
+        given(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, requestUserId)).willReturn(
+            false);
 
         // when
         ReviewDto result = reviewService.findById(reviewId, requestUserId);

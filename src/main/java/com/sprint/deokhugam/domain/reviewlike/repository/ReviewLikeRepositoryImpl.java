@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ReviewLikeRepositoryImpl implements ReviewLikeRepositoryCustom {
 
-    private final JPAQueryFactory queryFactory;
     private static final QReviewLike reviewLike = QReviewLike.reviewLike;
+    private final JPAQueryFactory queryFactory;
 
     // 특정 기간 동안 리뷰에 눌린 좋아요 개수
     @Override

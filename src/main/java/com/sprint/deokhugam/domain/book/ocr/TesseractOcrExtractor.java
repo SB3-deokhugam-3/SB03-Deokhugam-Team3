@@ -1,7 +1,9 @@
 package com.sprint.deokhugam.domain.book.ocr;
 
 import com.sprint.deokhugam.domain.book.exception.OcrException;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -180,7 +182,8 @@ public class TesseractOcrExtractor implements OcrExtractor {
             throw OcrException.clientError("지원하지 않는 파일 형식입니다.");
         }
 
-        List<String> supportedTypes = List.of("image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp");
+        List<String> supportedTypes = List.of("image/jpeg", "image/jpg", "image/png", "image/gif",
+            "image/bmp", "image/webp");
         if (!supportedTypes.contains(contentType.toLowerCase())) {
             throw OcrException.clientError("지원되지 않는 이미지 형식입니다. (지원 형식: JPEG, PNG, GIF, BMP, WEBP)");
         }
@@ -193,8 +196,8 @@ public class TesseractOcrExtractor implements OcrExtractor {
     }
 
     /**
-     *  여러 페이지 분할 모드로 시도
-     *  */
+     * 여러 페이지 분할 모드로 시도
+     */
     private String tryOcrWithMultipleModes(BufferedImage image) throws TesseractException {
         for (int mode : PAGE_SEG_MODES) {
             try {
@@ -293,7 +296,9 @@ public class TesseractOcrExtractor implements OcrExtractor {
     }
 
     private String cleanIsbn(String rawIsbn) {
-        if (rawIsbn == null) return null;
+        if (rawIsbn == null) {
+            return null;
+        }
 
         String cleaned = rawIsbn.replaceAll("(?i)isbn[-\\s:]*", "")
             .replaceAll("[^\\d]", "");
@@ -302,7 +307,9 @@ public class TesseractOcrExtractor implements OcrExtractor {
     }
 
     private boolean isValidIsbnFormat(String isbn) {
-        if (isbn == null) return false;
+        if (isbn == null) {
+            return false;
+        }
 
         if (isbn.length() == 13) {
             return isbn.startsWith("978") || isbn.startsWith("979");
@@ -314,7 +321,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
 
     /**
      * OCR 오인식 문자 보정 개선
-     * */
+     */
     private String correctOcrErrors(String text) {
         String corrected = text;
 
@@ -345,7 +352,7 @@ public class TesseractOcrExtractor implements OcrExtractor {
 
     /**
      * 기존 이미지 크기 최적화
-     * */
+     */
     private BufferedImage resizeImageForOcr(BufferedImage image) {
         try {
             int width = image.getWidth();
@@ -375,9 +382,11 @@ public class TesseractOcrExtractor implements OcrExtractor {
             Graphics2D g2d = resized.createGraphics();
 
             // 고품질 리사이징 설정
-            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
 
             g2d.drawImage(image, 0, 0, targetWidth, targetHeight, null);
             g2d.dispose();

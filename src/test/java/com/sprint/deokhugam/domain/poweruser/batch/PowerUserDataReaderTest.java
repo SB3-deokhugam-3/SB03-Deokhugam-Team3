@@ -1,25 +1,24 @@
 package com.sprint.deokhugam.domain.poweruser.batch;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.when;
+
 import com.sprint.deokhugam.domain.poweruser.batch.reader.PowerUserDataReader;
 import com.sprint.deokhugam.domain.poweruser.dto.batch.PowerUserData;
 import com.sprint.deokhugam.domain.poweruser.repository.PowerUserRepository;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.enums.PeriodType;
+import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PowerUserDataReader 테스트")
@@ -39,7 +38,8 @@ class PowerUserDataReaderTest {
     void Daily_기간으로_데이터를_정상적으로_읽음() throws Exception {
         // given
         List<PowerUserData> mockData = createMockPowerUserData(PeriodType.DAILY);
-        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class), any(Instant.class)))
+        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class),
+            any(Instant.class)))
             .thenReturn(mockData);
 
         reader.setPeriod(PeriodType.DAILY);
@@ -67,7 +67,8 @@ class PowerUserDataReaderTest {
     void Weekly_기간으로_데이터를_정상적으로_읽음() throws Exception {
         // given
         List<PowerUserData> mockData = createMockPowerUserData(PeriodType.WEEKLY);
-        when(powerUserRepository.findUserActivityData(eq(PeriodType.WEEKLY), any(Instant.class), any(Instant.class)))
+        when(powerUserRepository.findUserActivityData(eq(PeriodType.WEEKLY), any(Instant.class),
+            any(Instant.class)))
             .thenReturn(mockData);
 
         reader.setPeriod(PeriodType.WEEKLY);
@@ -84,7 +85,8 @@ class PowerUserDataReaderTest {
     void Monthly_기간으로_데이터를_정상적으로_읽음() throws Exception {
         // given
         List<PowerUserData> mockData = createMockPowerUserData(PeriodType.MONTHLY);
-        when(powerUserRepository.findUserActivityData(eq(PeriodType.MONTHLY), any(Instant.class), any(Instant.class)))
+        when(powerUserRepository.findUserActivityData(eq(PeriodType.MONTHLY), any(Instant.class),
+            any(Instant.class)))
             .thenReturn(mockData);
 
         reader.setPeriod(PeriodType.MONTHLY);
@@ -126,7 +128,8 @@ class PowerUserDataReaderTest {
     @Test
     void 빈_데이터_목록인_경우_null을_반환() throws Exception {
         // given
-        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class), any(Instant.class)))
+        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class),
+            any(Instant.class)))
             .thenReturn(List.of());
 
         reader.setPeriod(PeriodType.DAILY);
@@ -142,11 +145,13 @@ class PowerUserDataReaderTest {
     void createForPeriod_팩토리_메서드가_정상_동작() throws Exception {
         // given
         List<PowerUserData> mockData = createMockPowerUserData(PeriodType.DAILY);
-        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class), any(Instant.class)))
+        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class),
+            any(Instant.class)))
             .thenReturn(mockData);
 
         // when
-        PowerUserDataReader factoryReader = PowerUserDataReader.createForPeriod(powerUserRepository, PeriodType.DAILY);
+        PowerUserDataReader factoryReader = PowerUserDataReader.createForPeriod(powerUserRepository,
+            PeriodType.DAILY);
         PowerUserData result = factoryReader.read();
 
         // then
@@ -161,9 +166,11 @@ class PowerUserDataReaderTest {
         List<PowerUserData> dailyData = createMockPowerUserData(PeriodType.DAILY);
         List<PowerUserData> weeklyData = createMockPowerUserDataForWeekly();
 
-        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class), any(Instant.class)))
+        when(powerUserRepository.findUserActivityData(eq(PeriodType.DAILY), any(Instant.class),
+            any(Instant.class)))
             .thenReturn(dailyData);
-        when(powerUserRepository.findUserActivityData(eq(PeriodType.WEEKLY), any(Instant.class), any(Instant.class)))
+        when(powerUserRepository.findUserActivityData(eq(PeriodType.WEEKLY), any(Instant.class),
+            any(Instant.class)))
             .thenReturn(weeklyData);
 
         reader.setPeriod(PeriodType.DAILY);

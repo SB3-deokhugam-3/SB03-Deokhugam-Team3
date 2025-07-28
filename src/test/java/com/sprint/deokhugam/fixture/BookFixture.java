@@ -12,8 +12,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class BookFixture {
 
-    public static Book createBookEntity(String title, String author, String description, String publisher,
-        LocalDate publishedDate, String isbn, String thumbnailUrl, Double rating, Long reviewCount) {
+    public static Book createBookEntity(String title, String author, String description,
+        String publisher,
+        LocalDate publishedDate, String isbn, String thumbnailUrl, Double rating,
+        Long reviewCount) {
         return Book.builder()
             .title(title)
             .author(author)
@@ -59,7 +61,8 @@ public class BookFixture {
             .build();
     }
 
-    public static BookUpdateRequest createUpdateRequest(String title, String author, String description,
+    public static BookUpdateRequest createUpdateRequest(String title, String author,
+        String description,
         String publisher, LocalDate publishedDate) {
 
         return BookUpdateRequest.builder()

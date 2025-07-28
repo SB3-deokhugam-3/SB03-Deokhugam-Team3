@@ -44,7 +44,8 @@ public class NaverBookInfoProvider implements BookInfoProvider {
         String author = item.author().replace("^", ",");
         LocalDate publishedDate;
         try {
-            publishedDate = LocalDate.parse(item.pubDate(), DateTimeFormatter.ofPattern("yyyyMMdd"));
+            publishedDate = LocalDate.parse(item.pubDate(),
+                DateTimeFormatter.ofPattern("yyyyMMdd"));
         } catch (DateTimeParseException e) {
             log.warn("[BookInfoProvider] pubDate 파싱 실패: {}", item.pubDate(), e);
             publishedDate = null;

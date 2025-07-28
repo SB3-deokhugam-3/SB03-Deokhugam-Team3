@@ -4,6 +4,7 @@ import com.sprint.deokhugam.global.exception.ConflictException;
 import java.util.Map;
 
 public class DuplicateEmailException extends ConflictException {
+
     private final String message;
 
     public DuplicateEmailException(String email, String message) {

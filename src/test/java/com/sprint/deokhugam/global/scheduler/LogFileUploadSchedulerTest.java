@@ -1,9 +1,6 @@
 package com.sprint.deokhugam.global.scheduler;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.BDDAssertions.catchThrowable;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -79,7 +76,8 @@ class LogFileUploadSchedulerTest {
         given(s3Storage.uploadFile(any(File.class))).willThrow(new RuntimeException("S3 업로드 실패"));
 
         // when
-        Throwable thrown = catchThrowable(() -> scheduler.uploadYesterdayLogFile(tempDir.toString()));
+        Throwable thrown = catchThrowable(
+            () -> scheduler.uploadYesterdayLogFile(tempDir.toString()));
 
         // then
         verify(s3Storage).uploadFile(logFile);

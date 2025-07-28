@@ -3,10 +3,10 @@ package com.sprint.deokhugam.domain.book.repository;
 import com.sprint.deokhugam.domain.book.dto.request.BookSearchRequest;
 import com.sprint.deokhugam.domain.book.entity.Book;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface BookRepositoryCustom {
+
     /**
      * 키워드 검색 + 정렬 (첫 페이지)
      */

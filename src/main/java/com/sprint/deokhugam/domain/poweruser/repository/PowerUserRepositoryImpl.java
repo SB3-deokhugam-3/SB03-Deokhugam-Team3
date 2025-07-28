@@ -3,7 +3,6 @@ package com.sprint.deokhugam.domain.poweruser.repository;
 import static com.sprint.deokhugam.domain.comment.entity.QComment.comment;
 import static com.sprint.deokhugam.domain.popularreview.entity.QPopularReview.popularReview;
 import static com.sprint.deokhugam.domain.poweruser.entity.QPowerUser.powerUser;
-import static com.sprint.deokhugam.domain.review.entity.QReview.review;
 import static com.sprint.deokhugam.domain.reviewlike.entity.QReviewLike.reviewLike;
 import static com.sprint.deokhugam.domain.user.entity.QUser.user;
 
@@ -38,7 +37,8 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PowerUserData> findUserActivityData(PeriodType period, Instant startDate, Instant endDate) {
+    public List<PowerUserData> findUserActivityData(PeriodType period, Instant startDate,
+        Instant endDate) {
         log.debug("사용자 활동 데이터 조회 시작 - 기간: {}, 시작: {}, 종료: {}", period, startDate, endDate);
 
         return queryFactory
@@ -77,7 +77,8 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
 
     @Override
     @Transactional
-    public List<PowerUser> calculateAndCreatePowerUsers(PeriodType period, Instant startDate, Instant endDate) {
+    public List<PowerUser> calculateAndCreatePowerUsers(PeriodType period, Instant startDate,
+        Instant endDate) {
         log.info("파워 유저 계산 시작 - 기간: {}", period);
 
         // 1. 사용자 활동 데이터 조회
@@ -100,7 +101,8 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
                     actualReviewScore, actualLikeCount, actualCommentCount);
 
                 log.debug("사용자 {} 점수 계산: 리뷰점수={}, 좋아요={}, 댓글={}, 총점={}",
-                    data.user().getNickname(), actualReviewScore, actualLikeCount, actualCommentCount, score);
+                    data.user().getNickname(), actualReviewScore, actualLikeCount,
+                    actualCommentCount, score);
 
                 return PowerUser.builder()
                     .user(data.user())
@@ -191,7 +193,8 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
     }
 
     @Override
-    public List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit, String cursor, String after) {
+    public List<PowerUser> findPowerUsersWithCursor(PeriodType period, String direction, int limit,
+        String cursor, String after) {
         OrderSpecifier<?> orderSpecifier = "ASC".equals(direction)
             ? powerUser.rank.asc()
             : powerUser.rank.desc();
@@ -215,7 +218,8 @@ public class PowerUserRepositoryImpl implements PowerUserRepositoryCustom {
         if (after != null) {
             try {
                 Instant afterTime = Instant.parse(after);
-                whereClause = whereClause.and(powerUser.createdAt.gt(afterTime)); // after 시간보다 이후 데이터만
+                whereClause = whereClause.and(
+                    powerUser.createdAt.gt(afterTime)); // after 시간보다 이후 데이터만
             } catch (Exception e) {
                 log.warn("잘못된 after 시간 형식: {}", after);
             }

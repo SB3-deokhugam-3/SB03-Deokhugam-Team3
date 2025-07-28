@@ -50,7 +50,8 @@ class BatchSchedulerTest {
         verify(jobLauncher, times(PeriodType.values().length))
             .run(eq(popularBookRankingJob), any(JobParameters.class));
 
-        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
+        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(
+            JobParameters.class);
         verify(jobLauncher, times(PeriodType.values().length))
             .run(eq(popularBookRankingJob), parametersCaptor.capture());
 

@@ -2,14 +2,11 @@ package com.sprint.deokhugam.domain.poweruser.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.sprint.deokhugam.domain.poweruser.dto.batch.PowerUserData;
 import com.sprint.deokhugam.domain.poweruser.entity.PowerUser;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import com.sprint.deokhugam.global.enums.PeriodType;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -151,7 +148,8 @@ public class PowerUserRepositoryTest {
         // given
         List<PowerUser> powerUsers = List.of(
             PowerUser.builder().user(testUser1).period(PeriodType.ALL_TIME)
-                .rank(1L).score(100.0).reviewScoreSum(80.0).likeCount(50L).commentCount(30L).build(),
+                .rank(1L).score(100.0).reviewScoreSum(80.0).likeCount(50L).commentCount(30L)
+                .build(),
             PowerUser.builder().user(testUser2).period(PeriodType.ALL_TIME)
                 .rank(2L).score(95.0).reviewScoreSum(75.0).likeCount(45L).commentCount(28L).build()
         );
@@ -169,7 +167,8 @@ public class PowerUserRepositoryTest {
         // given
         List<PowerUser> powerUsers = List.of(
             PowerUser.builder().user(testUser1).period(PeriodType.DAILY)
-                .rank(1L).score(100.0).reviewScoreSum(80.0).likeCount(50L).commentCount(30L).build(),
+                .rank(1L).score(100.0).reviewScoreSum(80.0).likeCount(50L).commentCount(30L)
+                .build(),
             PowerUser.builder().user(testUser2).period(PeriodType.WEEKLY)
                 .rank(1L).score(90.0).reviewScoreSum(70.0).likeCount(40L).commentCount(25L).build()
         );

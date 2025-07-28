@@ -5,17 +5,11 @@ import com.sprint.deokhugam.domain.notification.dto.data.NotificationDto;
 import com.sprint.deokhugam.domain.notification.dto.request.NotificationGetRequest;
 import com.sprint.deokhugam.domain.notification.service.NotificationService;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
-import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

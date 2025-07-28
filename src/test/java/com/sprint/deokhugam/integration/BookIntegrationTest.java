@@ -158,7 +158,8 @@ class BookIntegrationTest {
         Book savedBook = bookRepository.save(book);
         UUID bookId = savedBook.getId();
 
-        BookUpdateRequest updateRequest = createUpdateRequest("책책책", "test author", "test description",
+        BookUpdateRequest updateRequest = createUpdateRequest("책책책", "test author",
+            "test description",
             "test publisher", LocalDate.of(1999, 7, 2));
 
         MockMultipartFile bookData = new MockMultipartFile(

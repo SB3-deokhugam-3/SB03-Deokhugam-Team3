@@ -30,7 +30,8 @@ class TesseractOcrExtractorTest {
         try {
             tesseractOcrExtractor = new TesseractOcrExtractor();
         } catch (Exception e) {
-            org.junit.jupiter.api.Assumptions.assumeFalse(true, "Tesseract 초기화 실패: " + e.getMessage());
+            org.junit.jupiter.api.Assumptions.assumeFalse(true,
+                "Tesseract 초기화 실패: " + e.getMessage());
         }
     }
 
@@ -150,7 +151,8 @@ class TesseractOcrExtractorTest {
     @Test
     void 지원하지_않는_파일_타입_예외_테스트() {
         // given
-        MultipartFile textFile = new MockMultipartFile("test", "test.txt", "text/plain", "test content".getBytes());
+        MultipartFile textFile = new MockMultipartFile("test", "test.txt", "text/plain",
+            "test content".getBytes());
 
         // when
         Throwable thrown = catchThrowable(() -> tesseractOcrExtractor.extractIsbn(textFile));
@@ -165,7 +167,8 @@ class TesseractOcrExtractorTest {
     void 파일_크기_제한_테스트() {
         // given
         byte[] largeData = new byte[6 * 1024 * 1024]; // 11MB
-        MultipartFile largeFile = new MockMultipartFile("large", "large.jpg", "image/jpeg", largeData);
+        MultipartFile largeFile = new MockMultipartFile("large", "large.jpg", "image/jpeg",
+            largeData);
 
         // when
         Throwable thrown = catchThrowable(() -> tesseractOcrExtractor.extractIsbn(largeFile));
@@ -179,7 +182,8 @@ class TesseractOcrExtractorTest {
     @Test
     void 잘못된_이미지_파일_예외_테스트() {
         // given
-        MultipartFile corruptedFile = new MockMultipartFile("corrupted", "corrupted.jpg", "image/jpeg", "invalid image data".getBytes());
+        MultipartFile corruptedFile = new MockMultipartFile("corrupted", "corrupted.jpg",
+            "image/jpeg", "invalid image data".getBytes());
 
         // when
         Throwable thrown = catchThrowable(() -> tesseractOcrExtractor.extractIsbn(corruptedFile));
@@ -261,10 +265,12 @@ class TesseractOcrExtractorTest {
     @Test
     void ContentType_null_처리_테스트() {
         // given
-        MultipartFile fileWithNullContentType = new MockMultipartFile("test", "test.jpg", null, "test content".getBytes());
+        MultipartFile fileWithNullContentType = new MockMultipartFile("test", "test.jpg", null,
+            "test content".getBytes());
 
         // when
-        Throwable thrown = catchThrowable(() -> tesseractOcrExtractor.extractIsbn(fileWithNullContentType));
+        Throwable thrown = catchThrowable(
+            () -> tesseractOcrExtractor.extractIsbn(fileWithNullContentType));
 
         // then
         assertThat(thrown)
@@ -287,7 +293,8 @@ class TesseractOcrExtractorTest {
     @Test
     void 숫자_패턴_매칭_테스트() throws IOException, OcrException {
         // given
-        MultipartFile testImageWithNumbers = createTestImageWithText("Book Code: 1234567890123 Other: 9876543210");
+        MultipartFile testImageWithNumbers = createTestImageWithText(
+            "Book Code: 1234567890123 Other: 9876543210");
 
         // when
         String extractedIsbn = tesseractOcrExtractor.extractIsbn(testImageWithNumbers);

@@ -24,7 +24,7 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("is_deleted = false")
 @Entity
 @Table(name = "books")
-public class Book extends BaseUpdatableEntity  {
+public class Book extends BaseUpdatableEntity {
 
     @Column(nullable = false)
     private String title;
@@ -58,7 +58,6 @@ public class Book extends BaseUpdatableEntity  {
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
-
 
     public void updateTitle(String title) {
         this.title = title;

@@ -7,7 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PopularBookRepository extends JpaRepository<PopularBook, UUID>, PopularBookRepositoryCustom {
+public interface PopularBookRepository extends JpaRepository<PopularBook, UUID>,
+    PopularBookRepositoryCustom {
 
     long countByPeriod(PeriodType period);
 }
