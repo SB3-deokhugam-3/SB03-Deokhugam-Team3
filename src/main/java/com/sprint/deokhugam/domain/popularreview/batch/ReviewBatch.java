@@ -59,7 +59,7 @@ public class ReviewBatch {
             try {
                 Instant currentTime = Instant.now();
                 /* 오늘 이미 실행한 배치인지 검증 */
-                //popularReviewService.validateJobNotDuplicated(currentTime);
+                popularReviewService.validateJobNotDuplicated(currentTime);
 
                 for (PeriodType period : PeriodType.values()) {
                     ZoneId zoneId = ZoneId.of("Asia/Seoul");
