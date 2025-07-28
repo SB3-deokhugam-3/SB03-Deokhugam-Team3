@@ -248,7 +248,8 @@ public class PowerUserServiceTest {
         assertThat(response.nextCursor()).isNull();
         assertThat(response.nextAfter()).isNull();
 
-        verify(powerUserRepository).findPowerUsersWithCursor(period, direction, size, cursor, after);
+        verify(powerUserRepository).findPowerUsersWithCursor(period, direction, size, cursor,
+            after);
         verify(powerUserRepository).countByPeriod(period);
     }
 
@@ -280,7 +281,8 @@ public class PowerUserServiceTest {
         assertThat(response.nextAfter()).isNotNull();
         assertThat(response.totalElements()).isEqualTo(totalCount);
 
-        verify(powerUserRepository).findPowerUsersWithCursor(period, direction, size, cursor, after);
+        verify(powerUserRepository).findPowerUsersWithCursor(period, direction, size, cursor,
+            after);
     }
 
     @Test
@@ -311,7 +313,8 @@ public class PowerUserServiceTest {
         assertThat(response.nextAfter()).isNull();
         assertThat(response.totalElements()).isEqualTo(0L);
 
-        verify(powerUserRepository).findPowerUsersWithCursor(period, direction, size, cursor, after);
+        verify(powerUserRepository).findPowerUsersWithCursor(period, direction, size, cursor,
+            after);
         verify(powerUserRepository).countByPeriod(period);
     }
 

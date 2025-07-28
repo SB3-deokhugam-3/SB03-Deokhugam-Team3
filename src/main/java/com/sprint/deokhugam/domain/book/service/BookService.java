@@ -18,7 +18,8 @@ public interface BookService {
 
     BookDto findById(UUID bookId);
 
-    BookDto update(UUID bookId, BookUpdateRequest bookData, MultipartFile thumbnailImage) throws IOException;
+    BookDto update(UUID bookId, BookUpdateRequest bookData, MultipartFile thumbnailImage)
+        throws IOException;
 
     void delete(UUID bookId);
 
@@ -26,9 +27,10 @@ public interface BookService {
 
     /**
      * 이미지에서 ISBN을 추출
+     *
      * @param imageFile 도서 이미지 파일
      * @return 추출된 ISBN 문자열
      * @throws OcrException OCR  처리 중 오류 발생시
-     * */
+     */
     String extractIsbnFromImage(MultipartFile imageFile) throws OcrException;
 }

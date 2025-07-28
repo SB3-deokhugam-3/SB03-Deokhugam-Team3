@@ -17,7 +17,8 @@ public class LoginInterceptor implements HandlerInterceptor {
     private static final String USER_ID = "userId";
 
     @Override
-    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+    public boolean preHandle(@NonNull HttpServletRequest request,
+        @NonNull HttpServletResponse response,
         @NonNull Object handler) {
 
         // 사용자 ID 추출

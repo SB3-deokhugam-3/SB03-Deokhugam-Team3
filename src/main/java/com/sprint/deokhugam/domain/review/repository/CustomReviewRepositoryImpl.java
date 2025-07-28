@@ -21,11 +21,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class CustomReviewRepositoryImpl implements CustomReviewRepository {
 
-    private final JPAQueryFactory queryFactory;
-
     private static final String ORDER_BY_CREATED_AT = "createdAt";
     private static final String ORDER_BY_RATING = "rating";
     private static final String ORDER_DIRECTION_DESC = "DESC";
+    private final JPAQueryFactory queryFactory;
 
     public List<Review> findAll(ReviewGetRequest params) {
         QReview review = QReview.review;

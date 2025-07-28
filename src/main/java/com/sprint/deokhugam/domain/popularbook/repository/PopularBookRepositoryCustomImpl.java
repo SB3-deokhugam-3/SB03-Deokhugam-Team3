@@ -19,9 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PopularBookRepositoryCustomImpl implements PopularBookRepositoryCustom {
 
-    private final JPAQueryFactory queryFactory;
     private static final QPopularBook pb = QPopularBook.popularBook;
     private static final QBook b = QBook.book;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public List<PopularBookDto> findAllByRequest(PopularBookGetRequest request) {

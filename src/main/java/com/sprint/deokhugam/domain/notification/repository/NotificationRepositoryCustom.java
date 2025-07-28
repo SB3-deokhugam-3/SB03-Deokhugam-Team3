@@ -6,11 +6,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 public interface NotificationRepositoryCustom {
+
     CursorPageResponse<Notification> findByUserIdWithCursor(
-            UUID userId,
-            Instant after,
-            UUID cursor,
-            int limit
+        UUID userId,
+        Instant after,
+        UUID cursor,
+        int limit
     );
 
     void markAllAsReadByUserId(UUID userId);

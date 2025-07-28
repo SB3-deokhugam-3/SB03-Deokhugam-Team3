@@ -10,7 +10,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, UUID>, NotificationRepositoryCustom {
+public interface NotificationRepository extends JpaRepository<Notification, UUID>,
+    NotificationRepositoryCustom {
 
     @Modifying
     @Query(value = """

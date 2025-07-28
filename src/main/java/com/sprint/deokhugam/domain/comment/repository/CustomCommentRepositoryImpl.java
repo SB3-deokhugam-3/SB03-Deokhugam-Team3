@@ -18,8 +18,8 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class CustomCommentRepositoryImpl implements CustomCommentRepository {
 
-    private final JPAQueryFactory queryFactory;
     private static final QComment comment = QComment.comment;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public List<Comment> fetchComments(

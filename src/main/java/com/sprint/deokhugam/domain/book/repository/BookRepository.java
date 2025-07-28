@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, UUID>, BookRepositoryCustom {
+
     boolean existsByIsbn(String isbn);
 
     @Query(value = "SELECT * FROM books WHERE id = :id AND is_deleted = true", nativeQuery = true)

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class UserNotFoundException extends NotFoundException {
+
     private final String message;
 
     public UserNotFoundException(UUID userId, String message) {

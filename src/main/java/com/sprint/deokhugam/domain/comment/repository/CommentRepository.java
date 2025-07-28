@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface CommentRepository extends JpaRepository<Comment, UUID>, CustomCommentRepository {
-    
+
     Long countByReviewId(UUID reviewId);
 
     @Query(value = "SELECT * FROM comments WHERE id = :id", nativeQuery = true)

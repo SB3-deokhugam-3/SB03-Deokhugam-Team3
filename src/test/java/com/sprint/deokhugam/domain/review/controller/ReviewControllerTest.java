@@ -44,15 +44,17 @@ import org.springframework.test.web.servlet.ResultActions;
 @ActiveProfiles("test")
 class ReviewControllerTest {
 
+    UUID bookId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    String content = "굿 입니당~";
+    Integer rating = 4;
+    Instant now = Instant.now();
     @Autowired
     private MockMvc mockMvc;
-
     @MockitoBean
     private ReviewService reviewService;
-
     @MockitoBean
     private PopularReviewService popularReviewService;
-
     @Autowired
     private ObjectMapper objectMapper;
     private CursorPageResponse<ReviewDto> mockResponse;
@@ -100,12 +102,6 @@ class ReviewControllerTest {
             false
         );
     }
-
-    UUID bookId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    String content = "굿 입니당~";
-    Integer rating = 4;
-    Instant now = Instant.now();
 
     @Test
     void 리뷰_등록에_성공하면_201응답을_반환한다() throws Exception {
@@ -424,7 +420,7 @@ class ReviewControllerTest {
 
         // when
         ResultActions result = mockMvc.perform(get("/api/reviews/popular")
-                .contentType(MediaType.APPLICATION_JSON));
+            .contentType(MediaType.APPLICATION_JSON));
 
         // then
         result.andExpect(status().isOk())
@@ -432,7 +428,8 @@ class ReviewControllerTest {
             .andExpect(jsonPath("$.content[0].reviewId").value(reviewId.toString()))
             .andExpect(jsonPath("$.content[0].bookId").value(bookId.toString()))
             .andExpect(jsonPath("$.content[0].bookTitle").value("책 제목"))
-            .andExpect(jsonPath("$.content[0].bookThumbnailUrl").value("https://s3.bucket/thumbnail.jpg"))
+            .andExpect(
+                jsonPath("$.content[0].bookThumbnailUrl").value("https://s3.bucket/thumbnail.jpg"))
             .andExpect(jsonPath("$.content[0].userId").value(userId.toString()))
             .andExpect(jsonPath("$.content[0].userNickname").value("사용자닉네임"))
             .andExpect(jsonPath("$.content[0].reviewContent").value("왕 굳~!"))

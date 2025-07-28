@@ -2,7 +2,6 @@ package com.sprint.deokhugam.domain.user.repository;
 
 import com.sprint.deokhugam.domain.user.entity.User;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
+
     boolean existsByEmail(String email);
 
     Optional<User> findByEmail(String email);

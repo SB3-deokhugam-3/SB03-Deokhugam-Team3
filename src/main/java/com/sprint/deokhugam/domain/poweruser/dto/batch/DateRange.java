@@ -3,19 +3,19 @@ package com.sprint.deokhugam.domain.poweruser.dto.batch;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Spring Batch용 날짜 범위 객체
- * 각 기간별 데이터 조회 범위를 정의하는 불변 객체
+ * Spring Batch용 날짜 범위 객체 각 기간별 데이터 조회 범위를 정의하는 불변 객체
  */
 public record DateRange(
     Instant startDate,
     Instant endDate
 ) {
+
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(
+        "yyyy-MM-dd HH:mm:ss");
 
     /**
      * 어제 범위 (00:00:00 ~ 23:59:59)

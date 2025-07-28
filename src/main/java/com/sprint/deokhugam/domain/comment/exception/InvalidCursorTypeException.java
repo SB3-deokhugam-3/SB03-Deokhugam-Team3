@@ -5,10 +5,10 @@ import java.util.Map;
 
 public class InvalidCursorTypeException extends BadRequestException {
 
-  public InvalidCursorTypeException(String cursor, String message) {
-    super("comment", Map.of(
-        "cursor", cursor,
-        "message", "잘못된 커서 형식입니다"
-    ));
-  }
+    public InvalidCursorTypeException(String cursor, String message) {
+        super("comment", Map.of(
+            "cursor", cursor,
+            "message", "잘못된 커서 형식입니다"
+        ));
+    }
 }

@@ -1,8 +1,8 @@
 package com.sprint.deokhugam.domain.popularreview.mapper;
 
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

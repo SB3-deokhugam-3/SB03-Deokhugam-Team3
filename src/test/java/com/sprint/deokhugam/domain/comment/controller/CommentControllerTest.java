@@ -288,9 +288,9 @@ class CommentControllerTest {
 
         // when
         ResultActions result = mockMvc.perform(get("/api/comments")
-                .param("reviewId", reviewId.toString())
-                .param("direction", direction)
-                .param("limit", String.valueOf(limit)));
+            .param("reviewId", reviewId.toString())
+            .param("direction", direction)
+            .param("limit", String.valueOf(limit)));
 
         // then
         result.andExpect(status().isOk())
@@ -402,7 +402,7 @@ class CommentControllerTest {
 
         // when
         ResultActions result = mockMvc.perform(delete("/api/comments/{commentId}", commentId)
-                .header("Deokhugam-Request-User-ID", userId.toString()));
+            .header("Deokhugam-Request-User-ID", userId.toString()));
 
         // then
         result.andDo(print())
@@ -419,7 +419,7 @@ class CommentControllerTest {
 
         // When
         ResultActions result = mockMvc.perform(delete("/api/comments/{commentId}/hard", commentId)
-                .header("Deokhugam-Request-User-ID", userId.toString()));
+            .header("Deokhugam-Request-User-ID", userId.toString()));
 
         // then
         result.andDo(print())

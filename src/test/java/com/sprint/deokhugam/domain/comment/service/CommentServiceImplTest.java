@@ -39,9 +39,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -76,6 +73,13 @@ public class CommentServiceImplTest {
     private Comment comment1;
     private String content;
     private CommentDto expectedDto;
+
+    private static Comment createSoftDeleted(Review review, User user, String content) {
+        Comment comment = new Comment(review, user, content);
+        comment.softDelete();
+        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
+        return comment;
+    }
 
     @BeforeEach
     void 초기_설정() {
@@ -270,7 +274,8 @@ public class CommentServiceImplTest {
         given(reviewRepository.existsById(reviewId)).willReturn(false);
 
         // when
-        Throwable thrown = catchThrowable(() -> commentService.findAll(reviewId, null, null, "DESC", 10));
+        Throwable thrown = catchThrowable(
+            () -> commentService.findAll(reviewId, null, null, "DESC", 10));
 
         // then
         assertThat(thrown)
@@ -292,7 +297,8 @@ public class CommentServiceImplTest {
         List<Comment> list = List.of(comment1, comment2);
 
         given(reviewRepository.existsById(reviewId)).willReturn(true);
-        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC),
+            eq(limit + 1)))
             .willReturn(list);
         given(commentMapper.toDto(comment1)).willReturn(dto1);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
@@ -325,7 +331,8 @@ public class CommentServiceImplTest {
         CommentDto dto3 = createDto(reviewId, "댓3", createdAt3);
         List<Comment> list = List.of(comment3, comment2, comment1);
         given(reviewRepository.existsById(reviewId)).willReturn(true);
-        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC),
+            eq(limit + 1)))
             .willReturn(list);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
         given(commentMapper.toDto(comment3)).willReturn(dto3);
@@ -356,7 +363,8 @@ public class CommentServiceImplTest {
         CommentDto dto3 = createDto(reviewId, "댓3", now);
         List<Comment> list = List.of(comment3, comment2, comment1);
         given(reviewRepository.existsById(reviewId)).willReturn(true);
-        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC), eq(limit + 1)))
+        given(commentRepository.fetchComments(eq(reviewId), any(), any(), eq(Sort.Direction.DESC),
+            eq(limit + 1)))
             .willReturn(list);
         given(commentMapper.toDto(comment2)).willReturn(dto2);
         given(commentMapper.toDto(comment3)).willReturn(dto3);
@@ -510,13 +518,6 @@ public class CommentServiceImplTest {
 
     private Comment create(Review review, User user, String content) {
         return new Comment(review, user, content);
-    }
-
-    private static Comment createSoftDeleted(Review review, User user, String content) {
-        Comment comment = new Comment(review, user, content);
-        comment.softDelete();
-        ReflectionTestUtils.setField(comment, "id", UUID.randomUUID());
-        return comment;
     }
 
     private Comment createWithTime(Review review, User user, String content, Instant createdAt) {

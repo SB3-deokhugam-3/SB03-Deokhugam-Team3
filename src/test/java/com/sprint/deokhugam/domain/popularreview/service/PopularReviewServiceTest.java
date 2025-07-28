@@ -15,7 +15,6 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.when;
 
 import com.sprint.deokhugam.domain.book.entity.Book;
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
 import com.sprint.deokhugam.domain.popularreview.mapper.PopularReviewMapper;
@@ -26,9 +25,9 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

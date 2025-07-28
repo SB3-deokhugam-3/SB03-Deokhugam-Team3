@@ -4,8 +4,7 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.enums.PeriodType;
 
 /**
- * Spring Batch용 PowerUser 데이터 전송 객체
- * Reader에서 읽어온 사용자 활동 데이터를 담는 불변 객체
+ * Spring Batch용 PowerUser 데이터 전송 객체 Reader에서 읽어온 사용자 활동 데이터를 담는 불변 객체
  */
 public record PowerUserData(
     User user,
@@ -14,13 +13,20 @@ public record PowerUserData(
     Long likeCount,
     Long commentCount
 ) {
+
     /**
      * 기본값 설정 생성자
      */
     public PowerUserData {
-        if (reviewScoreSum == null) reviewScoreSum = 0.0;
-        if (likeCount == null) likeCount = 0L;
-        if (commentCount == null) commentCount = 0L;
+        if (reviewScoreSum == null) {
+            reviewScoreSum = 0.0;
+        }
+        if (likeCount == null) {
+            likeCount = 0L;
+        }
+        if (commentCount == null) {
+            commentCount = 0L;
+        }
     }
 
     /**

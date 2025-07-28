@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public class ReviewFixture {
+
     public static User user(String email, String nickname) {
         return User.builder()
             .email(email)
@@ -34,7 +35,8 @@ public class ReviewFixture {
             .build();
     }
 
-    public static Review review(User user, Book book, String content, long like, long comment, boolean deleted) {
+    public static Review review(User user, Book book, String content, long like, long comment,
+        boolean deleted) {
         return Review.builder()
             .user(user)
             .book(book)
@@ -46,7 +48,8 @@ public class ReviewFixture {
             .build();
     }
 
-    public static PopularReview popularReview(Review review, PeriodType period, long rank, double score) {
+    public static PopularReview popularReview(Review review, PeriodType period, long rank,
+        double score) {
         return PopularReview.builder()
             .review(review)
             .period(period)

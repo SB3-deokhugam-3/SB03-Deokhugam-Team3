@@ -7,6 +7,7 @@ import com.sprint.deokhugam.domain.user.dto.request.UserUpdateRequest;
 import java.util.UUID;
 
 public interface UserService {
+
     UserDto createUser(UserCreateRequest userCreateRequest);
 
     UserDto findUser(UUID userId);

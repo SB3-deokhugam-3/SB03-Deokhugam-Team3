@@ -184,15 +184,15 @@ CREATE TABLE IF NOT EXISTS comments
 CREATE TABLE IF NOT EXISTS notifications
 (
     -- Primary Key
-    id           VARCHAR(36) PRIMARY KEY,
+    id         VARCHAR(36) PRIMARY KEY,
 
     -- Column
-    created_at   TIMESTAMP   NOT NULL,
-    updated_at   TIMESTAMP,
-    review_id    VARCHAR(36) NOT NULL,
-    user_id      VARCHAR(36) NOT NULL,
-    content      VARCHAR(255),
-    confirmed BOOLEAN     NOT NULL,
+    created_at TIMESTAMP   NOT NULL,
+    updated_at TIMESTAMP,
+    review_id  VARCHAR(36) NOT NULL,
+    user_id    VARCHAR(36) NOT NULL,
+    content    VARCHAR(255),
+    confirmed  BOOLEAN     NOT NULL,
 
     CONSTRAINT fk_notifications_user
         FOREIGN KEY (user_id)
@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS power_users
     -- Column
     created_at       TIMESTAMP        NOT NULL,
     user_id          VARCHAR(36)      NOT NULL,
-    period           VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
+    period           VARCHAR(10)      NOT NULL CHECK (period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     score            DOUBLE PRECISION NOT NULL,
     rank             BIGINT           NOT NULL,
     review_score_sum DOUBLE PRECISION NOT NULL DEFAULT 0.0,
@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS popular_book_rankings
     -- Column
     created_at   TIMESTAMP        NOT NULL,
     book_id      VARCHAR(36)      NOT NULL,
-    period       VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
+    period       VARCHAR(10)      NOT NULL CHECK (period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     rank         BIGINT           NOT NULL,
     score        DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     review_count BIGINT           NOT NULL DEFAULT 0,
@@ -277,7 +277,7 @@ CREATE TABLE IF NOT EXISTS popular_review_rankings
     -- Column
     created_at    TIMESTAMP        NOT NULL,
     review_id     VARCHAR(36)      NOT NULL,
-    period        VARCHAR(10)      NOT NULL CHECK ( period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
+    period        VARCHAR(10)      NOT NULL CHECK (period IN ('DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME')),
     rank          BIGINT           NOT NULL,
     score         DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     like_count    BIGINT           NOT NULL DEFAULT 0,

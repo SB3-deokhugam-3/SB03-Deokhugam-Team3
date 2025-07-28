@@ -28,7 +28,7 @@ import org.springframework.test.context.jdbc.Sql;
 @Sql(scripts = "/test-schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @DataJpaTest
 @Import({JpaAuditingConfig.class, QueryDslConfig.class})
-@TestPropertySource(properties =  "spring.sql.init.mode=never")
+@TestPropertySource(properties = "spring.sql.init.mode=never")
 @ActiveProfiles("test")
 class BookRepositoryTest {
 
@@ -91,7 +91,7 @@ class BookRepositoryTest {
     void 책을_등록하고_조회할_수_있어야_한다() {
 
         // given
-        Book bookEntity =  Book.builder()
+        Book bookEntity = Book.builder()
             .title("test book")
             .author("test author")
             .description("test description")
@@ -133,7 +133,9 @@ class BookRepositoryTest {
     }
 
 
-    /** 정렬 기준별 분기 테스트 **/
+    /**
+     * 정렬 기준별 분기 테스트
+     **/
 
     @Test
     void 정렬_기준_title_ASC() {
@@ -168,7 +170,8 @@ class BookRepositoryTest {
     @Test
     void 정렬_기준_publishedDate_ASC() {
         // given
-        BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "ASC", null, null, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "ASC", null, null,
+            10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeyword(request);
@@ -183,7 +186,8 @@ class BookRepositoryTest {
     @Test
     void 정렬_기준_publishedDate_DESC() {
         // given
-        BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "DESC", null, null, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "DESC", null, null,
+            10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeyword(request);
@@ -228,7 +232,8 @@ class BookRepositoryTest {
     @Test
     void 정렬_기준_reviewCount_ASC() {
         // given
-        BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "ASC", null, null, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "ASC", null, null,
+            10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeyword(request);
@@ -243,7 +248,8 @@ class BookRepositoryTest {
     @Test
     void 정렬_기준_reviewCount_DESC() {
         // given
-        BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "DESC", null, null, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "DESC", null, null,
+            10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeyword(request);
@@ -258,7 +264,8 @@ class BookRepositoryTest {
     @Test
     void 정렬_기준_default_잘못된_값() {
         // given
-        BookSearchRequest request = BookSearchRequest.of(null, "invalidField", "DESC", null, null, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "invalidField", "DESC", null, null,
+            10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeyword(request);
@@ -271,7 +278,9 @@ class BookRepositoryTest {
         assertThat(result.get(2).getTitle()).isEqualTo("내일은 일요일");
     }
 
-    /** 키워드 검색 분기 테스트 **/
+    /**
+     * 키워드 검색 분기 테스트
+     **/
 
     @Test
     void 키워드_검색_제목으로_검색() {
@@ -352,13 +361,16 @@ class BookRepositoryTest {
         assertThat(result).isEmpty();
     }
 
-    /** 커서 기반 페이지네이션 분기 테스트 **/
+    /**
+     * 커서 기반 페이지네이션 분기 테스트
+     **/
 
     @Test
     void 커서_조건_title_기준_커서() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
-        BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", "토요일이 끝나가는 구나..", after, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "title", "DESC", "토요일이 끝나가는 구나..",
+            after, 10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeywordAndCursor(request);
@@ -373,7 +385,8 @@ class BookRepositoryTest {
     void 커서_조건_publishedDate_기준_커서() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
-        BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "DESC", "2025-06-01", after, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "publishedDate", "DESC",
+            "2025-06-01", after, 10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeywordAndCursor(request);
@@ -381,7 +394,8 @@ class BookRepositoryTest {
         // then
         assertThat(result).isNotEmpty();
         // 2025-06-01보다 이전 날짜들이 조회되어야 함 (DESC 정렬)
-        assertThat(result).allMatch(book -> book.getPublishedDate().isBefore(LocalDate.of(2025, 6, 1)));
+        assertThat(result).allMatch(
+            book -> book.getPublishedDate().isBefore(LocalDate.of(2025, 6, 1)));
     }
 
     @Test
@@ -403,7 +417,8 @@ class BookRepositoryTest {
     void 커서_조건_reviewCount_기준_커서() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
-        BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "DESC", "10", after, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "reviewCount", "DESC", "10", after,
+            10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeywordAndCursor(request);
@@ -430,7 +445,8 @@ class BookRepositoryTest {
     void 커서_조건_default_분기() {
         // given
         Instant after = Instant.now().minus(1, ChronoUnit.HOURS);
-        BookSearchRequest request = BookSearchRequest.of(null, "invalidField", "DESC", "someValue", after, 10);
+        BookSearchRequest request = BookSearchRequest.of(null, "invalidField", "DESC", "someValue",
+            after, 10);
 
         // when
         List<Book> result = bookRepository.findBooksWithKeywordAndCursor(request);
@@ -440,7 +456,9 @@ class BookRepositoryTest {
         assertThat(result).allMatch(book -> book.getCreatedAt().isBefore(after));
     }
 
-    /** 삭제된 도서 필터링 테스트 **/
+    /**
+     * 삭제된 도서 필터링 테스트
+     **/
 
     @Test
     void 삭제된_도서_필터링() {
@@ -454,7 +472,9 @@ class BookRepositoryTest {
         assertThat(result).isEmpty(); // 삭제된 도서는 조회되지 않음
     }
 
-    /** 총 개수 조회 테스트 **/
+    /**
+     * 총 개수 조회 테스트
+     **/
     @Test
     void 총_개수_조회_키워드_있음() {
         // given
@@ -479,14 +499,17 @@ class BookRepositoryTest {
         assertThat(count).isEqualTo(3); // 삭제되지 않은 모든 도서 수
     }
 
-    /**  기존 유효성 검증 테스트 **/
+    /**
+     * 기존 유효성 검증 테스트
+     **/
 
     @Test
     void 정렬기준_및_방향_유효성검증_잘못된_값_입력() {
         // given : 잘못된 정렬 기준 및 방향
         String invalidOrderBy = "invalidField";
         String invalidDirection = "invalidDirection";
-        BookSearchRequest request = BookSearchRequest.of("test", invalidOrderBy, invalidDirection, null, null, 10);
+        BookSearchRequest request = BookSearchRequest.of("test", invalidOrderBy, invalidDirection,
+            null, null, 10);
 
         // when: validate 메서드 호출
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -494,14 +517,16 @@ class BookRepositoryTest {
         });
 
         // then: 발생한 예외 메시지가 올바른지 확인
-        assertThat(exception.getMessage()).isEqualTo("정렬 기준은 title, publishedDate, rating, reviewCount 중 하나여야 합니다.");
+        assertThat(exception.getMessage()).isEqualTo(
+            "정렬 기준은 title, publishedDate, rating, reviewCount 중 하나여야 합니다.");
     }
 
     @Test
     void 페이지_크기_유효성_검증_유효하지_않은_값() {
         // given : 잘못된 페이지 크기
         int invalidPageSize = 101;
-        BookSearchRequest request = BookSearchRequest.of("test", "title", "DESC", null, null, invalidPageSize);
+        BookSearchRequest request = BookSearchRequest.of("test", "title", "DESC", null, null,
+            invalidPageSize);
 
         // when: validate 메서드 호출
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {

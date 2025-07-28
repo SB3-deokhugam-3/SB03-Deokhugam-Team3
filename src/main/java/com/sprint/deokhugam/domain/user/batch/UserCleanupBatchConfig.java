@@ -30,6 +30,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @RequiredArgsConstructor
 @Slf4j
 public class UserCleanupBatchConfig {
+
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final UserRepository userRepository;
@@ -69,7 +70,7 @@ public class UserCleanupBatchConfig {
                 if (!initialized) {
                     // 테스트: 10초 전, 실제: 1일 전
 //                    Instant cutoff = Instant.now().minusSeconds(10);
-                     Instant cutoff = Instant.now().minus(1, ChronoUnit.DAYS);
+                    Instant cutoff = Instant.now().minus(1, ChronoUnit.DAYS);
 
                     users = userRepository.findDeletableUsers(cutoff);
                     initialized = true;

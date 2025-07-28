@@ -27,10 +27,9 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class BookRepositoryImpl implements BookRepositoryCustom {
 
+    private static final QBook book = QBook.book;
     private final JPAQueryFactory queryFactory;
     private final EntityManager entityManager;
-
-    private static final QBook book = QBook.book;
 
     @Override
     public List<Book> findBooksWithKeyword(BookSearchRequest request) {
@@ -56,7 +55,8 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
         BooleanBuilder whereCondition = new BooleanBuilder()
             .and(book.isDeleted.eq(false))
             .and(keywordCondition(request.keyword()))
-            .and(cursorCondition(request.orderBy(), request.direction(), request.cursor(), request.after()));
+            .and(cursorCondition(request.orderBy(), request.direction(), request.cursor(),
+                request.after()));
 
         return queryFactory
             .selectFrom(book)
@@ -112,7 +112,8 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
     /**
      * 커서 조건 생성
      */
-    private BooleanExpression cursorCondition(String orderBy, String direction, String cursorValue, Instant after) {
+    private BooleanExpression cursorCondition(String orderBy, String direction, String cursorValue,
+        Instant after) {
         if (cursorValue == null || after == null) {
             return null;
         }
@@ -120,10 +121,17 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
         boolean isAsc = "ASC".equals(direction);
 
         return switch (orderBy) {
-            case "title" -> createCursorCondition(book.title, cursorValue, book.createdAt, after, isAsc);
-            case "publishedDate" -> createCursorCondition(book.publishedDate, LocalDate.parse(cursorValue), book.createdAt, after, isAsc);
-            case "rating" -> createNumberCursorCondition(book.rating, Double.parseDouble(cursorValue), book.createdAt, after, isAsc);
-            case "reviewCount" -> createNumberCursorCondition(book.reviewCount, Long.parseLong(cursorValue), book.createdAt, after, isAsc);
+            case "title" ->
+                createCursorCondition(book.title, cursorValue, book.createdAt, after, isAsc);
+            case "publishedDate" ->
+                createCursorCondition(book.publishedDate, LocalDate.parse(cursorValue),
+                    book.createdAt, after, isAsc);
+            case "rating" ->
+                createNumberCursorCondition(book.rating, Double.parseDouble(cursorValue),
+                    book.createdAt, after, isAsc);
+            case "reviewCount" ->
+                createNumberCursorCondition(book.reviewCount, Long.parseLong(cursorValue),
+                    book.createdAt, after, isAsc);
             default -> book.createdAt.lt(after);
         };
     }
@@ -170,9 +178,11 @@ public class BookRepositoryImpl implements BookRepositoryCustom {
         // 주 정렬 조건
         switch (orderBy) {
             case "title" -> orderSpecifiers.add(new OrderSpecifier<>(order, book.title));
-            case "publishedDate" -> orderSpecifiers.add(new OrderSpecifier<>(order, book.publishedDate));
+            case "publishedDate" ->
+                orderSpecifiers.add(new OrderSpecifier<>(order, book.publishedDate));
             case "rating" -> orderSpecifiers.add(new OrderSpecifier<>(order, book.rating));
-            case "reviewCount" -> orderSpecifiers.add(new OrderSpecifier<>(order, book.reviewCount));
+            case "reviewCount" ->
+                orderSpecifiers.add(new OrderSpecifier<>(order, book.reviewCount));
             default -> orderSpecifiers.add(new OrderSpecifier<>(order, book.title));
         }
 

@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.book.entity;
 
-import com.sprint.deokhugam.domain.popularbook.entity.PopularBook;
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.global.base.BaseUpdatableEntity;
 import jakarta.persistence.CascadeType;
@@ -25,7 +24,7 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("is_deleted = false")
 @Entity
 @Table(name = "books")
-public class Book extends BaseUpdatableEntity  {
+public class Book extends BaseUpdatableEntity {
 
     @Column(nullable = false)
     private String title;

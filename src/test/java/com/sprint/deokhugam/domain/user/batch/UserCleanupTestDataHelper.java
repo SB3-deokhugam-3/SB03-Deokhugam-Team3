@@ -16,15 +16,13 @@ import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class UserCleanupTestDataHelper {
+
     @Autowired
     private EntityManager em;
     @Autowired
@@ -210,7 +208,8 @@ public class UserCleanupTestDataHelper {
         long commentCount = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM comments")
             .getSingleResult()).longValue();
 
-        long notificationCount = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM notifications")
+        long notificationCount = ((Number) em.createNativeQuery(
+                "SELECT COUNT(*) FROM notifications")
             .getSingleResult()).longValue();
 
         long reviewLikeCount = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM review_likes")
@@ -238,6 +237,7 @@ public class UserCleanupTestDataHelper {
 
     // Static 내부 클래스들
     public static class TestDataCounts {
+
         public final long userCount;
         public final long reviewCount;
         public final long commentCount;
@@ -257,6 +257,7 @@ public class UserCleanupTestDataHelper {
     }
 
     public static class UserTypeCounts {
+
         public final long activeUserCount;
         public final long deletedUserCount;
 

@@ -14,8 +14,8 @@ import com.sprint.deokhugam.domain.book.exception.OcrException;
 import com.sprint.deokhugam.domain.book.mapper.BookMapper;
 import com.sprint.deokhugam.domain.book.ocr.TesseractOcrExtractor;
 import com.sprint.deokhugam.domain.book.repository.BookRepository;
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -31,18 +31,18 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional(readOnly = true)
 public class BookServiceImpl implements BookService {
 
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final List<String> SUPPORTED_IMAGE_TYPES =
+        List.of("image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp");
     private final BookMapper bookMapper;
     private final BookRepository bookRepository;
     private final S3Storage s3Storage;
     private final TesseractOcrExtractor tesseractOcrExtractor;
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-    private static final List<String> SUPPORTED_IMAGE_TYPES =
-        List.of("image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp");
-
     @Override
     @Transactional
-    public BookDto create(BookCreateRequest bookData, MultipartFile thumbnailImage) throws IOException {
+    public BookDto create(BookCreateRequest bookData, MultipartFile thumbnailImage)
+        throws IOException {
         log.debug("[BookService] 책 등록 요청 - bookData: {}", bookData);
 
         String isbn = bookData.isbn();
@@ -52,7 +52,7 @@ public class BookServiceImpl implements BookService {
         }
 
         Book book = bookMapper.toEntity(bookData);
-        
+
         if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
             // Book Entity를 저장할 때는 S3의 실제 경로 저장
             String thumbnailImageUrl = s3Storage.uploadImage(thumbnailImage);
@@ -120,7 +120,8 @@ public class BookServiceImpl implements BookService {
             hasNext
         );
 
-        log.info("[BookService] 도서 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(), response.hasNext());
+        log.info("[BookService] 도서 목록 조회 완료 - 결과 수: {}, 다음 페이지 존재: {}", response.size(),
+            response.hasNext());
 
         return response;
     }
@@ -162,7 +163,7 @@ public class BookServiceImpl implements BookService {
 
     /**
      * 이미지 파일 유효성 검사
-     * */
+     */
 
     private void validateImageFile(MultipartFile image) {
         if (image == null || image.isEmpty()) {
@@ -181,7 +182,8 @@ public class BookServiceImpl implements BookService {
 
         // 지원되는 이미지 형식 검사
         if (!SUPPORTED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
-            throw new IllegalArgumentException("[BookService] 지원되지 않는 이미지 형식입니다. ( 지원 형식 : JPEG, PNG, GIF, BMP, WEBP )");
+            throw new IllegalArgumentException(
+                "[BookService] 지원되지 않는 이미지 형식입니다. ( 지원 형식 : JPEG, PNG, GIF, BMP, WEBP )");
         }
     }
 
@@ -197,7 +199,8 @@ public class BookServiceImpl implements BookService {
 
     @Override
     @Transactional
-    public BookDto update(UUID bookId, BookUpdateRequest bookData, MultipartFile thumbnailImage) throws IOException {
+    public BookDto update(UUID bookId, BookUpdateRequest bookData, MultipartFile thumbnailImage)
+        throws IOException {
         log.debug("[BookService] 책 정보 수정 요청 - id: {}", bookId);
 
         Book book = findBook(bookId);
@@ -229,7 +232,7 @@ public class BookServiceImpl implements BookService {
 
         Book updatedBook = bookRepository.save(book);
 
-        log.info("[BookService] 도서 정보 수정 완료- book: {}" , updatedBook);
+        log.info("[BookService] 도서 정보 수정 완료- book: {}", updatedBook);
 
         return bookMapper.toDto(updatedBook, s3Storage);
     }
@@ -240,7 +243,6 @@ public class BookServiceImpl implements BookService {
         log.info("[BookService] 도서 논리 삭제 요청 - id: {}", bookId);
 
         Book book = findBook(bookId);
-
 
         book.delete();
         bookRepository.save(book);
@@ -268,7 +270,8 @@ public class BookServiceImpl implements BookService {
                 s3Storage.deleteImage(book.getThumbnailUrl());
                 log.info("[BookService] 썸네일 이미지 삭제 완료 - id: {}", bookId);
             } catch (Exception e) {
-                log.error("[BookService] 썸네일 이미지 삭제 실패 - id: {}, error: {}", bookId, e.getMessage());
+                log.error("[BookService] 썸네일 이미지 삭제 실패 - id: {}, error: {}", bookId,
+                    e.getMessage());
             }
         }
 

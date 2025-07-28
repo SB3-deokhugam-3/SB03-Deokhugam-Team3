@@ -23,10 +23,10 @@ import org.springframework.stereotype.Repository;
 @Slf4j
 public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCustom {
 
-    private final JPAQueryFactory queryFactory;
     private static final QPopularReview pr = QPopularReview.popularReview;
     private static final QReview r = QReview.review;
     private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Seoul");
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public List<PopularReview> findByPeriodWithCursor(
