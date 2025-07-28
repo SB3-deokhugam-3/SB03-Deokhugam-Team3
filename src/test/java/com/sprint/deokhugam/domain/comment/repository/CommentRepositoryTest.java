@@ -11,8 +11,8 @@ import com.sprint.deokhugam.global.config.JpaAuditingConfig;
 import com.sprint.deokhugam.global.config.QueryDslConfig;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,9 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -161,7 +158,6 @@ class CommentRepositoryTest {
         assert(result.values().contains(1L));
     }
 
-    private Comment createComment(String content, Instant createdAt) {
     @Test
     void  ASC_정렬로_댓글을_조회하면_오래된_순으로_반환된다() {
         // given
@@ -210,6 +206,14 @@ class CommentRepositoryTest {
         // then
         assertThat(result).extracting(Comment::getContent)
             .containsExactly("댓3", "댓2", "댓1");
+    }
+
+    private Comment createComment(String content, Instant createdAt) {
+        Comment comment = new Comment(review1, user1, content);
+        ReflectionTestUtils.setField(comment, "createdAt", createdAt);
+        ReflectionTestUtils.setField(comment, "updatedAt", createdAt);
+        ReflectionTestUtils.setField(comment, "isDeleted", false);
+        return comment;
     }
 
     private Comment createCommentWithTime(String content, Instant createdAt) {

@@ -54,9 +54,6 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
             .atZone(zone)
             .toInstant();
 
-        log.info("[StartOfDay] - {}", startOfDay);
-        log.info("[endOfDay] - {}", endOfDay);
-
         builder.and(pr.createdAt.goe(startOfDay));
         builder.and(pr.createdAt.lt(endOfDay));
 
