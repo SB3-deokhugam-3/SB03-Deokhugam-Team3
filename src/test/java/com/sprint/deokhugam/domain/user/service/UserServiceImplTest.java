@@ -216,7 +216,7 @@ class UserServiceImplTest {
     @Test
     void 논리삭제_상태인_사용자를_물리삭제하면_성공한다() {
         // given
-        user.deleted(); // 논리 삭제 상태로 변경
+        user.softDelete(); // 논리 삭제 상태로 변경
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // when
