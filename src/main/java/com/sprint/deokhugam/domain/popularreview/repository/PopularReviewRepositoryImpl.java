@@ -26,6 +26,7 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
     private final JPAQueryFactory queryFactory;
     private static final QPopularReview pr = QPopularReview.popularReview;
     private static final QReview r = QReview.review;
+    private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Seoul");
 
     @Override
     public List<PopularReview> findByPeriodWithCursor(
@@ -42,16 +43,15 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
         builder.and(r.isDeleted.eq(false));
 
         // 오늘 생성된 인기 리뷰 데이터만 조회
-        ZoneId zone = ZoneId.of("Asia/Seoul");
-        Instant startOfDay = LocalDate.now(zone)
+        Instant startOfDay = LocalDate.now(DEFAULT_ZONE)
             .atTime(0, 0)
-            .atZone(zone)
+            .atZone(DEFAULT_ZONE)
             .toInstant();
 
-        Instant endOfDay = LocalDate.now(zone)
+        Instant endOfDay = LocalDate.now(DEFAULT_ZONE)
             .plusDays(1)
             .atTime(0, 0)
-            .atZone(zone)
+            .atZone(DEFAULT_ZONE)
             .toInstant();
 
         builder.and(pr.createdAt.goe(startOfDay));
