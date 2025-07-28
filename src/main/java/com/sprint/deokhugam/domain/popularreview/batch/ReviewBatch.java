@@ -76,15 +76,16 @@ public class ReviewBatch {
                         period, currentTime, commentMap, likeMap, stepContribution
                     );
                 }
+                return RepeatStatus.FINISHED;
             } catch (BatchAlreadyRunException e) {
-                log.error(e.getMessage(), e);
+                log.info(e.getMessage(), e);
                 stepContribution.incrementProcessSkipCount();
+                return RepeatStatus.FINISHED;
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 stepContribution.incrementProcessSkipCount();
                 throw e;
             }
-            return RepeatStatus.FINISHED;
         };
     }
 }

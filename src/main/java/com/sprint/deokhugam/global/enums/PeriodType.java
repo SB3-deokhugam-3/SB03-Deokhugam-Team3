@@ -54,7 +54,7 @@ public enum PeriodType {
 
         @Override
         public Instant getEndInstant(Instant today, ZoneId zone) {
-            return Instant.MAX;
+            return Instant.parse("9999-12-31T23:59:59Z");
         }
     };
 

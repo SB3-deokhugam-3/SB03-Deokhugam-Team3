@@ -144,7 +144,7 @@ class CommentRepositoryTest {
 
         // given
         Instant start = Instant.MIN;
-        Instant end = Instant.MAX;
+        Instant end = Instant.parse("9999-12-31T23:59:59Z");
         Comment comment = createComment("테스트용", Instant.now());
         em.persist(comment);
         em.flush();
