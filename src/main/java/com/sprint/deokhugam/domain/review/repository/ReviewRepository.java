@@ -35,15 +35,13 @@ public interface ReviewRepository extends JpaRepository<Review, UUID>, CustomRev
     List<UUID> findBookIdsByUserIdIn(@Param("userIds") List<UUID> userIds);
 
     @Modifying
-    @Query(value = """
-    UPDATE reviews 
-    SET comment_count = (
-        SELECT COUNT(*) 
-        FROM comments c 
-        WHERE c.review_id = reviews.id 
-        AND c.is_deleted = false
-    )
-    WHERE is_deleted = false
-    """, nativeQuery = true)
-    void recalculateReviewCommentCounts();
+    @Transactional
+    @Query("""
+        UPDATE Review r SET r.commentCount = (
+            SELECT COUNT(c) FROM Comment c 
+            WHERE c.review.id = r.id AND c.isDeleted = false
+        ) 
+        WHERE r.user.id IN :userIds
+        """)
+    void recalculateReviewCommentCounts(@Param("userIds") List<UUID> userIds);
 }

@@ -127,8 +127,12 @@ public class UserCleanupBatchConfig {
                 log.debug("유저 데이터 삭제 완료");
 
                 // 6. 모든 책의 카운트 재계산
-                bookRepository.recalculateBookCounts(); // books의 review_count
-                reviewRepository.recalculateReviewCommentCounts(); // reviews의 comment_count
+                List<UUID> affectedBookIds = reviewRepository.findBookIdsByUserIdIn(userIds);
+                if (!affectedBookIds.isEmpty()) {
+                    bookRepository.recalculateBookCounts(affectedBookIds); // 특정 책들만
+                }
+                reviewRepository.recalculateReviewCommentCounts(userIds);
+
                 log.debug("카운트 재계산 완료");
 
                 log.info("성공적으로 {} 명의 유저와 관련 데이터를 삭제했습니다.", userIds.size());
