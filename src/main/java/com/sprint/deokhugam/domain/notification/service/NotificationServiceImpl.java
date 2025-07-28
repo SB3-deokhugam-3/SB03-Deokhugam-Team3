@@ -11,6 +11,7 @@ import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.domain.user.exception.InvalidUserRequestException;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
 
-    public NotificationDto create(User user, Review review, String content, boolean isConfirmed) {
+    public Optional<NotificationDto> create(User user, Review review, String content, boolean isConfirmed) {
         log.info("[notification] 알림 등록 요청 - user: {}, review: {}", user, review);
         if (user == null || review == null || content == null) {
             log.warn("[notification] 알림 생성 실패 - user: {}, review: {}", user, review);
@@ -34,9 +35,15 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = new Notification(review.getUser(), review, content,
             isConfirmed);
 
+        // 자기 글에 대한 알림은 생성하지 않음
+        if (user.getId().equals(review.getUser().getId())) {
+            log.info("[notification] 알림 생성 스킵 - 본인 글에 대한 알림입니다.");
+            return Optional.empty();
+        }
+
         Notification saved = notificationRepository.save(notification);
         log.info("[notification] 알림 생성 완료 - user: {}, review: {}", user, review);
-        return notificationMapper.toDto(saved);
+        return Optional.of(notificationMapper.toDto(saved));
     }
 
     @Transactional(readOnly = true)

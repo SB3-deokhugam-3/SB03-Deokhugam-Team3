@@ -5,6 +5,7 @@ import com.sprint.deokhugam.domain.notification.dto.request.NotificationGetReque
 import com.sprint.deokhugam.domain.review.entity.Review;
 import com.sprint.deokhugam.domain.user.entity.User;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface NotificationService {
@@ -13,7 +14,7 @@ public interface NotificationService {
 
     void markAllAsRead(UUID userId);
 
-    NotificationDto create(User user, Review review, String content, boolean isConfirmed);
+    Optional<NotificationDto> create(User user, Review review, String content, boolean isConfirmed);
 
     void updateNotification(UUID id);
 }
