@@ -96,7 +96,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userID)
                 .orElseThrow(() -> new UserNotFoundException("userId", "존재하지 않은 사용자입니다."));
 
-        user.deleted();
+        user.softDelete();
 
         return userMapper.toDto(user);
     }
