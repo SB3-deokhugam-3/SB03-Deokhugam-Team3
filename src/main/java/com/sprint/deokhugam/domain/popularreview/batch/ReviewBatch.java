@@ -67,22 +67,25 @@ public class ReviewBatch {
                     Instant end = period.getEndInstant(currentTime, zoneId);
 
                     // 특정 기간 동안 추가된 댓글 / 좋아요 수
-                    Map<UUID, Long> commentMap = commentRepository.countByReviewIdBetween(start, end);
-                    Map<UUID, Long> likeMap = reviewLikeRepository.countByReviewIdBetween(start, end);
-                    
+                    Map<UUID, Long> commentMap = commentRepository.countByReviewIdBetween(start,
+                        end);
+                    Map<UUID, Long> likeMap = reviewLikeRepository.countByReviewIdBetween(start,
+                        end);
+
                     popularReviewService.savePopularReviewsByPeriod(
                         period, currentTime, commentMap, likeMap, stepContribution
                     );
                 }
+                return RepeatStatus.FINISHED;
             } catch (BatchAlreadyRunException e) {
-                log.error(e.getMessage(), e);
+                log.info(e.getMessage(), e);
                 stepContribution.incrementProcessSkipCount();
+                return RepeatStatus.FINISHED;
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 stepContribution.incrementProcessSkipCount();
                 throw e;
             }
-            return RepeatStatus.FINISHED;
         };
     }
 }
