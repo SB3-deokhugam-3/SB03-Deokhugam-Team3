@@ -1,0 +1,60 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "deokhugam-app-hj",
+      "image": "public.ecr.aws/t7q8z8s5/deokhugam:latest",
+      "cpu": 512,
+      "memory": 1536,
+      "memoryReservation": 512,
+      "portMappings": [
+        {
+          "name": "deokhugam-app-hj-80-tcp",
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::deokhugam-thumbnail-image-storage-leader-squad/env/.env",
+          "type": "s3"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "ulimits": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/deokhugam-task-hj",
+          "awslogs-create-group": "true",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      },
+      "systemControls": []
+    }
+  ],
+  "family": "deokhugam-task-hj",
+  "taskRoleArn": "arn:aws:iam::487825214505:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::487825214505:role/ecsTaskExecutionRole",
+  "networkMode": "bridge",
+  "volumes": [],
+  "placementConstraints": [],
+  "compatibilities": [
+    "EC2"
+  ],
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "cpu": "512",
+  "memory": "1536",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  }
+}
