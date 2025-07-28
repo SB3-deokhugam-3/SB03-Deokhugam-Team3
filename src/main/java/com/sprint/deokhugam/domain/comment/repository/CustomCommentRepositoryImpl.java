@@ -25,7 +25,7 @@ public class CustomCommentRepositoryImpl implements CustomCommentRepository {
     public List<Comment> fetchComments(
         UUID reviewId,
         Instant cursor,
-        UUID after,
+        Instant after,
         Sort.Direction direction,
         int fetchSize
     ) {
@@ -35,29 +35,30 @@ public class CustomCommentRepositoryImpl implements CustomCommentRepository {
             .and(comment.review.id.eq(reviewId))
             .and(comment.isDeleted.isFalse());
 
-        // cursor 기반 커서 페이지네이션
         if (cursor != null) {
             if (direction.isAscending()) {
-                where.and(
-                    comment.createdAt.gt(cursor)
-                        .or(comment.createdAt.eq(cursor).and(comment.id.gt(after)))
-                );
+                where.and(comment.createdAt.gt(cursor));
             } else {
-                where.and(
-                    comment.createdAt.lt(cursor)
-                        .or(comment.createdAt.eq(cursor).and(comment.id.lt(after)))
-                );
+                where.and(comment.createdAt.lt(cursor));
             }
         }
 
-        OrderSpecifier<?>[] orderSpecifiers = direction.isAscending()
-            ? new OrderSpecifier[]{comment.createdAt.asc(), comment.id.asc()}
-            : new OrderSpecifier[]{comment.createdAt.desc(), comment.id.desc()};
+        if (after != null) {
+            if (direction.isAscending()) {
+                where.and(comment.createdAt.gt(after));
+            } else {
+                where.and(comment.createdAt.lt(after));
+            }
+        }
+
+        OrderSpecifier<?> orderSpecifier = direction.isAscending()
+            ? comment.createdAt.asc()
+            : comment.createdAt.desc();
 
         return queryFactory
             .selectFrom(comment)
             .where(where)
-            .orderBy(orderSpecifiers)
+            .orderBy(orderSpecifier)
             .limit(fetchSize)
             .fetch();
     }

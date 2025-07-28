@@ -12,7 +12,7 @@ public interface CustomCommentRepository {
     List<Comment> fetchComments(
         UUID reviewId,
         Instant cursor,
-        UUID after,
+        Instant after,
         Sort.Direction direction,
         int fetchSize
     );

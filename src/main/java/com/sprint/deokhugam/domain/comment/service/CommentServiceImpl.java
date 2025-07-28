@@ -112,10 +112,10 @@ public class CommentServiceImpl implements CommentService {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
 
         Instant cursorTime = parseInstant(cursor);
-        UUID afterId = parseUUID(after);
+        Instant afterTime = parseInstant(after);
 
         int fetchSize = limit + 1;
-        List<Comment> comments = commentRepository.fetchComments(reviewId, cursorTime, afterId,
+        List<Comment> comments = commentRepository.fetchComments(reviewId, cursorTime, afterTime,
             sortDirection, fetchSize);
 
         boolean hasNext = comments.size() > limit;
@@ -193,17 +193,6 @@ public class CommentServiceImpl implements CommentService {
             return Instant.parse(value);
         } catch (DateTimeParseException e) {
             throw new InvalidCursorTypeException(value, e.getMessage());
-        }
-    }
-
-    private UUID parseUUID(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return UUID.fromString(value);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("올바르지 않은 after(UUID) 형식입니다: " + value);
         }
     }
 }
