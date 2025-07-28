@@ -9,6 +9,8 @@ import com.sprint.deokhugam.domain.popularreview.entity.QPopularReview;
 import com.sprint.deokhugam.domain.review.entity.QReview;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,25 @@ public class PopularReviewRepositoryImpl implements PopularReviewRepositoryCusto
 
         builder.and(pr.period.eq(period));
         builder.and(r.isDeleted.eq(false));
+
+        // 오늘 생성된 인기 리뷰 데이터만 조회
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+        Instant startOfDay = LocalDate.now(zone)
+            .atTime(0, 0)
+            .atZone(zone)
+            .toInstant();
+
+        Instant endOfDay = LocalDate.now(zone)
+            .plusDays(1)
+            .atTime(0, 0)
+            .atZone(zone)
+            .toInstant();
+
+        log.info("[StartOfDay] - {}", startOfDay);
+        log.info("[endOfDay] - {}", endOfDay);
+
+        builder.and(pr.createdAt.goe(startOfDay));
+        builder.and(pr.createdAt.lt(endOfDay));
 
         if (cursor != null && !cursor.isBlank() && after != null) {
             try {
