@@ -36,7 +36,7 @@ public class ReviewBatch {
 
     @Bean
     public Job popularReviewJob() {
-        return new JobBuilder("popularReviewRankingJob", jobRepository)
+        return new JobBuilder("popularReviewJob", jobRepository)
             .incrementer(new RunIdIncrementer())
             .start(popularReviewStep(jobRepository, transactionManager))
             .build();

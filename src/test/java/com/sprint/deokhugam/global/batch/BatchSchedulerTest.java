@@ -1,5 +1,6 @@
 package com.sprint.deokhugam.global.batch;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -35,31 +36,40 @@ class BatchSchedulerTest {
     @Mock
     private Job popularBookRankingJob;
 
-    @Test
-    void 각_기간별_작업_파라미터_검증() throws Exception {
 
+    @Test
+    void 각_기간별_인기_도서_배치_파라미터_검증() throws Exception {
         // given
         JobExecution mockExecution = new JobExecution(1L);
-
         given(jobLauncher.run(any(Job.class), any(JobParameters.class))).willReturn(mockExecution);
 
         // when
         scheduler.runPopularBookRankingJob();
 
-        // then
-        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(
-            JobParameters.class);
+        // then - 각 기간별로 popularBookRankingJob을 실행
+        verify(jobLauncher, times(PeriodType.values().length))
+            .run(eq(popularBookRankingJob), any(JobParameters.class));
+
+        ArgumentCaptor<JobParameters> parametersCaptor = ArgumentCaptor.forClass(JobParameters.class);
         verify(jobLauncher, times(PeriodType.values().length))
             .run(eq(popularBookRankingJob), parametersCaptor.capture());
-        List<JobParameters> captureParameters = parametersCaptor.getAllValues();
+
+        List<JobParameters> capturedParameters = parametersCaptor.getAllValues();
+
         // 각 기간별로 올바른 파라미터가 전달되었는지 확인
         Set<String> expectedPeriods = Arrays.stream(PeriodType.values())
             .map(Enum::name)
             .collect(Collectors.toSet());
-        Set<String> actualPeriods = captureParameters.stream()
+        Set<String> actualPeriods = capturedParameters.stream()
             .map(params -> params.getString("period"))
             .collect(Collectors.toSet());
+
         assertEquals(expectedPeriods, actualPeriods);
+
+        // 모든 파라미터에 today와 timestamp가 포함되어야 함
+        for (JobParameters params : capturedParameters) {
+            assertThat(params.getString("today")).isNotNull();
+            assertThat(params.getLong("timestamp")).isNotNull();
+        }
     }
 }
-
