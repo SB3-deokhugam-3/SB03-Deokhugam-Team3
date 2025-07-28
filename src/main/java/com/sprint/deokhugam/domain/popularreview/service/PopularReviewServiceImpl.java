@@ -1,6 +1,5 @@
 package com.sprint.deokhugam.domain.popularreview.service;
 
-import com.sprint.deokhugam.global.storage.S3Storage;
 import com.sprint.deokhugam.domain.popularreview.dto.data.PopularReviewDto;
 import com.sprint.deokhugam.domain.popularreview.dto.data.ReviewScoreDto;
 import com.sprint.deokhugam.domain.popularreview.entity.PopularReview;
@@ -11,10 +10,8 @@ import com.sprint.deokhugam.domain.review.repository.ReviewRepository;
 import com.sprint.deokhugam.global.dto.response.CursorPageResponse;
 import com.sprint.deokhugam.global.enums.PeriodType;
 import com.sprint.deokhugam.global.exception.BatchAlreadyRunException;
-import java.nio.charset.StandardCharsets;
+import com.sprint.deokhugam.global.storage.S3Storage;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
