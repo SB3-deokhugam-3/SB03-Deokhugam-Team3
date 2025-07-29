@@ -115,6 +115,7 @@ public interface CommentApi {
         summary = "댓글 상세 정보 조회",
         description = "특정 댓글의 상세 정보를 조회합니다.",
         operationId = "getComment"
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
