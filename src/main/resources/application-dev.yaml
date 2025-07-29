@@ -1,0 +1,27 @@
+server:
+  port: 8081
+spring:
+  # DB config
+
+  datasource:
+    url: jdbc:h2:~/test;MODE=POSTGRESQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true     # 쿼리 로그 포맷 (정렬)
+        highlight_sql: true  # 쿼리 로그 출력
+  # H2 Console 설정
+  h2:
+    console:
+      enabled: true      # H2 Console 사용 여부
+      path: /h2-console  # H2 Console 접속 주소
+
+swagger:
+  server-url: http://localhost:8081

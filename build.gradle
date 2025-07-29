@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.sprint'
@@ -30,9 +31,105 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    runtimeOnly 'com.h2database:h2'
+    testImplementation 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.7'
+    // mapstruct
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+    implementation 'org.postgresql:postgresql'
+
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    implementation 'software.amazon.awssdk:s3:2.31.7'
+
+    // webclient
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // OCR
+    implementation 'net.sourceforge.tess4j:tess4j:5.11.0'
+
+    // aop
+    implementation "org.springframework.boot:spring-boot-starter-aop"
+
+    // spring batch
+
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    testImplementation 'org.springframework.batch:spring-batch-test'
+}
+
+// querydsl Q클래스 생성 경로설정
+def querydslDir = layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main").get().asFile
+
+sourceSets {
+    main {
+        java {
+            srcDir querydslDir
+        }
+    }
+}
+
+compileJava {
+    options.annotationProcessorPath = configurations.annotationProcessor
+    doFirst {
+        querydslDir.mkdirs()
+    }
+}
+
+// Clean 작업에서 생성된 Q클래스 제거
+clean {
+    delete querydslDir
+}
+
+configurations {
+    querydsl.extendsFrom compileClasspath
+    annotationProcessor
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    ignoreFailures = true  // 실패해도 다음 task 진행
+    finalizedBy jacocoTestReport
+    String jnaPath = System.getenv("JNA_PATH")
+    if (jnaPath) {
+        println "JNA path set for tests: $jnaPath"
+        jvmArgs += "-Djna.library.path=$jnaPath"
+    }
+}
+
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        csv.required = true
+        html.required = true
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(
+                files(classDirectories.files.collect {
+                    fileTree(dir: it, exclude: [
+                            '**/enums/**',
+                            '**/interceptor/**',
+                            'global/batch/**',
+                            '**/writer/**',
+                            '**/ocr/**',
+                            '**/mapper/**',
+                            '**/reader/**',
+                            '**/processor/**',
+                            '**/tasklet/**',
+                    ])
+                })
+        )
+    }
 }

@@ -1,30 +1,26 @@
 package com.sprint.deokhugam.global.dto.response;
 
-import java.time.LocalDateTime;
-import org.springframework.http.HttpStatus;
+import com.sprint.deokhugam.global.exception.DomainException;
+import java.time.Instant;
+import java.util.Map;
 
 public record ErrorResponse(
-    LocalDateTime timestamp,
-    int status,
+    Instant timestamp,
+    String code,
     String message,
-    String details
+    Map<String, Object> details,
+    String exceptionType,
+    int status
 ) {
 
-    public static ErrorResponse of(HttpStatus status, String details) {
+    public static ErrorResponse of(DomainException ex) {
         return new ErrorResponse(
-            LocalDateTime.now(),
-            status.value(),
-            status.getReasonPhrase(),
-            details
-        );
-    }
-
-    public static ErrorResponse of(HttpStatus status, String message, String details) {
-        return new ErrorResponse(
-            LocalDateTime.now(),
-            status.value(),
-            message,
-            details
+            ex.getTimestamp(),
+            ex.getErrorCodeString(),
+            ex.getErrorMessage(),
+            ex.getDetails(),
+            ex.getClass().getSimpleName(),
+            ex.getErrorCode().getStatus()
         );
     }
 }
