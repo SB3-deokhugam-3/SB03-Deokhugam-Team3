@@ -103,7 +103,11 @@ public class PopularReviewServiceTest {
     void 오늘날짜로_데이터가_생성된게_없다면_에러를_반환하지_않는다() {
         //given
         for (PeriodType period : PeriodType.values()) {
-            given(popularReviewRepository.countByPeriod(period))
+            Instant startOfDay = LocalDate.now()
+                .atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant();
+            Instant endOfDay = startOfDay.plus(java.time.Duration.ofDays(1));
+            given(popularReviewRepository.countByPeriodAndCreatedDate(period, startOfDay, endOfDay))
                 .willReturn(0L);
         }
 
@@ -119,7 +123,9 @@ public class PopularReviewServiceTest {
     void 오늘날짜로_데이터가_생성된게_이미_있다면_BatchAlreadyRunException에러를_반환한다() {
         //given
         // 첫 번째로 체크되는 PeriodType에서만 1을 반환
-        given(popularReviewRepository.countByPeriod(any(PeriodType.class)))
+        given(popularReviewRepository.countByPeriodAndCreatedDate(any(PeriodType.class),
+            any(Instant.class),
+            any(Instant.class)))
             .willReturn(1L);
 
         //when
