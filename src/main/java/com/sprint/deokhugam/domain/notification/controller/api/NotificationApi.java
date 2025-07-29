@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public interface NotificationApi {
         summary = "알림 읽음 상태 업데이트",
         description = "특정 알림의 읽음 상태를 업데이트합니다.",
         operationId = "updateNotification"
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -70,6 +72,7 @@ public interface NotificationApi {
         summary = "모든 알림 읽음 처리",
         description = "사용자의 모든 알림을 읽음 상태로 처리합니다.",
         operationId = "markAllAsRead"
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "알림 읽음 처리 성공",
@@ -91,6 +94,7 @@ public interface NotificationApi {
         summary = "알림 목록 조회",
         description = "사용자의 알림 목록을 조회합니다.",
         operationId = "getNotifications"
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
     )
     @ApiResponses(value = {
         @ApiResponse(

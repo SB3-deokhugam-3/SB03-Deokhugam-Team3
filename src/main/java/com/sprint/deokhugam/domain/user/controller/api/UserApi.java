@@ -251,18 +251,6 @@ public interface UserApi {
 
         @Parameter(description = "페이지 크기")
         @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit
-
-//        혹은,
-//        @Parameter(
-//            description = """
-//                파워 유저 목록 조회용 DTO<br>
-//                - **period**: 랭킹 기간 (DAILY, WEEKLY, MONTHLY, ALL_TIME, 기본값: DAILY)<br>
-//                - **direction**: 정렬 방향 (ASC, DESC, 기본값: ASC)<br>
-//                - **cursor**: 커서 페이지네이션을 커서<br>
-//                - **after**: createdAt 기준 보조 커서<br>
-//                - **limit**: 페이지 크기 (기본값: 50)
-//                """
-//        )@ModelAttribute @Valid PowerUserGetRequest request;
     );
 
 }

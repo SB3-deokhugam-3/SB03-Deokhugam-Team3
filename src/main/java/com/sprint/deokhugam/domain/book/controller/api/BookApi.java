@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -37,7 +38,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "도서 관리", description = "도서 관련 API")
 public interface BookApi {
 
-    @Operation(summary = "도서 등록", description = "새로운 도서를 등록합니다.")
+    @Operation(
+        summary = "도서 등록"
+        , description = "새로운 도서를 등록합니다."
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
+    )
     @ApiResponses({
         @ApiResponse(
             responseCode = "201",
@@ -82,7 +87,11 @@ public interface BookApi {
         @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage)
         throws IOException;
 
-    @Operation(summary = "도서 목록 조회", description = "검색 조건에 맞는 도서 목록을 조회합니다.")
+    @Operation(
+        summary = "도서 목록 조회"
+        , description = "검색 조건에 맞는 도서 목록을 조회합니다."
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
+    )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -132,7 +141,10 @@ public interface BookApi {
         @RequestParam(defaultValue = "50") Integer limit
     );
 
-    @Operation(summary = "도서 정보 상세 조회", description = "도서 상세 정보 조회")
+    @Operation(
+        summary = "도서 정보 상세 조회"
+        , description = "도서 상세 정보 조회"
+        , security = @SecurityRequirement(name = "CustomHeaderAuth"))
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -164,8 +176,11 @@ public interface BookApi {
         @Parameter(description = "도서 ID", example = "9a4d6e2b-8f53-4c8c-a7c7-21d5079b8b37")
         @PathVariable UUID bookId);
 
-    @Operation(summary = "ISBN으로 도서 정보 조회",
-        description = "Naver API를 통해 ISBN으로 도서 정보를 조회합니다.")
+    @Operation(
+        summary = "ISBN으로 도서 정보 조회",
+        description = "Naver API를 통해 ISBN으로 도서 정보를 조회합니다."
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
+    )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -205,7 +220,11 @@ public interface BookApi {
         @Parameter(description = "ISBN 번호", example = "9788968481901")
         @RequestParam String isbn);
 
-    @Operation(summary = "도서 정보 수정", description = "도서 정보를 수정합니다.")
+    @Operation(
+        summary = "도서 정보 수정"
+        , description = "도서 정보를 수정합니다."
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
+    )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -260,8 +279,11 @@ public interface BookApi {
         @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
     ) throws IOException;
 
-    @Operation(summary = "이미지 기반 ISBN 인식",
-        description = "도서 이미지를 통해 ISBN을 인식합니다.")
+    @Operation(
+        summary = "이미지 기반 ISBN 인식",
+        description = "도서 이미지를 통해 ISBN을 인식합니다."
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
+    )
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -302,8 +324,11 @@ public interface BookApi {
         @RequestPart(value = "image") MultipartFile image
     ) throws OcrException;
 
-    @Operation(summary = "도서 논리 삭제",
-        description = "도서를 논리적으로 삭제합니다.")
+    @Operation(
+        summary = "도서 논리 삭제",
+        description = "도서를 논리적으로 삭제합니다."
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
+    )
     @ApiResponses({
         @ApiResponse(
             responseCode = "204",
@@ -324,8 +349,11 @@ public interface BookApi {
             example = "9a4d6e2b-8f53-4c8c-a7c7-21d5079b8b37")
         @PathVariable UUID bookId);
 
-    @Operation(summary = "도서 물리 삭제",
-        description = "도서를 물리적으로 삭제합니다.")
+    @Operation(
+        summary = "도서 물리 삭제",
+        description = "도서를 물리적으로 삭제합니다."
+        , security = @SecurityRequirement(name = "CustomHeaderAuth")
+    )
     @ApiResponses({
         @ApiResponse(
             responseCode = "204",
