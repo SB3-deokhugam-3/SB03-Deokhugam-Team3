@@ -3,7 +3,7 @@ name: Deploy to AWS ECS
 # 테스트를 위해 우선 release 브랜치에 push 됐을때 배포 되는지 확인
 on:
   push:
-    branches: [ dev, release ]
+    branches: [ main, release ]
 
 env:
   AWS_REGION: ap-northeast-2
