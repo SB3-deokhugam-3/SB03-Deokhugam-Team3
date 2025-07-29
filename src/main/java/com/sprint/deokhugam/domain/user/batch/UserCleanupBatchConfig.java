@@ -107,6 +107,8 @@ public class UserCleanupBatchConfig {
             log.info("유저 {} 명과 관련 데이터 삭제 시작", userIds.size());
 
             try {
+                List<UUID> affectedBookIds = reviewRepository.findBookIdsByUserIdIn(userIds);
+
                 // 1. 알림 삭제
                 notificationRepository.deleteByReviewUserIdIn(userIds);
                 log.debug("알림 데이터 삭제 완료");
@@ -128,7 +130,6 @@ public class UserCleanupBatchConfig {
                 log.debug("유저 데이터 삭제 완료");
 
                 // 6. 모든 책의 카운트 재계산
-                List<UUID> affectedBookIds = reviewRepository.findBookIdsByUserIdIn(userIds);
                 if (!affectedBookIds.isEmpty()) {
                     bookRepository.recalculateBookCounts(affectedBookIds); // 특정 책들만
                 }

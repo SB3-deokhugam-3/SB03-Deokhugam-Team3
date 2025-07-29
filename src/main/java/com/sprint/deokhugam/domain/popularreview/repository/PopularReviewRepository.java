@@ -44,14 +44,4 @@ public interface PopularReviewRepository extends JpaRepository<PopularReview, UU
         """)
     Double findScoreSumByUserIdAndPeriod(@Param("userId") UUID userId,
         @Param("period") PeriodType period);
-
-    /**
-     * 기간별 인기 리뷰 개수 조회 (중복 검증용)
-     */
-    long countByPeriod(PeriodType period);
-
-    /**
-     * 기간별 인기 리뷰 조회
-     */
-    List<PopularReview> findByPeriod(PeriodType period);
 }
