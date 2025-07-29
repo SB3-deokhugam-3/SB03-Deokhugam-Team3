@@ -22,6 +22,7 @@ jobs:
       - name: Run tests with coverage
         run: ./gradlew clean test jacocoTestReport
 
-
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5  # Codecov를 이용한 테스트 커버리지 뱃지 업로드
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

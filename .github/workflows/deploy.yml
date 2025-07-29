@@ -64,6 +64,11 @@ jobs:
             --cluster $ECS_CLUSTER \
             --service $ECS_SERVICE \
             --desired-count 0
+          
+          echo "Waiting for ECS tasks to stop..."
+          aws ecs wait services-stable \
+          --cluster $ECS_CLUSTER \
+          --services $ECS_SERVICE
 
       # step 7
       - name: Fill in the new image ID in the Amazon ECS task definition
